@@ -64,3 +64,12 @@ PR: `hotfix/*` → `main`, then merge `main` back into `develop`.
 - Do not commit directly to `main` except via release/hotfix PRs.
 - Keep `develop` up to date after every `main` release (merge `main` → `develop`).
 - Run `flutter analyze` and `flutter test` before opening a PR.
+
+## CI (GitHub Actions)
+
+| Workflow | When | Purpose |
+|----------|------|---------|
+| [flutter_ci.yml](../.github/workflows/flutter_ci.yml) | Push/PR to `main` or `develop` | `flutter analyze` + `flutter test` |
+| [pr_branch_policy.yml](../.github/workflows/pr_branch_policy.yml) | Pull requests | Enforces `feature/*` → `develop`, release/hotfix → `main` |
+
+After your repo settings are approved, you can require these checks on `main` / `develop` under **Settings → Branches → Branch protection** (status contexts: `analyze-and-test`, `check-base-branch`).
