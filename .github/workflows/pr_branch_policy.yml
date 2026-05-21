@@ -1,5 +1,5 @@
-# Enforce main/develop branching: feature → develop, release/hotfix → main.
-# Optional: require check-base-branch on main/develop after GitHub branch protection is enabled.
+# Enforce production/develop branching: feature → develop, release/hotfix → production.
+# Optional: require check-base-branch on production/develop after GitHub branch protection is enabled.
 name: PR branch policy
 
 on:
@@ -27,23 +27,23 @@ jobs:
               exit 0
               ;;
             hotfix/*)
-              if [[ "$BASE" != "main" ]]; then
-                echo "::error::hotfix/* branches must target main (base is $BASE)."
+              if [[ "$BASE" != "production" ]]; then
+                echo "::error::hotfix/* branches must target production (base is $BASE)."
                 exit 1
               fi
-              echo "OK: $HEAD → main"
+              echo "OK: $HEAD → production"
               exit 0
               ;;
             develop)
-              if [[ "$BASE" == "main" ]]; then
-                echo "OK: release PR develop → main"
+              if [[ "$BASE" == "production" ]]; then
+                echo "OK: release PR develop → production"
                 exit 0
               fi
               ;;
           esac
 
-          if [[ "$BASE" == "main" ]]; then
-            echo "::error::Only develop (release) or hotfix/* may target main. Head: $HEAD"
+          if [[ "$BASE" == "production" ]]; then
+            echo "::error::Only develop (release) or hotfix/* may target production. Head: $HEAD"
             exit 1
           fi
 

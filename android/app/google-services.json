@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "464131010897",
+    "project_id": "logic-sprint",
+    "storage_bucket": "logic-sprint.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:464131010897:android:0c8a8bf6ff96becebf6370",
+        "android_client_info": {
+          "package_name": "com.logicsprint.logic_sprint"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8OIrOPVb9sGAAZ1ebPARV_l7n3jQ7saA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

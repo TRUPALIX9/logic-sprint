@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/constants/app_config.dart';
 import '../models/game_model.dart';
 
 class LocalStorageService {
@@ -9,6 +10,14 @@ class LocalStorageService {
   static const String soundKey = 'isSoundEnabled';
   static const String vibrationKey = 'isVibrationEnabled';
   static const String themeModeKey = 'themeMode';
+  static const String playerNameKey = 'playerName';
+  static const String leaderboardCacheJsonKey = 'leaderboardCacheJson';
+  static const String leaderboardCacheTimestampKey = 'leaderboardCacheTimestamp';
+  static const String leaderboardLastRefreshKey = 'leaderboardLastRefreshAt';
+  static const String leaderboardSubmissionDateKey =
+      'leaderboardSubmissionDate';
+  static const String leaderboardSubmissionCountKey =
+      'leaderboardSubmissionCount';
 
   final SharedPreferences _preferences;
 
@@ -75,5 +84,72 @@ class LocalStorageService {
 
   String _highScoreKey(GameType gameType, DifficultyLevel difficulty) {
     return 'highScore_${gameType.storageKey}_${difficulty.storageKey}';
+  }
+
+  String? getPlayerName() => _preferences.getString(playerNameKey);
+
+  Future<void> setPlayerName(String value) =>
+      _preferences.setString(playerNameKey, value);
+
+  String? getLeaderboardCacheJson() =>
+      _preferences.getString(leaderboardCacheJsonKey);
+
+  Future<void> setLeaderboardCacheJson(String value) =>
+      _preferences.setString(leaderboardCacheJsonKey, value);
+
+  DateTime? getLeaderboardCacheTimestamp() {
+    final millis = _preferences.getInt(leaderboardCacheTimestampKey);
+    if (millis == null) {
+      return null;
+    }
+    return DateTime.fromMillisecondsSinceEpoch(millis);
+  }
+
+  Future<void> setLeaderboardCacheTimestamp(DateTime value) => _preferences
+      .setInt(leaderboardCacheTimestampKey, value.millisecondsSinceEpoch);
+
+  DateTime? getLeaderboardLastRefreshAt() {
+    final millis = _preferences.getInt(leaderboardLastRefreshKey);
+    if (millis == null) {
+      return null;
+    }
+    return DateTime.fromMillisecondsSinceEpoch(millis);
+  }
+
+  Future<void> setLeaderboardLastRefreshAt(DateTime value) => _preferences
+      .setInt(leaderboardLastRefreshKey, value.millisecondsSinceEpoch);
+
+  bool canSubmitLeaderboardToday() =>
+      remainingLeaderboardSubmissionsToday() > 0;
+
+  int remainingLeaderboardSubmissionsToday() {
+    _resetLeaderboardSubmissionsIfNewDay();
+    final count =
+        _preferences.getInt(leaderboardSubmissionCountKey) ?? 0;
+    return (AppConfig.maxDailyLeaderboardSubmissions - count)
+        .clamp(0, AppConfig.maxDailyLeaderboardSubmissions);
+  }
+
+  Future<void> recordLeaderboardSubmission() async {
+    _resetLeaderboardSubmissionsIfNewDay();
+    final count = _preferences.getInt(leaderboardSubmissionCountKey) ?? 0;
+    await _preferences.setInt(leaderboardSubmissionCountKey, count + 1);
+    await _preferences.setString(
+      leaderboardSubmissionDateKey,
+      _todayKey(),
+    );
+  }
+
+  void _resetLeaderboardSubmissionsIfNewDay() {
+    final storedDate = _preferences.getString(leaderboardSubmissionDateKey);
+    if (storedDate != _todayKey()) {
+      _preferences.setInt(leaderboardSubmissionCountKey, 0);
+      _preferences.setString(leaderboardSubmissionDateKey, _todayKey());
+    }
+  }
+
+  String _todayKey() {
+    final now = DateTime.now();
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   }
 }

@@ -48,11 +48,20 @@ class _SplashScreenState extends State<SplashScreen> {
                     .scale(duration: 500.ms, curve: Curves.easeOutBack)
                     .fadeIn(duration: 350.ms),
                 const SizedBox(height: 20),
-                const BrandLogo(
-                  variant: BrandLogoVariant.lockupOnDark,
-                  height: 56,
-                  width: 280,
+                Text(
+                  AppStrings.appName,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.12),
+                const SizedBox(height: 6),
+                Text(
+                  AppStrings.appSubtitle,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ).animate().fadeIn(delay: 320.ms),
                 const SizedBox(height: 18),
                 Text(
                   AppStrings.homeTagline,

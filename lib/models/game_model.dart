@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 
 enum GameType {
   quickMath,
-  numberSequence,
+  colorSequence,
   trueFalse,
-  memoryPattern,
-  colorConfusion,
 }
 
 enum DifficultyLevel { easy, medium, hard }
@@ -16,14 +14,14 @@ class GameModel {
     required this.title,
     required this.description,
     required this.icon,
-    this.isComingSoon = false,
+    this.accentColor,
   });
 
   final GameType type;
   final String title;
   final String description;
   final IconData icon;
-  final bool isComingSoon;
+  final Color? accentColor;
 }
 
 extension GameTypeX on GameType {
@@ -31,14 +29,10 @@ extension GameTypeX on GameType {
     switch (this) {
       case GameType.quickMath:
         return 'Quick Math';
-      case GameType.numberSequence:
-        return 'Number Sequence';
+      case GameType.colorSequence:
+        return 'Color Sequence';
       case GameType.trueFalse:
         return 'True or False';
-      case GameType.memoryPattern:
-        return 'Memory Pattern';
-      case GameType.colorConfusion:
-        return 'Color Confusion';
     }
   }
 
@@ -46,14 +40,10 @@ extension GameTypeX on GameType {
     switch (this) {
       case GameType.quickMath:
         return 'Solve fast arithmetic before the clock runs out.';
-      case GameType.numberSequence:
-        return 'Spot the pattern and pick the missing next number.';
+      case GameType.colorSequence:
+        return 'Watch the pattern and repeat the colors.';
       case GameType.trueFalse:
-        return 'Judge quick facts about math, shapes, and numbers.';
-      case GameType.memoryPattern:
-        return 'Repeat visual sequences once this mode launches.';
-      case GameType.colorConfusion:
-        return 'Stay sharp through tricky color-word clashes.';
+        return 'Sort rapid-fire facts into true or false.';
     }
   }
 
@@ -61,14 +51,10 @@ extension GameTypeX on GameType {
     switch (this) {
       case GameType.quickMath:
         return Icons.calculate_rounded;
-      case GameType.numberSequence:
-        return Icons.auto_graph_rounded;
+      case GameType.colorSequence:
+        return Icons.palette_rounded;
       case GameType.trueFalse:
         return Icons.fact_check_rounded;
-      case GameType.memoryPattern:
-        return Icons.grid_view_rounded;
-      case GameType.colorConfusion:
-        return Icons.palette_rounded;
     }
   }
 
@@ -76,28 +62,14 @@ extension GameTypeX on GameType {
     switch (this) {
       case GameType.quickMath:
         return 'quickMath';
-      case GameType.numberSequence:
-        return 'numberSequence';
+      case GameType.colorSequence:
+        return 'colorSequence';
       case GameType.trueFalse:
         return 'trueFalse';
-      case GameType.memoryPattern:
-        return 'memoryPattern';
-      case GameType.colorConfusion:
-        return 'colorConfusion';
     }
   }
 
-  bool get isPlayable {
-    switch (this) {
-      case GameType.quickMath:
-      case GameType.numberSequence:
-      case GameType.trueFalse:
-        return true;
-      case GameType.memoryPattern:
-      case GameType.colorConfusion:
-        return false;
-    }
-  }
+  bool get isPlayable => true;
 }
 
 extension DifficultyLevelX on DifficultyLevel {
@@ -126,11 +98,11 @@ extension DifficultyLevelX on DifficultyLevel {
   String get shortHint {
     switch (this) {
       case DifficultyLevel.easy:
-        return 'Warm up with steady patterns.';
+        return 'Warm up with shorter patterns.';
       case DifficultyLevel.medium:
-        return 'Mix speed with sharper thinking.';
+        return 'Mix speed with longer sequences.';
       case DifficultyLevel.hard:
-        return 'Handle the fastest logic challenges.';
+        return 'Handle the longest memory challenges.';
     }
   }
 }
@@ -139,33 +111,22 @@ const List<GameModel> availableGames = [
   GameModel(
     type: GameType.quickMath,
     title: 'Quick Math',
-    description: 'Solve fast arithmetic before the timer hits zero.',
+    description: 'Solve fast arithmetic before time runs out.',
     icon: Icons.calculate_rounded,
+    accentColor: Color(0xFF10BDEB),
   ),
   GameModel(
-    type: GameType.numberSequence,
-    title: 'Number Sequence',
-    description: 'Find the pattern and pick the next number.',
-    icon: Icons.auto_graph_rounded,
+    type: GameType.colorSequence,
+    title: 'Color Sequence',
+    description: 'Watch the pattern and repeat the colors.',
+    icon: Icons.palette_rounded,
+    accentColor: Color(0xFFFF8A00),
   ),
   GameModel(
     type: GameType.trueFalse,
     title: 'True or False',
-    description: 'Sort rapid-fire facts into true or false.',
+    description: 'Answer rapid-fire facts as true or false.',
     icon: Icons.fact_check_rounded,
-  ),
-  GameModel(
-    type: GameType.memoryPattern,
-    title: 'Memory Pattern',
-    description: 'Coming soon',
-    icon: Icons.grid_view_rounded,
-    isComingSoon: true,
-  ),
-  GameModel(
-    type: GameType.colorConfusion,
-    title: 'Color Confusion',
-    description: 'Coming soon',
-    icon: Icons.palette_rounded,
-    isComingSoon: true,
+    accentColor: Color(0xFF22C55E),
   ),
 ];

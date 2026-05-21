@@ -7,12 +7,14 @@ class PrimaryButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.isSecondary = false,
+    this.compact = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
   final bool isSecondary;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -21,28 +23,34 @@ class PrimaryButton extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 20),
-          const SizedBox(width: 10),
+          Icon(icon, size: 18),
+          const SizedBox(width: 8),
         ],
         Text(label),
       ],
     );
 
+    final height = compact ? 44.0 : 48.0;
+
     if (isSecondary) {
-      return OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(56),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+      return SizedBox(
+        width: double.infinity,
+        height: height,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
+          child: child,
         ),
-        child: child,
       );
     }
 
     return SizedBox(
       width: double.infinity,
+      height: height,
       child: ElevatedButton(
         onPressed: onPressed,
         child: child,

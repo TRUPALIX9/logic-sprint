@@ -35,6 +35,8 @@ dependencies:
   shared_preferences: ^2.5.5
   audioplayers: ^6.6.0
   flutter_animate: ^4.5.2
+  firebase_core: ^4.9.0
+  cloud_firestore: ^6.4.1
 
 dev_dependencies:
   flutter_test:
@@ -66,5 +68,4 @@ flutter:
     - assets/brand/docs/
     - assets/brand/store/google_play/
     - assets/brand/games/quick_math/
-    - assets/brand/games/number_sequence/
     - assets/brand/games/true_false/
