@@ -9,9 +9,11 @@ LogicSprint uses **Cloud Firestore** only for the optional Global Top 100 leader
 | File | Purpose | In Git? | In Flutter app? |
 |------|---------|---------|-----------------|
 | `credentials/logic-sprint-firebase.json` | **Admin SDK** — deploy rules, admin tools | **No** (gitignored) | **Never** |
-| `android/app/google-services.json` | Android **client** config | Yes | Yes |
-| `ios/Runner/GoogleService-Info.plist` | iOS **client** config | Yes | Yes |
-| `lib/firebase_options.dart` | Dart **client** config | Yes | Yes |
+| `android/app/google-services.json` | Android **client** config | **No** (gitignored) | Yes |
+| `ios/Runner/GoogleService-Info.plist` | iOS **client** config | **No** (gitignored) | Yes |
+| `lib/firebase_options.dart` | Dart **client** config | **No** (gitignored) | Yes |
+
+Copy from `*.example` files or run `flutterfire configure`. See [firebase_secret_remediation.md](firebase_secret_remediation.md) if API keys were exposed on GitHub.
 
 Your Admin SDK key in `credentials/` is already wired for CLI use only. The app connects with the client files above.
 

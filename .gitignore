@@ -54,3 +54,8 @@ android/.gradle/
 credentials/
 credentials/**
 !credentials/README.md
+
+# Firebase client config (contains API keys) — use *.example templates
+lib/firebase_options.dart
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist

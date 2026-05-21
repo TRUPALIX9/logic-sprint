@@ -1,16 +1,22 @@
-// File generated from Firebase client config (google-services.json / GoogleService-Info.plist).
-// Project: logic-sprint
+// Copy to lib/firebase_options.dart and fill from Firebase Console or:
+//   dart run flutterfire_cli:flutterfire configure
 //
-// Do NOT put Admin SDK service account keys here — use credentials/ for CLI only.
+// Never commit lib/firebase_options.dart (gitignored).
 
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 abstract final class DefaultFirebaseOptions {
-  static const String _projectId = 'logic-sprint';
+  static const String _projectId = 'your-firebase-project-id';
 
-  static bool get isConfigured => android.projectId == _projectId;
+  static bool get isConfigured {
+    const key = android.apiKey;
+    return key.isNotEmpty &&
+        !key.startsWith('REPLACE_') &&
+        android.projectId == _projectId &&
+        _projectId != 'your-firebase-project-id';
+  }
 
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -29,19 +35,19 @@ abstract final class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyB8OIrOPVb9sGAAZ1ebPARV_l7n3jQ7saA',
-    appId: '1:464131010897:android:0c8a8bf6ff96becebf6370',
-    messagingSenderId: '464131010897',
+    apiKey: 'REPLACE_ANDROID_API_KEY',
+    appId: 'REPLACE_ANDROID_APP_ID',
+    messagingSenderId: 'REPLACE_SENDER_ID',
     projectId: _projectId,
-    storageBucket: 'logic-sprint.firebasestorage.app',
+    storageBucket: 'REPLACE_PROJECT_ID.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCzuZSLSArYFYQRZ-mypEXwpQxf6WDqYOo',
-    appId: '1:464131010897:ios:4b5c06ba30025ec2bf6370',
-    messagingSenderId: '464131010897',
+    apiKey: 'REPLACE_IOS_API_KEY',
+    appId: 'REPLACE_IOS_APP_ID',
+    messagingSenderId: 'REPLACE_SENDER_ID',
     projectId: _projectId,
-    storageBucket: 'logic-sprint.firebasestorage.app',
+    storageBucket: 'REPLACE_PROJECT_ID.firebasestorage.app',
     iosBundleId: 'com.logicsprint.logicSprint',
   );
 }
