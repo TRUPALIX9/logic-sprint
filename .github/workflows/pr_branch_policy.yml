@@ -1,0 +1,50 @@
+# Enforce main/develop branching: feature → develop, release/hotfix → main.
+# Optional: require check-base-branch on main/develop after GitHub branch protection is enabled.
+name: PR branch policy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  check-base-branch: # status context name for branch protection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR base branch
+        env:
+          HEAD: ${{ github.head_ref }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+
+          case "$HEAD" in
+            feature/*)
+              if [[ "$BASE" != "develop" ]]; then
+                echo "::error::feature/* branches must target develop (base is $BASE)."
+                exit 1
+              fi
+              echo "OK: $HEAD → develop"
+              exit 0
+              ;;
+            hotfix/*)
+              if [[ "$BASE" != "main" ]]; then
+                echo "::error::hotfix/* branches must target main (base is $BASE)."
+                exit 1
+              fi
+              echo "OK: $HEAD → main"
+              exit 0
+              ;;
+            develop)
+              if [[ "$BASE" == "main" ]]; then
+                echo "OK: release PR develop → main"
+                exit 0
+              fi
+              ;;
+          esac
+
+          if [[ "$BASE" == "main" ]]; then
+            echo "::error::Only develop (release) or hotfix/* may target main. Head: $HEAD"
+            exit 1
+          fi
+
+          echo "OK: PR policy passed (head=$HEAD base=$BASE)"
