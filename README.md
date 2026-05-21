@@ -137,18 +137,18 @@ make check
 # or: make analyze && make test
 ```
 
-CI runs the same steps on pushes and PRs to `main` and `develop` (see [.github/workflows/flutter_ci.yml](.github/workflows/flutter_ci.yml)).
+CI runs the same steps on pushes and PRs to `production` and `develop` (see [.github/workflows/flutter_ci.yml](.github/workflows/flutter_ci.yml)).
 
 ### Git workflow
 
 | Branch | Purpose |
 |--------|---------|
-| `main` | **Production** — store-ready releases |
+| `production` | **Production** — store-ready releases |
 | `develop` | **Integration** — day-to-day merges |
 | `feature/*` | Short-lived work off `develop` |
 
 - Normal PRs target **`develop`**
-- Releases merge **`develop` → `main`**, then tag (e.g. `v1.0.0`)
+- Releases merge **`develop` → `production`**, then tag (e.g. `v1.0.0`)
 
 Full guide: [docs/git_workflow.md](docs/git_workflow.md) · [CONTRIBUTING.md](CONTRIBUTING.md)
 
@@ -156,7 +156,7 @@ Full guide: [docs/git_workflow.md](docs/git_workflow.md) · [CONTRIBUTING.md](CO
 
 ## Release builds
 
-From **`main`** after a release merge:
+From **`production`** after a release merge:
 
 ```bash
 make build-aab    # Android (.aab) for Google Play
@@ -197,7 +197,7 @@ Privacy text is bundled from `assets/brand/docs/privacy_policy.md` and shown in 
 
 | Document | Description |
 |----------|-------------|
-| [docs/git_workflow.md](docs/git_workflow.md) | `main` / `develop` branching |
+| [docs/git_workflow.md](docs/git_workflow.md) | `production` / `develop` branching |
 | [docs/logic_sprint_epic_plan.md](docs/logic_sprint_epic_plan.md) | Product epic & tickets |
 | [docs/brand_assets.md](docs/brand_assets.md) | Brand usage guide |
 | [docs/release_checklist.md](docs/release_checklist.md) | Play Store & App Store prep |
