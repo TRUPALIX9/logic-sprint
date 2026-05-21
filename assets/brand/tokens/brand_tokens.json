@@ -1,0 +1,18 @@
+{
+  "appName": "LogicSprint",
+  "storeTitle": "LogicSprint: Brain Games",
+  "colors": {
+    "midnight_purple": "#12002F",
+    "deep_blue": "#004F9F",
+    "electric_blue": "#23BEEF",
+    "sprint_orange": "#FC8620",
+    "soft_ice": "#D8E5EC",
+    "white": "#FFFFFF",
+    "ink": "#130A33"
+  },
+  "typography": {
+    "primary": "DejaVu Sans / system sans-serif",
+    "usage": "Bold display titles, clean readable body text"
+  },
+  "assetSource": "Cropped from the original concept image provided by the user; no AI redraw/vector approximation."
+}
