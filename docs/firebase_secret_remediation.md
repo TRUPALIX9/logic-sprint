@@ -21,6 +21,23 @@ Firebase **client** API keys are not as sensitive as Admin SDK JSON, but anyone 
 
 ## Step 1 — Rotate keys (do this first)
 
+### Option A — Service account (only if IAM allows it)
+
+Your `credentials/logic-sprint-firebase.json` can deploy Firestore rules and download SDK config, but it **usually cannot regenerate API keys** until you grant:
+
+**Role:** `API Keys Admin` (`roles/serviceusage.apiKeysAdmin`)  
+**Principal:** `firebase-adminsdk-fbsvc@logic-sprint.iam.gserviceaccount.com`
+
+Then:
+
+```bash
+python3 scripts/rotate_firebase_api_keys.py
+```
+
+If you see `403 Forbidden`, use Option B.
+
+### Option B — Google Cloud Console (always works)
+
 1. Open [Google Cloud Console](https://console.cloud.google.com/) → project **logic-sprint**.
 2. **APIs & Services** → **Credentials**.
 3. Find the API keys used by your Android and iOS Firebase apps.
@@ -30,7 +47,18 @@ Firebase **client** API keys are not as sensitive as Admin SDK JSON, but anyone 
      - Android: package `com.logicsprint.logic_sprint` + your release/debug SHA-1.
      - iOS: bundle id `com.logicsprint.logicSprint`.
    - **API restrictions**: limit to Firebase-related APIs only.
-5. In [Firebase Console](https://console.firebase.google.com/) → Project settings → your apps → download fresh `google-services.json` and `GoogleService-Info.plist`.
+
+### Refresh local files after rotation
+
+```bash
+./scripts/refresh_firebase_client_config.sh
+```
+
+Uses the same Admin SDK JSON + Firebase CLI to write gitignored:
+
+- `android/app/google-services.json`
+- `ios/Runner/GoogleService-Info.plist`
+- `lib/firebase_options.dart`
 
 ---
 
