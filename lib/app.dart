@@ -10,15 +10,17 @@ import 'screens/about/about_screen.dart';
 import 'screens/about/privacy_policy_screen.dart';
 import 'screens/difficulty/difficulty_screen.dart';
 import 'screens/game_select/game_select_screen.dart';
-import 'screens/games/number_sequence/number_sequence_screen.dart';
+import 'screens/games/color_sequence/color_sequence_screen.dart';
 import 'screens/games/quick_math/quick_math_screen.dart';
 import 'screens/games/true_false/true_false_screen.dart';
 import 'screens/high_scores/high_scores_screen.dart';
+import 'screens/leaderboard/leaderboard_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/result/result_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/splash/splash_screen.dart';
 import 'services/app_state.dart';
+import 'services/leaderboard_service.dart';
 import 'services/local_storage_service.dart';
 import 'services/sound_service.dart';
 
@@ -28,11 +30,13 @@ class LogicSprintApp extends StatelessWidget {
     required this.appState,
     required this.storage,
     required this.soundService,
+    required this.leaderboardService,
   });
 
   final AppState appState;
   final LocalStorageService storage;
   final SoundService soundService;
+  final LeaderboardService leaderboardService;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +45,7 @@ class LogicSprintApp extends StatelessWidget {
         ChangeNotifierProvider<AppState>.value(value: appState),
         Provider<LocalStorageService>.value(value: storage),
         Provider<SoundService>.value(value: soundService),
+        Provider<LeaderboardService>.value(value: leaderboardService),
       ],
       child: Consumer<AppState>(
         builder: (context, state, _) {
@@ -87,10 +92,10 @@ class LogicSprintApp extends StatelessWidget {
           builder: (_) => QuickMathScreen(difficulty: difficulty),
           settings: settings,
         );
-      case AppRoutes.numberSequence:
+      case AppRoutes.colorSequence:
         final difficulty = settings.arguments as DifficultyLevel;
         return MaterialPageRoute<void>(
-          builder: (_) => NumberSequenceScreen(difficulty: difficulty),
+          builder: (_) => ColorSequenceScreen(difficulty: difficulty),
           settings: settings,
         );
       case AppRoutes.trueFalse:
@@ -108,6 +113,11 @@ class LogicSprintApp extends StatelessWidget {
       case AppRoutes.highScores:
         return MaterialPageRoute<void>(
           builder: (_) => const HighScoresScreen(),
+          settings: settings,
+        );
+      case AppRoutes.leaderboard:
+        return MaterialPageRoute<void>(
+          builder: (_) => const LeaderboardScreen(),
           settings: settings,
         );
       case AppRoutes.settings:

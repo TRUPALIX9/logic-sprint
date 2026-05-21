@@ -1,6 +1,8 @@
 abstract final class AppStrings {
   static const String appName = 'LogicSprint';
   static const String appSubtitle = 'Brain Games';
+  static const String homeDescription =
+      'Fast 30-sec brain challenges';
   static const String appTitle = 'LogicSprint: Brain Games';
   static const String homeTagline =
       'Fast logic, math, and focus challenges';

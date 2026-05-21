@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_routes.dart';
 import '../../services/app_state.dart';
-import '../../widgets/custom_app_bar.dart';
+import '../../widgets/ui/app_scaffold.dart';
+import '../../widgets/ui/section_title.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -11,30 +12,32 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
-    return Scaffold(
-      appBar: const CustomAppBar(
-        title: 'Settings',
-        subtitle: 'Personalize your local experience',
-      ),
+    return AppScaffold(
+      title: 'Settings',
+      subtitle: 'Personalize your experience',
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
         children: [
+          const SectionTitle(title: 'Preferences'),
+          const SizedBox(height: 12),
           Card(
             margin: EdgeInsets.zero,
             child: Column(
               children: [
                 SwitchListTile(
                   title: const Text('Sound'),
-                  subtitle: const Text('Enable sound-ready feedback hooks'),
+                  subtitle: const Text('Play feedback sounds during games'),
                   value: appState.isSoundEnabled,
                   onChanged: appState.setSoundEnabled,
                 ),
+                const Divider(height: 1),
                 SwitchListTile(
                   title: const Text('Vibration'),
-                  subtitle: const Text('Keep haptic preference ready for later'),
+                  subtitle: const Text('Haptic feedback on supported devices'),
                   value: appState.isVibrationEnabled,
                   onChanged: appState.setVibrationEnabled,
                 ),
+                const Divider(height: 1),
                 ListTile(
                   title: const Text('Theme Mode'),
                   subtitle: Text(
@@ -46,6 +49,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   trailing: DropdownButton<ThemeMode>(
                     value: appState.themeMode,
+                    underline: const SizedBox.shrink(),
                     onChanged: (value) {
                       if (value != null) {
                         appState.setThemeMode(value);
@@ -70,22 +74,28 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
+          const SectionTitle(title: 'Data & Legal'),
+          const SizedBox(height: 12),
           Card(
             margin: EdgeInsets.zero,
             child: Column(
               children: [
                 ListTile(
                   leading: const Icon(Icons.delete_outline_rounded),
-                  title: const Text('Reset high scores'),
-                  subtitle: const Text('Clear all saved best scores on this device'),
+                  title: const Text('Reset High Scores'),
+                  subtitle: const Text(
+                    'Clear all saved best scores on this device',
+                  ),
                   onTap: () => _confirmReset(context),
                 ),
+                const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.info_outline_rounded),
                   title: const Text('About'),
                   onTap: () => Navigator.of(context).pushNamed(AppRoutes.about),
                 ),
+                const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.privacy_tip_outlined),
                   title: const Text('Privacy Policy'),

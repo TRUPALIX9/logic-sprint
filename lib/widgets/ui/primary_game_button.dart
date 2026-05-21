@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 
-class PrimaryButton extends StatelessWidget {
-  const PrimaryButton({
+import '../../core/brand/brand_palette.dart';
+
+class PrimaryGameButton extends StatelessWidget {
+  const PrimaryGameButton({
     super.key,
     required this.label,
     required this.onPressed,
     this.icon,
-    this.isSecondary = false,
     this.compact = false,
+    this.isSecondary = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
-  final bool isSecondary;
   final bool compact;
+  final bool isSecondary;
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +53,25 @@ class PrimaryButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: height,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        child: child,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: onPressed == null ? null : BrandPalette.ctaGradient,
+          borderRadius: BorderRadius.circular(14),
+          color: onPressed == null ? Colors.grey.shade400 : null,
+        ),
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            padding: EdgeInsets.zero,
+          ),
+          child: child,
+        ),
       ),
     );
   }
