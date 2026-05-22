@@ -40,13 +40,11 @@ class SettingsScreen extends StatelessWidget {
                 const Divider(height: 1),
                 ListTile(
                   title: const Text('Theme Mode'),
-                  subtitle: Text(
-                    switch (appState.themeMode) {
-                      ThemeMode.light => 'Light',
-                      ThemeMode.dark => 'Dark',
-                      ThemeMode.system => 'System',
-                    },
-                  ),
+                  subtitle: Text(switch (appState.themeMode) {
+                    ThemeMode.light => 'Light',
+                    ThemeMode.dark => 'Dark',
+                    ThemeMode.system => 'System',
+                  }),
                   trailing: DropdownButton<ThemeMode>(
                     value: appState.themeMode,
                     underline: const SizedBox.shrink(),
@@ -112,7 +110,8 @@ class SettingsScreen extends StatelessWidget {
 
   Future<void> _confirmReset(BuildContext context) async {
     final appState = context.read<AppState>();
-    final shouldReset = await showDialog<bool>(
+    final shouldReset =
+        await showDialog<bool>(
           context: context,
           builder: (context) {
             return AlertDialog(
@@ -143,8 +142,8 @@ class SettingsScreen extends StatelessWidget {
     if (!context.mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('High scores cleared')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('High scores cleared')));
   }
 }

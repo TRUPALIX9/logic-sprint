@@ -21,10 +21,7 @@ class TrueFalseController extends TimedGameController {
 enum _FactType { arithmetic, shapes, numberFacts }
 
 class TrueFalseQuestionFactory {
-  static QuestionModel create(
-    DifficultyLevel difficulty, {
-    Random? random,
-  }) {
+  static QuestionModel create(DifficultyLevel difficulty, {Random? random}) {
     final rng = random ?? Random();
     final factType = _FactType.values[rng.nextInt(_FactType.values.length)];
     final isTrueStatement = rng.nextBool();
@@ -130,7 +127,8 @@ class TrueFalseQuestionFactory {
       return '$number is divisible by $wrongDivisor';
     }
 
-    final number = rng.nextInt(difficulty == DifficultyLevel.easy ? 20 : 60) + 1;
+    final number =
+        rng.nextInt(difficulty == DifficultyLevel.easy ? 20 : 60) + 1;
     final shouldBeEven = rng.nextBool();
     final truth = shouldBeEven ? number.isEven : number.isOdd;
     final adjective = shouldBeEven ? 'even' : 'odd';

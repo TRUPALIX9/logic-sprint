@@ -38,6 +38,7 @@ dependencies:
   firebase_core: ^4.9.0
   cloud_firestore: ^6.4.1
   package_info_plus: ^9.0.0
+  google_mobile_ads: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -71,3 +72,4 @@ flutter:
     - assets/brand/games/quick_math/
     - assets/brand/games/color_sequence/
     - assets/brand/games/true_false/
+    - assets/images/

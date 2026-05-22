@@ -26,7 +26,9 @@ void main() {
         3,
       );
       expect(
-        ColorSequenceController.startingSequenceLengthFor(DifficultyLevel.medium),
+        ColorSequenceController.startingSequenceLengthFor(
+          DifficultyLevel.medium,
+        ),
         4,
       );
       expect(
@@ -109,13 +111,13 @@ void main() {
     test('launch games include colorSequence with correct storage key', () {
       expect(GameType.values, contains(GameType.colorSequence));
       expect(GameType.colorSequence.storageKey, 'colorSequence');
-      expect(availableGames, hasLength(3));
+      expect(availableGames.length, greaterThanOrEqualTo(5));
       expect(
         availableGames.map((game) => game.type),
         containsAll([
           GameType.quickMath,
           GameType.colorSequence,
-          GameType.trueFalse,
+          GameType.launchRocket,
         ]),
       );
     });

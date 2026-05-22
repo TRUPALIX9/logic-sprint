@@ -41,10 +41,7 @@ void main() {
     });
 
     test('rejects names longer than 20 characters', () {
-      expect(
-        PlayerNameValidator.validate('abcdefghijklmnopqrstu'),
-        isNotNull,
-      );
+      expect(PlayerNameValidator.validate('abcdefghijklmnopqrstu'), isNotNull);
     });
   });
 
@@ -122,14 +119,17 @@ void main() {
       expect(result.infoMessage, contains('Refresh available'));
     });
 
-    test('returns unavailable message when firestore fails without cache', () async {
-      final result = await service.loadLeaderboard();
-      expect(result.scores, isEmpty);
-      expect(
-        result.errorMessage,
-        'Online leaderboard is temporarily unavailable.',
-      );
-    });
+    test(
+      'returns unavailable message when firestore fails without cache',
+      () async {
+        final result = await service.loadLeaderboard();
+        expect(result.scores, isEmpty);
+        expect(
+          result.errorMessage,
+          'Online leaderboard is temporarily unavailable.',
+        );
+      },
+    );
 
     test('filters cached scores locally without extra queries', () {
       final scores = [

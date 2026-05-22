@@ -5,6 +5,9 @@ import '../core/brand/game_brand.dart';
 enum GameType {
   quickMath,
   colorSequence,
+  emojiMatch,
+  patternLock,
+  launchRocket,
   trueFalse,
 }
 
@@ -16,12 +19,16 @@ class GameModel {
     required this.title,
     required this.description,
     required this.icon,
+    this.emoji,
+    this.skipsDifficulty = false,
   });
 
   final GameType type;
   final String title;
   final String description;
   final IconData icon;
+  final String? emoji;
+  final bool skipsDifficulty;
 
   Color get accentColor => type.accentColor;
 }
@@ -33,6 +40,12 @@ extension GameTypeX on GameType {
         return 'Quick Math';
       case GameType.colorSequence:
         return 'Color Sequence';
+      case GameType.emojiMatch:
+        return 'Emoji Match';
+      case GameType.patternLock:
+        return 'Pattern Lock';
+      case GameType.launchRocket:
+        return 'Launch Rocket';
       case GameType.trueFalse:
         return 'True or False';
     }
@@ -44,6 +57,12 @@ extension GameTypeX on GameType {
         return 'Solve fast arithmetic before the clock runs out.';
       case GameType.colorSequence:
         return 'Watch the pattern and repeat the colors.';
+      case GameType.emojiMatch:
+        return 'Flip cards and match all emoji pairs before time runs out.';
+      case GameType.patternLock:
+        return 'Memorize the dot pattern and recreate it from memory.';
+      case GameType.launchRocket:
+        return 'Dodge asteroids in space.';
       case GameType.trueFalse:
         return 'Sort rapid-fire facts into true or false.';
     }
@@ -55,6 +74,12 @@ extension GameTypeX on GameType {
         return Icons.calculate_rounded;
       case GameType.colorSequence:
         return Icons.palette_rounded;
+      case GameType.emojiMatch:
+        return Icons.emoji_emotions_rounded;
+      case GameType.patternLock:
+        return Icons.pattern_rounded;
+      case GameType.launchRocket:
+        return Icons.rocket_launch_rounded;
       case GameType.trueFalse:
         return Icons.fact_check_rounded;
     }
@@ -66,12 +91,32 @@ extension GameTypeX on GameType {
         return 'quickMath';
       case GameType.colorSequence:
         return 'colorSequence';
+      case GameType.emojiMatch:
+        return 'emojiMatch';
+      case GameType.patternLock:
+        return 'patternLock';
+      case GameType.launchRocket:
+        return 'launchRocket';
       case GameType.trueFalse:
         return 'trueFalse';
     }
   }
 
-  bool get isPlayable => true;
+  bool get isPlayable {
+    switch (this) {
+      case GameType.quickMath:
+      case GameType.colorSequence:
+      case GameType.emojiMatch:
+      case GameType.patternLock:
+      case GameType.launchRocket:
+      case GameType.trueFalse:
+        return true;
+    }
+  }
+
+  bool get usesDifficulty {
+    return this != GameType.launchRocket;
+  }
 
   Color get accentColor => GameBrand.forGame(this).accent;
 }
@@ -111,19 +156,48 @@ extension DifficultyLevelX on DifficultyLevel {
   }
 }
 
-const List<GameModel> availableGames = [
+/// Games shown on the home launcher (wireframe order).
+const List<GameModel> homeLauncherGames = [
   GameModel(
     type: GameType.quickMath,
     title: 'Quick Math',
-    description: 'Solve fast arithmetic before time runs out.',
+    description: 'Solve fast arithmetic',
     icon: Icons.calculate_rounded,
+    emoji: '🧠',
   ),
   GameModel(
     type: GameType.colorSequence,
     title: 'Color Sequence',
-    description: 'Watch the pattern and repeat the colors.',
+    description: 'Watch and repeat colors',
     icon: Icons.palette_rounded,
+    emoji: '🎨',
   ),
+  GameModel(
+    type: GameType.emojiMatch,
+    title: 'Emoji Match',
+    description: 'Match emoji pairs',
+    icon: Icons.emoji_emotions_rounded,
+    emoji: '🧩',
+  ),
+  GameModel(
+    type: GameType.patternLock,
+    title: 'Pattern Lock',
+    description: 'Remember the unlock path',
+    icon: Icons.pattern_rounded,
+    emoji: '🔐',
+  ),
+  GameModel(
+    type: GameType.launchRocket,
+    title: 'Launch Rocket',
+    description: 'Dodge asteroids in space',
+    icon: Icons.rocket_launch_rounded,
+    emoji: '🚀',
+    skipsDifficulty: true,
+  ),
+];
+
+const List<GameModel> availableGames = [
+  ...homeLauncherGames,
   GameModel(
     type: GameType.trueFalse,
     title: 'True or False',

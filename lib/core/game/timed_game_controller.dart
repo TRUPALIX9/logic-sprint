@@ -46,9 +46,9 @@ abstract class TimedGameController extends ChangeNotifier {
       secondsRemaining / ScoreUtils.roundLengthSeconds.clamp(1, 999);
 
   double get accuracy => ScoreUtils.accuracyPercentage(
-        correctAnswers: correctAnswers,
-        wrongAnswers: wrongAnswers,
-      );
+    correctAnswers: correctAnswers,
+    wrongAnswers: wrongAnswers,
+  );
 
   Future<void> initialize() async {
     bestScore = storage.getHighScore(gameType, difficulty);
@@ -122,7 +122,11 @@ abstract class TimedGameController extends ChangeNotifier {
     _roundTimer?.cancel();
     _nextQuestionTimer?.cancel();
     final previousBest = bestScore;
-    bestScore = await storage.saveHighScoreIfHigher(gameType, difficulty, score);
+    bestScore = await storage.saveHighScoreIfHigher(
+      gameType,
+      difficulty,
+      score,
+    );
     result = ScoreModel(
       gameType: gameType,
       difficulty: difficulty,

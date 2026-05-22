@@ -33,17 +33,16 @@ class GameSelectScreen extends StatelessWidget {
 
           final game = availableGames[index - 1];
           return GameModeCard(
-            title: game.title,
-            description: game.description,
-            icon: game.icon,
-            game: game.type,
-            accentColor: game.accentColor,
-            bestScore: appState.overallBestFor(game.type),
-            onPressed: () => Navigator.of(context).pushNamed(
-              AppRoutes.difficulty,
-              arguments: game.type,
-            ),
-          )
+                title: game.title,
+                description: game.description,
+                icon: game.icon,
+                game: game.type,
+                accentColor: game.accentColor,
+                bestScore: appState.overallBestFor(game.type),
+                onPressed: () => Navigator.of(
+                  context,
+                ).pushNamed(AppRoutes.difficulty, arguments: game.type),
+              )
               .animate()
               .fadeIn(delay: Duration(milliseconds: 60 * index))
               .slideY(begin: 0.06);

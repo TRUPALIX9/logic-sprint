@@ -29,10 +29,7 @@ class LeaderboardLoadResult {
 }
 
 class LeaderboardSubmitResult {
-  const LeaderboardSubmitResult({
-    required this.success,
-    this.message,
-  });
+  const LeaderboardSubmitResult({required this.success, this.message});
 
   final bool success;
   final String? message;
@@ -43,9 +40,9 @@ class LeaderboardService {
     required LocalStorageService storage,
     required LeaderboardCacheService cache,
     FirebaseFirestore? firestore,
-  })  : _storage = storage,
-        _cache = cache,
-        _firestore = firestore;
+  }) : _storage = storage,
+       _cache = cache,
+       _firestore = firestore;
 
   final LocalStorageService _storage;
   final LeaderboardCacheService _cache;
@@ -117,9 +114,7 @@ class LeaderboardService {
         scores: cached ?? const [],
         fromCache: true,
         lastUpdated: _cache.cacheTimestamp,
-        infoMessage: seconds > 0
-            ? 'Refresh available in ${seconds}s.'
-            : null,
+        infoMessage: seconds > 0 ? 'Refresh available in ${seconds}s.' : null,
       );
     }
 

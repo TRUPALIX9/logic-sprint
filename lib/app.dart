@@ -11,6 +11,9 @@ import 'screens/about/privacy_policy_screen.dart';
 import 'screens/difficulty/difficulty_screen.dart';
 import 'screens/game_select/game_select_screen.dart';
 import 'screens/games/color_sequence/color_sequence_screen.dart';
+import 'screens/games/emoji_match/emoji_match_screen.dart';
+import 'screens/games/launch_rocket/launch_rocket_screen.dart';
+import 'screens/games/pattern_lock/pattern_lock_screen.dart';
 import 'screens/games/quick_math/quick_math_screen.dart';
 import 'screens/games/true_false/true_false_screen.dart';
 import 'screens/high_scores/high_scores_screen.dart';
@@ -96,6 +99,23 @@ class LogicSprintApp extends StatelessWidget {
         final difficulty = settings.arguments as DifficultyLevel;
         return MaterialPageRoute<void>(
           builder: (_) => ColorSequenceScreen(difficulty: difficulty),
+          settings: settings,
+        );
+      case AppRoutes.emojiMatch:
+        final difficulty = settings.arguments as DifficultyLevel;
+        return MaterialPageRoute<void>(
+          builder: (_) => EmojiMatchScreen(difficulty: difficulty),
+          settings: settings,
+        );
+      case AppRoutes.patternLock:
+        final difficulty = settings.arguments as DifficultyLevel;
+        return MaterialPageRoute<void>(
+          builder: (_) => PatternLockScreen(difficulty: difficulty),
+          settings: settings,
+        );
+      case AppRoutes.launchRocket:
+        return MaterialPageRoute<void>(
+          builder: (_) => const LaunchRocketScreen(),
           settings: settings,
         );
       case AppRoutes.trueFalse:

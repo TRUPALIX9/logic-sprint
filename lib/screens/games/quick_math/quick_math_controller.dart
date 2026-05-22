@@ -22,10 +22,7 @@ class QuickMathController extends TimedGameController {
 enum _MathOperation { addition, subtraction, multiplication, division }
 
 class QuickMathQuestionFactory {
-  static QuestionModel create(
-    DifficultyLevel difficulty, {
-    Random? random,
-  }) {
+  static QuestionModel create(DifficultyLevel difficulty, {Random? random}) {
     final rng = random ?? Random();
     final operation = _pickOperation(difficulty, rng);
     final maxNumber = switch (difficulty) {
@@ -86,14 +83,14 @@ class QuickMathQuestionFactory {
   ) {
     final choices = switch (difficulty) {
       DifficultyLevel.easy => [
-          _MathOperation.addition,
-          _MathOperation.subtraction,
-        ],
+        _MathOperation.addition,
+        _MathOperation.subtraction,
+      ],
       DifficultyLevel.medium => [
-          _MathOperation.addition,
-          _MathOperation.subtraction,
-          _MathOperation.multiplication,
-        ],
+        _MathOperation.addition,
+        _MathOperation.subtraction,
+        _MathOperation.multiplication,
+      ],
       DifficultyLevel.hard => _MathOperation.values,
     };
     return choices[random.nextInt(choices.length)];

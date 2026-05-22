@@ -17,10 +17,7 @@ class TimerBar extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
-              'Timer',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Timer', style: Theme.of(context).textTheme.titleMedium),
             const Spacer(),
             Text(
               '$secondsRemaining s',

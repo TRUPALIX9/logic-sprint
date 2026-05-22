@@ -20,9 +20,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: MultiProvider(
-          providers: [
-            Provider<LeaderboardService>.value(value: service),
-          ],
+          providers: [Provider<LeaderboardService>.value(value: service)],
           child: const LeaderboardScreen(),
         ),
       ),
@@ -35,7 +33,9 @@ void main() {
     expect(find.text('All Games'), findsOneWidget);
     expect(find.text('Number Sequence'), findsNothing);
 
-    await tester.tap(find.byType(DropdownButtonFormField<LeaderboardGameFilter>));
+    await tester.tap(
+      find.byType(DropdownButtonFormField<LeaderboardGameFilter>),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Color Sequence'), findsOneWidget);

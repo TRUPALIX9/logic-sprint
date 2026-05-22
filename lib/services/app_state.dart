@@ -12,10 +12,10 @@ class AppState extends ChangeNotifier {
     required bool isSoundEnabled,
     required bool isVibrationEnabled,
     required Map<String, int> highScores,
-  })  : _themeMode = themeMode,
-        _isSoundEnabled = isSoundEnabled,
-        _isVibrationEnabled = isVibrationEnabled,
-        _highScores = highScores;
+  }) : _themeMode = themeMode,
+       _isSoundEnabled = isSoundEnabled,
+       _isVibrationEnabled = isVibrationEnabled,
+       _highScores = highScores;
 
   final LocalStorageService storage;
   final SoundService soundService;
@@ -50,8 +50,10 @@ class AppState extends ChangeNotifier {
   Future<void> refreshHighScores() async {
     for (final gameType in GameType.values.where((game) => game.isPlayable)) {
       for (final difficulty in DifficultyLevel.values) {
-        _highScores[_mapKey(gameType, difficulty)] =
-            storage.getHighScore(gameType, difficulty);
+        _highScores[_mapKey(gameType, difficulty)] = storage.getHighScore(
+          gameType,
+          difficulty,
+        );
       }
     }
     notifyListeners();
@@ -96,7 +98,11 @@ class AppState extends ChangeNotifier {
     DifficultyLevel difficulty,
     int score,
   ) async {
-    final best = await storage.saveHighScoreIfHigher(gameType, difficulty, score);
+    final best = await storage.saveHighScoreIfHigher(
+      gameType,
+      difficulty,
+      score,
+    );
     _highScores[_mapKey(gameType, difficulty)] = best;
     notifyListeners();
   }

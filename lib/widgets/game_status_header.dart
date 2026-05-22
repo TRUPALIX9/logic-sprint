@@ -52,7 +52,9 @@ class GameStatusHeader extends StatelessWidget {
           children: [
             for (var i = 0; i < stats.length; i++) ...[
               if (i > 0) const SizedBox(width: 12),
-              Expanded(child: _StatTile(stat: stats[i], accent: brand?.accent)),
+              Expanded(
+                child: _StatTile(stat: stats[i], accent: brand?.accent),
+              ),
             ],
           ],
         ),
@@ -91,9 +93,9 @@ class _StatTile extends StatelessWidget {
           Text(
             stat.value,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w800,
-                ),
+              color: accent,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 4),
           Text(stat.label),

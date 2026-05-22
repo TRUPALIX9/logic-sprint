@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 
 class StatChip extends StatelessWidget {
-  const StatChip({
-    super.key,
-    required this.icon,
-    required this.label,
-  });
+  const StatChip({super.key, required this.icon, required this.label});
 
   final IconData icon;
   final String label;

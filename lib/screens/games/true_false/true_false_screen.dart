@@ -39,23 +39,24 @@ class _TrueFalseScreenState extends State<TrueFalseScreen> {
   }
 
   Future<void> _handleControllerUpdate() async {
-    if (_didNavigate || !_controller.isRoundComplete || _controller.result == null) {
+    if (_didNavigate ||
+        !_controller.isRoundComplete ||
+        _controller.result == null) {
       return;
     }
 
     _didNavigate = true;
     await context.read<AppState>().recordHighScore(
-          _controller.gameType,
-          widget.difficulty,
-          _controller.score,
-        );
+      _controller.gameType,
+      widget.difficulty,
+      _controller.score,
+    );
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pushReplacementNamed(
-      AppRoutes.result,
-      arguments: _controller.result,
-    );
+    Navigator.of(
+      context,
+    ).pushReplacementNamed(AppRoutes.result, arguments: _controller.result);
   }
 
   @override
@@ -110,7 +111,9 @@ class _TrueFalseScreenState extends State<TrueFalseScreen> {
                               Text(
                                 _controller.currentQuestion?.prompt ?? '',
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.headlineMedium,
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineMedium,
                               ),
                             ],
                           ),
@@ -118,25 +121,30 @@ class _TrueFalseScreenState extends State<TrueFalseScreen> {
                       ),
                       const SizedBox(height: 18),
                       Column(
-                        children: (_controller.currentQuestion?.options ?? const [])
-                            .map(
-                              (answer) => Padding(
-                                padding: const EdgeInsets.only(bottom: 14),
-                                child: AnswerButton(
-                                  label: answer,
-                                  onPressed: _controller.isAnswerLocked
-                                      ? null
-                                      : () => unawaited(
-                                            _controller.submitAnswer(answer),
-                                          ),
-                                  showFeedback: _controller.isAnswerLocked,
-                                  isCorrectChoice: answer ==
-                                      _controller.currentQuestion!.correctAnswer,
-                                  isSelected: answer == _controller.selectedAnswer,
-                                ),
-                              ),
-                            )
-                            .toList(),
+                        children:
+                            (_controller.currentQuestion?.options ?? const [])
+                                .map(
+                                  (answer) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 14),
+                                    child: AnswerButton(
+                                      label: answer,
+                                      onPressed: _controller.isAnswerLocked
+                                          ? null
+                                          : () => unawaited(
+                                              _controller.submitAnswer(answer),
+                                            ),
+                                      showFeedback: _controller.isAnswerLocked,
+                                      isCorrectChoice:
+                                          answer ==
+                                          _controller
+                                              .currentQuestion!
+                                              .correctAnswer,
+                                      isSelected:
+                                          answer == _controller.selectedAnswer,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
                       ),
                     ],
                   ),

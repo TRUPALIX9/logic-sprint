@@ -4,8 +4,8 @@ class SoundService {
   SoundService._({AudioPlayer? audioPlayer}) : _audioPlayer = audioPlayer;
 
   factory SoundService() => SoundService._(
-        audioPlayer: AudioPlayer()..setReleaseMode(ReleaseMode.stop),
-      );
+    audioPlayer: AudioPlayer()..setReleaseMode(ReleaseMode.stop),
+  );
 
   /// No-op implementation for unit tests (avoids platform channel plugins).
   factory SoundService.silent() => SoundService._();

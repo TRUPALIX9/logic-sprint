@@ -23,17 +23,17 @@ class AnswerButton extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final backgroundColor = showFeedback
         ? isCorrectChoice
-            ? AppColors.success.withValues(alpha: 0.16)
-            : isSelected
-                ? AppColors.danger.withValues(alpha: 0.18)
-                : colors.surfaceContainerHighest
+              ? AppColors.success.withValues(alpha: 0.16)
+              : isSelected
+              ? AppColors.danger.withValues(alpha: 0.18)
+              : colors.surfaceContainerHighest
         : colors.surfaceContainerHighest;
     final borderColor = showFeedback
         ? isCorrectChoice
-            ? AppColors.success
-            : isSelected
-                ? AppColors.danger
-                : Colors.transparent
+              ? AppColors.success
+              : isSelected
+              ? AppColors.danger
+              : Colors.transparent
         : Colors.transparent;
 
     return AnimatedContainer(

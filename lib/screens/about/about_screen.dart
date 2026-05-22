@@ -34,10 +34,7 @@ class _AboutScreenState extends State<AboutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'About',
-        subtitle: _versionLabel,
-      ),
+      appBar: CustomAppBar(title: 'About', subtitle: _versionLabel),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

@@ -92,7 +92,9 @@ class GameModeCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         description,
-                        style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: muted,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),

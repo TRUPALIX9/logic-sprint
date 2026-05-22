@@ -23,9 +23,7 @@ class AppScaffold extends StatelessWidget {
           ? null
           : CustomAppBar(title: title!, subtitle: subtitle),
       floatingActionButton: floatingActionButton,
-      body: SafeArea(
-        child: body,
-      ),
+      body: SafeArea(child: body),
     );
   }
 }

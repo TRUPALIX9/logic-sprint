@@ -39,23 +39,24 @@ class _QuickMathScreenState extends State<QuickMathScreen> {
   }
 
   Future<void> _handleControllerUpdate() async {
-    if (_didNavigate || !_controller.isRoundComplete || _controller.result == null) {
+    if (_didNavigate ||
+        !_controller.isRoundComplete ||
+        _controller.result == null) {
       return;
     }
 
     _didNavigate = true;
     await context.read<AppState>().recordHighScore(
-          _controller.gameType,
-          widget.difficulty,
-          _controller.score,
-        );
+      _controller.gameType,
+      widget.difficulty,
+      _controller.score,
+    );
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pushReplacementNamed(
-      AppRoutes.result,
-      arguments: _controller.result,
-    );
+    Navigator.of(
+      context,
+    ).pushReplacementNamed(AppRoutes.result, arguments: _controller.result);
   }
 
   @override
@@ -122,22 +123,27 @@ class _QuickMathScreenState extends State<QuickMathScreen> {
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 14,
-                          mainAxisSpacing: 14,
-                          childAspectRatio: 1.5,
-                        ),
-                        itemCount: _controller.currentQuestion?.options.length ?? 0,
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 14,
+                              mainAxisSpacing: 14,
+                              childAspectRatio: 1.5,
+                            ),
+                        itemCount:
+                            _controller.currentQuestion?.options.length ?? 0,
                         itemBuilder: (context, index) {
-                          final answer = _controller.currentQuestion!.options[index];
+                          final answer =
+                              _controller.currentQuestion!.options[index];
                           return AnswerButton(
                             label: answer,
                             onPressed: _controller.isAnswerLocked
                                 ? null
-                                : () => unawaited(_controller.submitAnswer(answer)),
+                                : () => unawaited(
+                                    _controller.submitAnswer(answer),
+                                  ),
                             showFeedback: _controller.isAnswerLocked,
                             isCorrectChoice:
-                                answer == _controller.currentQuestion!.correctAnswer,
+                                answer ==
+                                _controller.currentQuestion!.correctAnswer,
                             isSelected: answer == _controller.selectedAnswer,
                           );
                         },

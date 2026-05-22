@@ -68,13 +68,14 @@ class ColorSequenceController extends ChangeNotifier {
       secondsRemaining / ScoreUtils.roundLengthSeconds.clamp(1, 999);
 
   double get accuracy => ScoreUtils.accuracyPercentage(
-        correctAnswers: correctAnswers,
-        wrongAnswers: wrongAnswers,
-      );
+    correctAnswers: correctAnswers,
+    wrongAnswers: wrongAnswers,
+  );
 
   int get roundNumber => completedRounds + 1;
 
-  bool get canTapColors => phase == ColorSequencePhase.repeating && !isRoundComplete;
+  bool get canTapColors =>
+      phase == ColorSequencePhase.repeating && !isRoundComplete;
 
   Future<void> initialize() async {
     bestScore = storage.getHighScore(GameType.colorSequence, difficulty);

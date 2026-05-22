@@ -31,19 +31,14 @@ class _SplashScreenState extends State<SplashScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: BrandPalette.splashGradient,
-        ),
+        decoration: const BoxDecoration(gradient: BrandPalette.splashGradient),
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const BrandLogo(
-                  variant: BrandLogoVariant.mark,
-                  height: 120,
-                )
+                const BrandLogo(variant: BrandLogoVariant.mark, height: 120)
                     .animate()
                     .scale(duration: 500.ms, curve: Curves.easeOutBack)
                     .fadeIn(duration: 350.ms),

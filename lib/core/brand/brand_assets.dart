@@ -51,6 +51,12 @@ abstract final class BrandAssets {
         return logoMark;
       case GameType.colorSequence:
         return appIcon512;
+      case GameType.emojiMatch:
+        return originalIconCrop;
+      case GameType.patternLock:
+        return lockupOnDark;
+      case GameType.launchRocket:
+        return appIcon512;
       case GameType.trueFalse:
         return lockupTransparent;
     }

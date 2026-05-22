@@ -32,7 +32,10 @@ void main() {
           random: Random(seed),
         );
         if (question.prompt.contains('divisible by')) {
-          expect(question.prompt, matches(RegExp(r'^\d+ is divisible by \d+$')));
+          expect(
+            question.prompt,
+            matches(RegExp(r'^\d+ is divisible by \d+$')),
+          );
         }
       }
     });

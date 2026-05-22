@@ -26,9 +26,7 @@ abstract final class AppTheme {
         color: AppColors.cardLight,
         elevation: 2,
         shadowColor: AppColors.primaryDark.withValues(alpha: 0.08),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -39,10 +37,7 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
       textTheme: const TextTheme(
@@ -62,10 +57,7 @@ abstract final class AppTheme {
           fontWeight: FontWeight.w700,
           color: AppColors.textDark,
         ),
-        bodyLarge: TextStyle(
-          height: 1.35,
-          color: AppColors.textDark,
-        ),
+        bodyLarge: TextStyle(height: 1.35, color: AppColors.textDark),
         bodyMedium: TextStyle(color: AppColors.textMuted),
         bodySmall: TextStyle(color: AppColors.textMuted),
       ),
@@ -96,9 +88,7 @@ abstract final class AppTheme {
         color: AppColors.cardDark,
         elevation: 2,
         shadowColor: Colors.black.withValues(alpha: 0.3),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -109,10 +99,7 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
       textTheme: const TextTheme(

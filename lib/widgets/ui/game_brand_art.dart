@@ -43,11 +43,7 @@ class GameBrandArt extends StatelessWidget {
             if (!showIconFallback) {
               return const SizedBox.shrink();
             }
-            return Icon(
-              game.icon,
-              color: brand.accent,
-              size: size * 0.52,
-            );
+            return Icon(game.icon, color: brand.accent, size: size * 0.52);
           },
         ),
       ),

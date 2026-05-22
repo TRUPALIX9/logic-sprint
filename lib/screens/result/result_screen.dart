@@ -94,14 +94,14 @@ class _ResultScreenState extends State<ResultScreen> {
               onPressed: () {
                 final error = PlayerNameValidator.validate(controller.text);
                 if (error != null) {
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    SnackBar(content: Text(error)),
-                  );
+                  ScaffoldMessenger.of(
+                    dialogContext,
+                  ).showSnackBar(SnackBar(content: Text(error)));
                   return;
                 }
-                Navigator.of(dialogContext).pop(
-                  PlayerNameValidator.normalize(controller.text),
-                );
+                Navigator.of(
+                  dialogContext,
+                ).pop(PlayerNameValidator.normalize(controller.text));
               },
               child: const Text('Save'),
             ),
@@ -206,10 +206,9 @@ class _ResultScreenState extends State<ResultScreen> {
             label: 'Back to Home',
             icon: Icons.home_rounded,
             isSecondary: true,
-            onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
-              AppRoutes.home,
-              (route) => false,
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false),
           ),
         ],
       ),

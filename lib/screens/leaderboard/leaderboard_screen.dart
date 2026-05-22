@@ -133,8 +133,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               child: Text(
                 _infoMessage!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
               ),
             ),
           if (_errorMessage != null)
@@ -143,8 +143,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               child: Text(
                 _errorMessage!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                  color: Theme.of(context).colorScheme.error,
+                ),
               ),
             ),
           const SizedBox(height: 8),
@@ -180,10 +180,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       itemCount: filtered.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        return LeaderboardTile(
-          rank: index + 1,
-          score: filtered[index],
-        );
+        return LeaderboardTile(rank: index + 1, score: filtered[index]);
       },
     );
   }

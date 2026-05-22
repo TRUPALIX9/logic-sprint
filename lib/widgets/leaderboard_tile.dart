@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/leaderboard_score_model.dart';
 
 class LeaderboardTile extends StatelessWidget {
-  const LeaderboardTile({
-    super.key,
-    required this.rank,
-    required this.score,
-  });
+  const LeaderboardTile({super.key, required this.rank, required this.score});
 
   final int rank;
   final LeaderboardScoreModel score;
@@ -28,7 +24,9 @@ class LeaderboardTile extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 20,
-              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+              backgroundColor: theme.colorScheme.primary.withValues(
+                alpha: 0.12,
+              ),
               child: Text(
                 '$rank',
                 style: theme.textTheme.titleMedium?.copyWith(
@@ -65,10 +63,7 @@ class LeaderboardTile extends StatelessWidget {
                     style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    dateLabel,
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  Text(dateLabel, style: theme.textTheme.bodySmall),
                 ],
               ),
             ),

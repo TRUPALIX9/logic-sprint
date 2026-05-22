@@ -27,6 +27,12 @@ class GameBrand {
         return quickMath;
       case GameType.colorSequence:
         return colorSequence;
+      case GameType.emojiMatch:
+        return emojiMatch;
+      case GameType.patternLock:
+        return patternLock;
+      case GameType.launchRocket:
+        return launchRocket;
       case GameType.trueFalse:
         return trueFalse;
     }
@@ -62,16 +68,52 @@ class GameBrand {
     iconBackground: Color(0x33FF8A00),
   );
 
+  static const emojiMatch = GameBrand(
+    type: GameType.emojiMatch,
+    label: 'Emoji Match',
+    accent: BrandPalette.brainCyan,
+    secondary: BrandPalette.electricBlue,
+    gradient: LinearGradient(
+      colors: [BrandPalette.electricBlue, BrandPalette.brainCyan],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    iconBackground: Color(0x3345D7FF),
+  );
+
+  static const patternLock = GameBrand(
+    type: GameType.patternLock,
+    label: 'Pattern Lock',
+    accent: BrandPalette.deepPurple,
+    secondary: BrandPalette.electricBlue,
+    gradient: LinearGradient(
+      colors: [BrandPalette.primaryNavy, BrandPalette.deepPurple],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    iconBackground: Color(0x3325105A),
+  );
+
+  static const launchRocket = GameBrand(
+    type: GameType.launchRocket,
+    label: 'Launch Rocket',
+    accent: BrandPalette.energyOrange,
+    secondary: BrandPalette.electricBlue,
+    gradient: LinearGradient(
+      colors: [Color(0xFF1A1245), BrandPalette.primaryNavy, Color(0xFF0D3A6E)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ),
+    iconBackground: Color(0x33FF8A00),
+  );
+
   static const trueFalse = GameBrand(
     type: GameType.trueFalse,
     label: 'True or False',
     accent: BrandPalette.successGreen,
     secondary: BrandPalette.electricBlue,
     gradient: LinearGradient(
-      colors: [
-        BrandPalette.successGreen,
-        BrandPalette.electricBlue,
-      ],
+      colors: [BrandPalette.successGreen, BrandPalette.electricBlue],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),

@@ -49,9 +49,9 @@ class HighScoresScreen extends StatelessWidget {
                                       Expanded(child: Text(difficulty.title)),
                                       Text(
                                         '${appState.bestScoreFor(game, difficulty)}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleMedium,
                                       ),
                                     ],
                                   ),

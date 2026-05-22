@@ -12,7 +12,8 @@ class LocalStorageService {
   static const String themeModeKey = 'themeMode';
   static const String playerNameKey = 'playerName';
   static const String leaderboardCacheJsonKey = 'leaderboardCacheJson';
-  static const String leaderboardCacheTimestampKey = 'leaderboardCacheTimestamp';
+  static const String leaderboardCacheTimestampKey =
+      'leaderboardCacheTimestamp';
   static const String leaderboardLastRefreshKey = 'leaderboardLastRefreshAt';
   static const String leaderboardSubmissionDateKey =
       'leaderboardSubmissionDate';
@@ -124,20 +125,18 @@ class LocalStorageService {
 
   int remainingLeaderboardSubmissionsToday() {
     _resetLeaderboardSubmissionsIfNewDay();
-    final count =
-        _preferences.getInt(leaderboardSubmissionCountKey) ?? 0;
-    return (AppConfig.maxDailyLeaderboardSubmissions - count)
-        .clamp(0, AppConfig.maxDailyLeaderboardSubmissions);
+    final count = _preferences.getInt(leaderboardSubmissionCountKey) ?? 0;
+    return (AppConfig.maxDailyLeaderboardSubmissions - count).clamp(
+      0,
+      AppConfig.maxDailyLeaderboardSubmissions,
+    );
   }
 
   Future<void> recordLeaderboardSubmission() async {
     _resetLeaderboardSubmissionsIfNewDay();
     final count = _preferences.getInt(leaderboardSubmissionCountKey) ?? 0;
     await _preferences.setInt(leaderboardSubmissionCountKey, count + 1);
-    await _preferences.setString(
-      leaderboardSubmissionDateKey,
-      _todayKey(),
-    );
+    await _preferences.setString(leaderboardSubmissionDateKey, _todayKey());
   }
 
   void _resetLeaderboardSubmissionsIfNewDay() {

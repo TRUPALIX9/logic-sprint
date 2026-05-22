@@ -39,23 +39,24 @@ class _ColorSequenceScreenState extends State<ColorSequenceScreen> {
   }
 
   Future<void> _handleControllerUpdate() async {
-    if (_didNavigate || !_controller.isRoundComplete || _controller.result == null) {
+    if (_didNavigate ||
+        !_controller.isRoundComplete ||
+        _controller.result == null) {
       return;
     }
 
     _didNavigate = true;
     await context.read<AppState>().recordHighScore(
-          GameType.colorSequence,
-          widget.difficulty,
-          _controller.score,
-        );
+      GameType.colorSequence,
+      widget.difficulty,
+      _controller.score,
+    );
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pushReplacementNamed(
-      AppRoutes.result,
-      arguments: _controller.result,
-    );
+    Navigator.of(
+      context,
+    ).pushReplacementNamed(AppRoutes.result, arguments: _controller.result);
   }
 
   @override
@@ -135,7 +136,8 @@ class _ColorSequenceScreenState extends State<ColorSequenceScreen> {
                                 sequence: _controller.targetSequence,
                                 highlightedIndex: _controller.highlightedIndex,
                                 colorFor: _colorFor,
-                                dimmed: _controller.phase ==
+                                dimmed:
+                                    _controller.phase ==
                                     ColorSequencePhase.repeating,
                               ),
                               const SizedBox(height: 12),
@@ -176,13 +178,14 @@ class _ColorSequenceScreenState extends State<ColorSequenceScreen> {
                         mainAxisSpacing: 12,
                         childAspectRatio: 1.35,
                         children: ColorSequenceController.palette.map((color) {
-                          final isHighlighted = _controller.highlightedIndex !=
-                                  null &&
-                              _controller.phase == ColorSequencePhase.watching &&
+                          final isHighlighted =
+                              _controller.highlightedIndex != null &&
+                              _controller.phase ==
+                                  ColorSequencePhase.watching &&
                               _controller.targetSequence.length >
                                   _controller.highlightedIndex! &&
-                              _controller.targetSequence[
-                                      _controller.highlightedIndex!] ==
+                              _controller.targetSequence[_controller
+                                      .highlightedIndex!] ==
                                   color;
 
                           return _ColorTapButton(

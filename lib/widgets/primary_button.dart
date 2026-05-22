@@ -22,10 +22,7 @@ class PrimaryButton extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (icon != null) ...[
-          Icon(icon, size: 18),
-          const SizedBox(width: 8),
-        ],
+        if (icon != null) ...[Icon(icon, size: 18), const SizedBox(width: 8)],
         Text(label),
       ],
     );
@@ -51,10 +48,7 @@ class PrimaryButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: height,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        child: child,
-      ),
+      child: ElevatedButton(onPressed: onPressed, child: child),
     );
   }
 }

@@ -47,10 +47,7 @@ class GameCard extends StatelessWidget {
                         : Colors.grey.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(
-                    icon,
-                    color: enabled ? accent : Colors.grey,
-                  ),
+                  child: Icon(icon, color: enabled ? accent : Colors.grey),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
