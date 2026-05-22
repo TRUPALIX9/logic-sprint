@@ -1,3 +1,5 @@
+import '../../models/game_model.dart';
+
 /// Canonical paths to the production brand kit under [assets/brand/].
 ///
 /// See [assets/brand/docs/README.md] for which file to use in each context.
@@ -36,4 +38,21 @@ abstract final class BrandAssets {
   static const String brandTokens = 'assets/brand/tokens/brand_tokens.json';
   static const String privacyPolicy = 'assets/brand/docs/privacy_policy.md';
   static const String storeListing = 'assets/brand/docs/store_listing.md';
+
+  // —— Per-game tiles (add tile.png under games/<id>/ when ready) ——
+  static String gameTilePath(GameType type) {
+    return 'assets/brand/games/${type.storageKey}/tile.png';
+  }
+
+  /// Bundled brand art for game select / home cards until custom tiles exist.
+  static String gameListingArt(GameType type) {
+    switch (type) {
+      case GameType.quickMath:
+        return logoMark;
+      case GameType.colorSequence:
+        return appIcon512;
+      case GameType.trueFalse:
+        return lockupTransparent;
+    }
+  }
 }

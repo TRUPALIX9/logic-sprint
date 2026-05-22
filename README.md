@@ -1,27 +1,27 @@
 # LogicSprint: Brain Games
 
-**LogicSprint** is a free, offline Flutter brain-training app for **Android** and **iOS**. Play fast 30-second mini-games, chase local high scores, and practice logic, math, and focus — no account, no internet, no ads.
+**LogicSprint** is a free Flutter brain-training app for **Android** and **iOS**. Play fast mini-games, chase local high scores, and optionally compete on a global Top 100 leaderboard — no login, no ads.
 
 | | |
 |---|---|
 | **Version** | 1.0.0 |
 | **Platform** | Android, iOS |
 | **Stack** | Flutter 3.x, Dart 3.12+ |
-| **Storage** | `shared_preferences` (device only) |
+| **Storage** | `shared_preferences` (device); optional Firestore for leaderboard |
 
 ---
 
 ## Mini-games (v1)
 
-| Game | Description |
-|------|-------------|
-| **Quick Math** | Addition, subtraction, multiplication, and division by difficulty |
-| **Number Sequence** | Spot the pattern and pick the next number |
-| **True or False** | Math, shape, and number facts — true or false |
+| Game | Mode | Description |
+|------|------|-------------|
+| **Quick Math** | 30 sec timed | Addition, subtraction, multiplication, and division by difficulty |
+| **Color Sequence** | 30 sec timed | Simon-style color patterns — watch, then repeat |
+| **True or False** | 30 sec timed | Math, shape, and number facts — tap true or false |
 
-Each round lasts **30 seconds**. Correct answers add **+10** points; **5 correct in a row** awards a **+20** streak bonus. High scores are saved per game and difficulty (Easy / Medium / Hard).
+**Scoring:** +10 per correct answer; **+20 bonus** every 5 correct in a row. High scores save locally per game and difficulty (Easy / Medium / Hard). Submit a run to the **Global Top 100** from the Result screen when Firebase is configured.
 
-**Coming soon:** Memory Pattern, Color Confusion, Tap in Order, Odd One Out, Word Scramble.
+**Roadmap:** Emoji Match, Pattern Lock, Memory Pattern, and more — see [docs/new_memory_games_plan.md](docs/new_memory_games_plan.md).
 
 ---
 
@@ -38,7 +38,7 @@ assets/brand/
   tokens/brand_tokens.json  # Canonical colors & app name
   docs/                     # Privacy policy & store listing copy
   store/google_play/        # Play Store icon & feature graphic
-  games/                    # Per-game tiles (drop PNGs here when ready)
+  games/<game_id>/          # Per-game tile.png (see BrandAssets.gameTilePath)
   logicsprint/              # Full mood board (reference only)
 ```
 
@@ -82,6 +82,8 @@ From `assets/brand/tokens/brand_tokens.json`:
 | `lib/core/brand/brand_assets.dart` | Single source of asset paths |
 | `lib/core/brand/brand_palette.dart` | Theme colors from tokens |
 | `lib/core/brand/game_brand.dart` | Per-game accent gradients |
+| `lib/widgets/ui/game_brand_art.dart` | Game select / card artwork |
+| `lib/widgets/game_status_header.dart` | In-game score, timer, streak stats |
 | `lib/widgets/brand_logo.dart` | `BrandLogo` widget (mark / lockups) |
 | `lib/services/brand_content_service.dart` | Loads privacy & store markdown |
 

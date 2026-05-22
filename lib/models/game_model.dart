@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/brand/game_brand.dart';
+
 enum GameType {
   quickMath,
   colorSequence,
@@ -14,14 +16,14 @@ class GameModel {
     required this.title,
     required this.description,
     required this.icon,
-    this.accentColor,
   });
 
   final GameType type;
   final String title;
   final String description;
   final IconData icon;
-  final Color? accentColor;
+
+  Color get accentColor => type.accentColor;
 }
 
 extension GameTypeX on GameType {
@@ -70,6 +72,8 @@ extension GameTypeX on GameType {
   }
 
   bool get isPlayable => true;
+
+  Color get accentColor => GameBrand.forGame(this).accent;
 }
 
 extension DifficultyLevelX on DifficultyLevel {
@@ -113,20 +117,17 @@ const List<GameModel> availableGames = [
     title: 'Quick Math',
     description: 'Solve fast arithmetic before time runs out.',
     icon: Icons.calculate_rounded,
-    accentColor: Color(0xFF10BDEB),
   ),
   GameModel(
     type: GameType.colorSequence,
     title: 'Color Sequence',
     description: 'Watch the pattern and repeat the colors.',
     icon: Icons.palette_rounded,
-    accentColor: Color(0xFFFF8A00),
   ),
   GameModel(
     type: GameType.trueFalse,
     title: 'True or False',
     description: 'Answer rapid-fire facts as true or false.',
     icon: Icons.fact_check_rounded,
-    accentColor: Color(0xFF22C55E),
   ),
 ];

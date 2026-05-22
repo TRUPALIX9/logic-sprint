@@ -11,7 +11,7 @@ FIREBASE_PROJECT ?= logic-sprint
 CREDENTIALS_FILE ?= $(PROJECT_DIR)credentials/logic-sprint-firebase.json
 
 .PHONY: help setup doctor devices emulator run run-android analyze test check clean \
-        icons build-apk build-aab build-ios firebase-rules android-licenses
+        hooks-install icons build-apk build-aab build-ios firebase-rules android-licenses
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -19,6 +19,11 @@ help: ## Show available commands
 
 setup: ## Install Flutter dependencies
 	cd "$(PROJECT_DIR)" && flutter pub get
+
+hooks-install: ## Install git pre-push hook (analyze + test before push)
+	chmod +x "$(PROJECT_DIR).githooks/pre-push"
+	git -C "$(PROJECT_DIR)" config core.hooksPath .githooks
+	@echo "Git hooks installed: pre-push runs 'make check' (same as CI)."
 
 doctor: ## Run flutter doctor
 	cd "$(PROJECT_DIR)" && flutter doctor -v

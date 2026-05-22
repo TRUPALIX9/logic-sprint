@@ -44,6 +44,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 android/local.properties
+android/key.properties
+android/*.jks
+android/*.keystore
 
 # Gradle cache (machine-local)
 android/.gradle/
@@ -54,3 +57,8 @@ android/.gradle/
 credentials/
 credentials/**
 !credentials/README.md
+
+# Firebase client config (contains API keys) — use *.example templates
+# lib/firebase_options.dart is committed with REPLACE_* placeholders only
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
