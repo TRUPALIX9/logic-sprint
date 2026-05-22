@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- brand_tokens.json → midnight_purple -->
+    <color name="splash_background">#12002F</color>
+</resources>
