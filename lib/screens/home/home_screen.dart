@@ -35,10 +35,19 @@ class HomeScreen extends StatelessWidget {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: const [
-                  StatChip(icon: Icons.timer_rounded, label: '30 Sec Rounds'),
-                  StatChip(icon: Icons.extension_rounded, label: '3 Games'),
-                  StatChip(icon: Icons.wifi_off_rounded, label: 'Offline Play'),
+                children: [
+                  const StatChip(
+                    icon: Icons.timer_rounded,
+                    label: '30 Sec Rounds',
+                  ),
+                  StatChip(
+                    icon: Icons.extension_rounded,
+                    label: '${availableGames.length} Mini Games',
+                  ),
+                  const StatChip(
+                    icon: Icons.emoji_events_rounded,
+                    label: 'Top 100 Online',
+                  ),
                 ],
               ).animate().fadeIn(delay: 80.ms),
               const SizedBox(height: 16),
@@ -58,7 +67,8 @@ class HomeScreen extends StatelessWidget {
                 title: featured.title,
                 description: featured.description,
                 icon: featured.icon,
-                accentColor: featured.accentColor ?? Theme.of(context).colorScheme.primary,
+                game: featured.type,
+                accentColor: featured.accentColor,
                 bestScore: appState.overallBestFor(featured.type),
                 trailingLabel: 'Play Now',
                 onPressed: () => Navigator.of(context).pushNamed(
@@ -83,8 +93,8 @@ class HomeScreen extends StatelessWidget {
                       title: game.title,
                       description: game.description,
                       icon: game.icon,
-                      accentColor:
-                          game.accentColor ?? Theme.of(context).colorScheme.primary,
+                      game: game.type,
+                      accentColor: game.accentColor,
                       onPressed: () => Navigator.of(context).pushNamed(
                         AppRoutes.difficulty,
                         arguments: game.type,

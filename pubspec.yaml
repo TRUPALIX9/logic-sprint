@@ -68,4 +68,5 @@ flutter:
     - assets/brand/docs/
     - assets/brand/store/google_play/
     - assets/brand/games/quick_math/
+    - assets/brand/games/color_sequence/
     - assets/brand/games/true_false/

@@ -36,8 +36,8 @@ class GameSelectScreen extends StatelessWidget {
             title: game.title,
             description: game.description,
             icon: game.icon,
-            accentColor:
-                game.accentColor ?? Theme.of(context).colorScheme.primary,
+            game: game.type,
+            accentColor: game.accentColor,
             bestScore: appState.overallBestFor(game.type),
             onPressed: () => Navigator.of(context).pushNamed(
               AppRoutes.difficulty,

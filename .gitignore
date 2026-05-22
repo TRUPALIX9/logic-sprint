@@ -56,6 +56,6 @@ credentials/**
 !credentials/README.md
 
 # Firebase client config (contains API keys) — use *.example templates
-lib/firebase_options.dart
+# lib/firebase_options.dart is committed with REPLACE_* placeholders only
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist

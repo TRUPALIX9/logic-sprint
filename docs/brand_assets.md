@@ -25,22 +25,22 @@ Each mini-game has its own accent layer on the master palette:
 - **Motif:** Calculator / arithmetic
 - **Code:** `GameBrand.quickMath`
 
-### Number Sequence
+### Color Sequence
 
-- **Accent:** Blue → Orange progression (sequence arrow)
-- **Motif:** Numbered circles, pattern line
-- **Code:** `GameBrand.numberSequence`
+- **Accent:** Sprint Orange + Brain Cyan gradient
+- **Motif:** Color pads, Simon-style sequence
+- **Code:** `GameBrand.colorSequence`
+- **Listing art:** `BrandAssets.gameListingArt(GameType.colorSequence)` → app icon until `games/color_sequence/tile.png`
 
 ### True or False
 
-- **Accent:** Orange + Gold (decisive true/false)
-- **Motif:** Fact check, lightning speed
+- **Accent:** Success green + electric blue
+- **Motif:** Fact check, rapid decisions
 - **Code:** `GameBrand.trueFalse`
 
 ### Coming soon
 
-- **Memory Pattern:** Orbit purple + grid motif — `GameBrand.memoryPattern`
-- **Color Confusion:** Orange + purple contrast — `GameBrand.colorConfusion`
+- **Emoji Match, Pattern Lock, Memory Pattern** — see `docs/new_memory_games_plan.md`
 
 ## Differentiation rules
 
@@ -53,6 +53,6 @@ Each mini-game has its own accent layer on the master palette:
 - [ ] App icon 1024×1024 (no text)
 - [ ] Feature graphic 1024×500
 - [ ] Screenshots per game (light + dark)
-- [ ] Quick Math tile PNG → `assets/brand/games/quick_math/`
-- [ ] Number Sequence tile PNG → `assets/brand/games/number_sequence/`
-- [ ] True or False tile PNG → `assets/brand/games/true_false/`
+- [ ] Quick Math tile PNG → `assets/brand/games/quick_math/tile.png`
+- [ ] Color Sequence tile PNG → `assets/brand/games/color_sequence/tile.png`
+- [ ] True or False tile PNG → `assets/brand/games/true_false/tile.png`

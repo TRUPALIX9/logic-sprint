@@ -10,7 +10,7 @@ import '../../../services/local_storage_service.dart';
 import '../../../services/sound_service.dart';
 import '../../../widgets/answer_button.dart';
 import '../../../widgets/custom_app_bar.dart';
-import '../../../widgets/score_header.dart';
+import '../../../widgets/game_status_header.dart';
 import '../../../widgets/timer_bar.dart';
 import 'quick_math_controller.dart';
 
@@ -88,10 +88,12 @@ class _QuickMathScreenState extends State<QuickMathScreen> {
                         secondsRemaining: _controller.secondsRemaining,
                       ),
                       const SizedBox(height: 18),
-                      ScoreHeader(
+                      GameStatusHeader(
+                        game: GameType.quickMath,
                         score: _controller.score,
                         streak: _controller.currentStreak,
                         correctAnswers: _controller.correctAnswers,
+                        remainingSeconds: _controller.secondsRemaining,
                       ),
                       const SizedBox(height: 18),
                       Card(

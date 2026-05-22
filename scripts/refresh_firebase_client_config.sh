@@ -23,7 +23,9 @@ firebase apps:sdkconfig IOS --project "$PROJECT" > "$ROOT/ios/Runner/GoogleServi
 
 python3 "$ROOT/scripts/firebase_options_from_google_services.py"
 
-echo "Done. Updated (gitignored):"
-echo "  android/app/google-services.json"
-echo "  ios/Runner/GoogleService-Info.plist"
+echo "Done. Updated:"
+echo "  android/app/google-services.json (gitignored)"
+echo "  ios/Runner/GoogleService-Info.plist (gitignored)"
 echo "  lib/firebase_options.dart"
+echo ""
+echo "Warning: do not commit lib/firebase_options.dart if it now contains real API keys."

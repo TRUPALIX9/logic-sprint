@@ -10,7 +10,7 @@ import '../../../services/app_state.dart';
 import '../../../services/local_storage_service.dart';
 import '../../../services/sound_service.dart';
 import '../../../widgets/custom_app_bar.dart';
-import '../../../widgets/score_header.dart';
+import '../../../widgets/game_status_header.dart';
 import '../../../widgets/timer_bar.dart';
 import 'color_sequence_controller.dart';
 
@@ -97,10 +97,13 @@ class _ColorSequenceScreenState extends State<ColorSequenceScreen> {
                         secondsRemaining: _controller.secondsRemaining,
                       ),
                       const SizedBox(height: 14),
-                      ScoreHeader(
+                      GameStatusHeader(
+                        game: GameType.colorSequence,
                         score: _controller.score,
                         streak: _controller.currentStreak,
                         correctAnswers: _controller.correctAnswers,
+                        round: _controller.roundNumber,
+                        remainingSeconds: _controller.secondsRemaining,
                       ),
                       const SizedBox(height: 14),
                       Row(

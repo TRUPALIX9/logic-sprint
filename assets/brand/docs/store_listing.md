@@ -13,9 +13,10 @@ Play short 30-second challenges, beat your high score, and train your brain anyt
 
 Features:
 - Quick Math challenges
-- Number Sequence puzzles
+- Color Sequence memory patterns
 - True or False brain questions
-- 30-second gameplay
+- 30-second timed rounds
+- Optional global Top 100 leaderboard
 - Easy, Medium, and Hard levels
 - Offline play
 - Local high scores

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../models/game_model.dart';
+import 'game_brand_art.dart';
 import 'primary_game_button.dart';
 
 class GameModeCard extends StatelessWidget {
@@ -10,6 +12,7 @@ class GameModeCard extends StatelessWidget {
     required this.description,
     required this.icon,
     required this.accentColor,
+    this.game,
     this.bestScore,
     this.onPressed,
     this.compact = false,
@@ -20,6 +23,7 @@ class GameModeCard extends StatelessWidget {
   final String description;
   final IconData icon;
   final Color accentColor;
+  final GameType? game;
   final int? bestScore;
   final VoidCallback? onPressed;
   final bool compact;
@@ -42,14 +46,11 @@ class GameModeCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  height: 40,
-                  width: 40,
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: accentColor, size: 22),
+                _GameArt(
+                  game: game,
+                  icon: icon,
+                  accentColor: accentColor,
+                  size: 40,
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -76,14 +77,11 @@ class GameModeCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  height: 48,
-                  width: 48,
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(icon, color: accentColor),
+                _GameArt(
+                  game: game,
+                  icon: icon,
+                  accentColor: accentColor,
+                  size: 48,
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -122,6 +120,36 @@ class GameModeCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _GameArt extends StatelessWidget {
+  const _GameArt({
+    required this.game,
+    required this.icon,
+    required this.accentColor,
+    required this.size,
+  });
+
+  final GameType? game;
+  final IconData icon;
+  final Color accentColor;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    if (game != null) {
+      return GameBrandArt(game: game!, size: size, borderRadius: size * 0.3);
+    }
+    return Container(
+      height: size,
+      width: size,
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(size * 0.3),
+      ),
+      child: Icon(icon, color: accentColor, size: size * 0.46),
     );
   }
 }
