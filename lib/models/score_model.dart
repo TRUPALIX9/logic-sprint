@@ -10,6 +10,8 @@ class ScoreModel {
     required this.correctAnswers,
     required this.wrongAnswers,
     required this.accuracyPercentage,
+    this.level = 1,
+    this.usedSecondLife = false,
   });
 
   final GameType gameType;
@@ -20,6 +22,18 @@ class ScoreModel {
   final int correctAnswers;
   final int wrongAnswers;
   final double accuracyPercentage;
+  final int level;
+  final bool usedSecondLife;
 
   bool get isNewBest => finalScore > previousBestScore;
+
+  Map<String, dynamic> toHistoryJson() {
+    return {
+      'gameType': gameType.storageKey,
+      'finalScore': finalScore,
+      'level': level,
+      'usedSecondLife': usedSecondLife,
+      'recordedAt': DateTime.now().toIso8601String(),
+    };
+  }
 }

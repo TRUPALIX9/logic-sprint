@@ -4,20 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_routes.dart';
+import '../../../core/constants/life_game_constants.dart';
 import '../../../models/game_model.dart';
+import '../../../models/second_life_config.dart';
 import '../../../services/app_state.dart';
 import '../../../services/local_storage_service.dart';
 import '../../../services/sound_service.dart';
-import '../../../widgets/custom_app_bar.dart';
-import '../../../widgets/game_status_header.dart';
-import '../../../widgets/timer_bar.dart';
+import '../../../widgets/app_gradient_background.dart';
+import '../../../widgets/game_second_life_layer.dart';
+import '../../../widgets/game_screen_shell.dart';
 import 'emoji_match_controller.dart';
 import 'emoji_match_widgets.dart';
 
 class EmojiMatchScreen extends StatefulWidget {
-  const EmojiMatchScreen({super.key, required this.difficulty});
-
-  final DifficultyLevel difficulty;
+  const EmojiMatchScreen({super.key});
 
   @override
   State<EmojiMatchScreen> createState() => _EmojiMatchScreenState();
@@ -33,9 +33,14 @@ class _EmojiMatchScreenState extends State<EmojiMatchScreen> {
     _controller = EmojiMatchController(
       storage: context.read<LocalStorageService>(),
       soundService: context.read<SoundService>(),
-      difficulty: widget.difficulty,
     )..addListener(_handleControllerUpdate);
     unawaited(_controller.initialize());
+  }
+
+  Future<void> _onPlayAgain() async {
+    _didNavigate = false;
+    _controller.resetGame();
+    await _controller.initialize();
   }
 
   Future<void> _handleControllerUpdate() async {
@@ -48,8 +53,9 @@ class _EmojiMatchScreenState extends State<EmojiMatchScreen> {
     _didNavigate = true;
     await context.read<AppState>().recordHighScore(
       _controller.gameType,
-      widget.difficulty,
+      LifeGameConstants.storageDifficulty,
       _controller.score,
+      highestLevel: _controller.level,
     );
     if (!mounted) {
       return;
@@ -69,73 +75,71 @@ class _EmojiMatchScreenState extends State<EmojiMatchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final totalSeconds = _controller.config.totalTime.inSeconds;
+    final config = SecondLifeConfig.forGame(GameType.emojiMatch);
 
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
-        return Scaffold(
-          appBar: CustomAppBar(
+        return GameSecondLifeLayer(
+          config: config,
+          session: _controller.secondLife,
+          score: _controller.score,
+          bestScore: _controller.bestScore,
+          onEndGameFinal: _controller.endGameFinal,
+          onPlayAgain: _onPlayAgain,
+          onResumeFromSecondLife: _controller.resumeFromSecondLifeReward,
+          child: GameScreenShell(
             title: 'Emoji Match',
-            subtitle: widget.difficulty.title,
-          ),
-          body: _controller.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TimerBar(
-                        progress: totalSeconds == 0
-                            ? 0
-                            : _controller.remainingSeconds / totalSeconds,
-                        secondsRemaining: _controller.remainingSeconds,
-                      ),
-                      const SizedBox(height: 18),
-                      GameStatusHeader(
-                        score: _controller.score,
-                        remainingSeconds: _controller.remainingSeconds,
-                        matches:
-                            '${_controller.matchedPairCount}/${_controller.config.pairCount}',
-                      ),
-                      const SizedBox(height: 18),
-                      Card(
-                        margin: EdgeInsets.zero,
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
+            score: _controller.score,
+            lives: _controller.lives,
+            level: _controller.level,
+            child: _controller.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        ThemedGamePanel(
+                          accent: const Color(0xFF2DD4BF),
                           child: Text(
                             _controller.statusMessage,
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.titleMedium,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: AppGradientBackground.textPrimary,
+                                ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 18),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _controller.cards.length,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: _controller.config.crossAxisCount,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.85,
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: GridView.builder(
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount:
+                                      _controller.config.crossAxisCount,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 0.85,
+                                ),
+                            itemCount: _controller.cards.length,
+                            itemBuilder: (context, index) {
+                              return EmojiCardTile(
+                                card: _controller.cards[index],
+                                onTap:
+                                    _controller.isCheckingPair ||
+                                        _controller.isGameplayPaused
+                                    ? null
+                                    : () => unawaited(
+                                        _controller.handleCardTap(index),
+                                      ),
+                              );
+                            },
+                          ),
                         ),
-                        itemBuilder: (context, index) {
-                          return EmojiCardTile(
-                            card: _controller.cards[index],
-                            onTap: _controller.isCheckingPair
-                                ? null
-                                : () => unawaited(
-                                    _controller.handleCardTap(index),
-                                  ),
-                          );
-                        },
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+          ),
         );
       },
     );

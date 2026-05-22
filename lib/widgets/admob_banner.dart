@@ -2,17 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../config/admob_config.dart';
+
 /// Bottom anchored adaptive banner for the home screen only.
 class AdMobBanner extends StatefulWidget {
   const AdMobBanner({super.key});
 
-  static const String productionUnitId =
-      'ca-app-pub-4460198288175671/1111339059';
-  static const String testUnitId = 'ca-app-pub-3940256099942544/6300978111';
-
   @visibleForTesting
   static String unitIdForBuildMode({required bool isDebug}) {
-    return isDebug ? testUnitId : productionUnitId;
+    return AdMobConfig.bannerUnitId(debug: isDebug);
   }
 
   @override

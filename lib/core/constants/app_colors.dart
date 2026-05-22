@@ -14,5 +14,7 @@ abstract final class AppColors {
   static const Color cardLight = BrandPalette.cardWhite;
   static const Color textDark = BrandPalette.textDark;
   static const Color textMuted = BrandPalette.mutedText;
+  static const Color textPrimary = Color(0xFFFFFFFF);
+  static const Color textSecondary = Color(0xFFD7E7F5);
   static const Color brainCyan = BrandPalette.brainCyan;
 }

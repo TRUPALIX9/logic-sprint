@@ -6,7 +6,7 @@ import '../../core/constants/app_strings.dart';
 import '../../models/game_model.dart';
 import '../../services/app_state.dart';
 import '../../widgets/admob_banner.dart';
-import '../../widgets/ui/gradient_background.dart';
+import '../../widgets/app_gradient_background.dart';
 import '../../widgets/ui/home_game_card.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -15,11 +15,7 @@ class HomeScreen extends StatelessWidget {
   static const double _bannerReserve = 72;
 
   void _openGame(BuildContext context, GameModel game) {
-    if (game.skipsDifficulty) {
-      Navigator.of(context).pushNamed(AppRoutes.gameRoute(game.type));
-      return;
-    }
-    Navigator.of(context).pushNamed(AppRoutes.difficulty, arguments: game.type);
+    Navigator.of(context).pushNamed(AppRoutes.gameRoute(game.type));
   }
 
   @override
@@ -29,7 +25,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       extendBody: true,
       backgroundColor: Colors.transparent,
-      body: GradientBackground(
+      body: AppGradientBackground(
         child: Stack(
           children: [
             SafeArea(
@@ -65,6 +61,7 @@ class HomeScreen extends StatelessWidget {
                           return HomeGameCard(
                             game: game,
                             bestScore: appState.overallBestFor(game.type),
+                            highestLevel: appState.highestLevelFor(game.type),
                             onTap: () => _openGame(context, game),
                           );
                         },

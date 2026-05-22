@@ -41,7 +41,7 @@ class GameSelectScreen extends StatelessWidget {
                 bestScore: appState.overallBestFor(game.type),
                 onPressed: () => Navigator.of(
                   context,
-                ).pushNamed(AppRoutes.difficulty, arguments: game.type),
+                ).pushNamed(AppRoutes.gameRoute(game.type)),
               )
               .animate()
               .fadeIn(delay: Duration(milliseconds: 60 * index))

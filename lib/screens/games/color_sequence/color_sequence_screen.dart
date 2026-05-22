@@ -3,21 +3,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
+import '../../../core/constants/life_game_constants.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../models/game_model.dart';
+import '../../../models/second_life_config.dart';
 import '../../../services/app_state.dart';
 import '../../../services/local_storage_service.dart';
 import '../../../services/sound_service.dart';
-import '../../../widgets/custom_app_bar.dart';
-import '../../../widgets/game_status_header.dart';
-import '../../../widgets/timer_bar.dart';
+import '../../../widgets/app_gradient_background.dart';
+import '../../../widgets/game_second_life_layer.dart';
+import '../../../widgets/game_screen_shell.dart';
 import 'color_sequence_controller.dart';
 
 class ColorSequenceScreen extends StatefulWidget {
-  const ColorSequenceScreen({super.key, required this.difficulty});
-
-  final DifficultyLevel difficulty;
+  const ColorSequenceScreen({super.key});
 
   @override
   State<ColorSequenceScreen> createState() => _ColorSequenceScreenState();
@@ -33,9 +33,14 @@ class _ColorSequenceScreenState extends State<ColorSequenceScreen> {
     _controller = ColorSequenceController(
       storage: context.read<LocalStorageService>(),
       soundService: context.read<SoundService>(),
-      difficulty: widget.difficulty,
     )..addListener(_handleControllerUpdate);
     unawaited(_controller.initialize());
+  }
+
+  Future<void> _onPlayAgain() async {
+    _didNavigate = false;
+    _controller.resetGame();
+    await _controller.initialize();
   }
 
   Future<void> _handleControllerUpdate() async {
@@ -48,8 +53,9 @@ class _ColorSequenceScreenState extends State<ColorSequenceScreen> {
     _didNavigate = true;
     await context.read<AppState>().recordHighScore(
       GameType.colorSequence,
-      widget.difficulty,
+      LifeGameConstants.storageDifficulty,
       _controller.score,
+      highestLevel: _controller.level,
     );
     if (!mounted) {
       return;
@@ -78,58 +84,40 @@ class _ColorSequenceScreenState extends State<ColorSequenceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final config = SecondLifeConfig.forGame(GameType.colorSequence);
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
-        return Scaffold(
-          appBar: CustomAppBar(
+        return GameSecondLifeLayer(
+          config: config,
+          session: _controller.secondLife,
+          score: _controller.score,
+          bestScore: _controller.bestScore,
+          onEndGameFinal: _controller.endGameFinal,
+          onPlayAgain: _onPlayAgain,
+          onResumeFromSecondLife: _controller.resumeFromSecondLifeReward,
+          child: GameScreenShell(
             title: 'Color Sequence',
-            subtitle: widget.difficulty.title,
-          ),
-          body: _controller.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TimerBar(
-                        progress: _controller.progress,
-                        secondsRemaining: _controller.secondsRemaining,
-                      ),
-                      const SizedBox(height: 14),
-                      GameStatusHeader(
-                        game: GameType.colorSequence,
-                        score: _controller.score,
-                        streak: _controller.currentStreak,
-                        correctAnswers: _controller.correctAnswers,
-                        round: _controller.roundNumber,
-                        remainingSeconds: _controller.secondsRemaining,
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Round ${_controller.roundNumber}',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          Text(
-                            'Length ${_controller.sequenceLength}',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Card(
-                        margin: EdgeInsets.zero,
-                        child: Padding(
-                          padding: const EdgeInsets.all(18),
+            score: _controller.score,
+            lives: _controller.lives,
+            level: _controller.level,
+            child: _controller.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        ThemedGamePanel(
+                          accent: const Color(0xFFC026D3),
                           child: Column(
                             children: [
                               Text(
                                 _controller.instruction,
-                                style: Theme.of(context).textTheme.titleMedium,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: AppGradientBackground.textPrimary,
+                                    ),
                               ),
                               const SizedBox(height: 12),
                               _SequencePreview(
@@ -139,11 +127,6 @@ class _ColorSequenceScreenState extends State<ColorSequenceScreen> {
                                 dimmed:
                                     _controller.phase ==
                                     ColorSequencePhase.repeating,
-                              ),
-                              const SizedBox(height: 12),
-                              _ProgressDots(
-                                length: _controller.sequenceLength,
-                                filled: _controller.playerSequence.length,
                               ),
                               if (_controller.feedbackMessage case final msg?)
                                 Padding(
@@ -156,51 +139,37 @@ class _ColorSequenceScreenState extends State<ColorSequenceScreen> {
                                         ?.copyWith(
                                           color: msg == 'Correct!'
                                               ? AppColors.success
-                                              : AppColors.danger,
+                                              : AppGradientBackground.lifeLost,
                                         ),
                                   ),
                                 ),
                             ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Repeat the sequence',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 12),
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.35,
-                        children: ColorSequenceController.palette.map((color) {
-                          final isHighlighted =
-                              _controller.highlightedIndex != null &&
-                              _controller.phase ==
-                                  ColorSequencePhase.watching &&
-                              _controller.targetSequence.length >
-                                  _controller.highlightedIndex! &&
-                              _controller.targetSequence[_controller
-                                      .highlightedIndex!] ==
-                                  color;
-
-                          return _ColorTapButton(
-                            label: color.label,
-                            color: _colorFor(color),
-                            enabled: _controller.canTapColors,
-                            highlighted: isHighlighted,
-                            onPressed: () =>
-                                unawaited(_controller.tapColor(color)),
-                          );
-                        }).toList(),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: GridView.count(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1.35,
+                            children: ColorSequenceController.palette.map((
+                              color,
+                            ) {
+                              return _ColorTapButton(
+                                label: color.label,
+                                color: _colorFor(color),
+                                enabled: _controller.canTapColors,
+                                onPressed: () =>
+                                    unawaited(_controller.tapColor(color)),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+          ),
         );
       },
     );
@@ -229,14 +198,13 @@ class _SequencePreview extends StatelessWidget {
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 8,
-      runSpacing: 8,
       children: [
         for (var i = 0; i < sequence.length; i++) ...[
           if (i > 0)
             Icon(
               Icons.arrow_forward_rounded,
               size: 18,
-              color: Theme.of(context).textTheme.bodySmall?.color,
+              color: AppGradientBackground.textSecondary,
             ),
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -247,49 +215,10 @@ class _SequencePreview extends StatelessWidget {
                 alpha: highlightedIndex == i ? 1 : (dimmed ? 0.35 : 0.85),
               ),
               borderRadius: BorderRadius.circular(10),
-              border: highlightedIndex == i
-                  ? Border.all(color: Colors.white, width: 2)
-                  : null,
-              boxShadow: highlightedIndex == i
-                  ? [
-                      BoxShadow(
-                        color: colorFor(sequence[i]).withValues(alpha: 0.5),
-                        blurRadius: 8,
-                      ),
-                    ]
-                  : null,
             ),
           ),
         ],
       ],
-    );
-  }
-}
-
-class _ProgressDots extends StatelessWidget {
-  const _ProgressDots({required this.length, required this.filled});
-
-  final int length;
-  final int filled;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(length, (index) {
-        final active = index < filled;
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: active
-                ? AppColors.primary
-                : AppColors.textMuted.withValues(alpha: 0.25),
-          ),
-        );
-      }),
     );
   }
 }
@@ -299,20 +228,18 @@ class _ColorTapButton extends StatelessWidget {
     required this.label,
     required this.color,
     required this.enabled,
-    required this.highlighted,
     required this.onPressed,
   });
 
   final String label;
   final Color color;
   final bool enabled;
-  final bool highlighted;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: color.withValues(alpha: enabled ? (highlighted ? 1 : 0.92) : 0.4),
+      color: color.withValues(alpha: enabled ? 0.92 : 0.4),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: enabled ? onPressed : null,
@@ -321,7 +248,7 @@ class _ColorTapButton extends StatelessWidget {
           child: Text(
             label,
             style: const TextStyle(
-              color: Colors.white,
+              color: Color(0xFFFFFFFF),
               fontWeight: FontWeight.w800,
               fontSize: 16,
             ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/constants/app_config.dart';
 import '../models/game_model.dart';
 
 class LocalStorageService {
@@ -11,14 +10,12 @@ class LocalStorageService {
   static const String vibrationKey = 'isVibrationEnabled';
   static const String themeModeKey = 'themeMode';
   static const String playerNameKey = 'playerName';
-  static const String leaderboardCacheJsonKey = 'leaderboardCacheJson';
-  static const String leaderboardCacheTimestampKey =
-      'leaderboardCacheTimestamp';
-  static const String leaderboardLastRefreshKey = 'leaderboardLastRefreshAt';
-  static const String leaderboardSubmissionDateKey =
-      'leaderboardSubmissionDate';
-  static const String leaderboardSubmissionCountKey =
-      'leaderboardSubmissionCount';
+  static const String scoreHistoryKey = 'scoreHistoryJson';
+  static const String pendingSubmissionsKey = 'pendingAllTimeSubmissionsJson';
+  static const String submittedBestPrefix = 'submittedAllTimeBest_';
+  static const String leaderboardCachePrefix = 'leaderboardCache_';
+  static const String leaderboardFetchedDatePrefix = 'leaderboardFetchedDate_';
+  static const String highestLevelPrefix = 'highestLevel_';
 
   final SharedPreferences _preferences;
 
@@ -50,7 +47,22 @@ class LocalStorageService {
       for (final difficulty in DifficultyLevel.values) {
         await _preferences.remove(_highScoreKey(gameType, difficulty));
       }
+      await _preferences.remove(_highestLevelKey(gameType));
     }
+  }
+
+  int getHighestLevel(GameType gameType) {
+    return _preferences.getInt(_highestLevelKey(gameType)) ?? 0;
+  }
+
+  Future<int> saveHighestLevelIfHigher(GameType gameType, int level) async {
+    final key = _highestLevelKey(gameType);
+    final current = _preferences.getInt(key) ?? 0;
+    if (level > current) {
+      await _preferences.setInt(key, level);
+      return level;
+    }
+    return current;
   }
 
   bool getSoundEnabled() => _preferences.getBool(soundKey) ?? true;
@@ -87,65 +99,72 @@ class LocalStorageService {
     return 'highScore_${gameType.storageKey}_${difficulty.storageKey}';
   }
 
+  String _highestLevelKey(GameType gameType) {
+    return '$highestLevelPrefix${gameType.storageKey}';
+  }
+
   String? getPlayerName() => _preferences.getString(playerNameKey);
 
   Future<void> setPlayerName(String value) =>
       _preferences.setString(playerNameKey, value);
 
-  String? getLeaderboardCacheJson() =>
-      _preferences.getString(leaderboardCacheJsonKey);
-
-  Future<void> setLeaderboardCacheJson(String value) =>
-      _preferences.setString(leaderboardCacheJsonKey, value);
-
-  DateTime? getLeaderboardCacheTimestamp() {
-    final millis = _preferences.getInt(leaderboardCacheTimestampKey);
-    if (millis == null) {
-      return null;
-    }
-    return DateTime.fromMillisecondsSinceEpoch(millis);
+  int getSubmittedAllTimeBest(GameType gameType) {
+    return _preferences.getInt(
+          '${submittedBestPrefix}${gameType.storageKey}',
+        ) ??
+        0;
   }
 
-  Future<void> setLeaderboardCacheTimestamp(DateTime value) => _preferences
-      .setInt(leaderboardCacheTimestampKey, value.millisecondsSinceEpoch);
-
-  DateTime? getLeaderboardLastRefreshAt() {
-    final millis = _preferences.getInt(leaderboardLastRefreshKey);
-    if (millis == null) {
-      return null;
-    }
-    return DateTime.fromMillisecondsSinceEpoch(millis);
-  }
-
-  Future<void> setLeaderboardLastRefreshAt(DateTime value) => _preferences
-      .setInt(leaderboardLastRefreshKey, value.millisecondsSinceEpoch);
-
-  bool canSubmitLeaderboardToday() =>
-      remainingLeaderboardSubmissionsToday() > 0;
-
-  int remainingLeaderboardSubmissionsToday() {
-    _resetLeaderboardSubmissionsIfNewDay();
-    final count = _preferences.getInt(leaderboardSubmissionCountKey) ?? 0;
-    return (AppConfig.maxDailyLeaderboardSubmissions - count).clamp(
-      0,
-      AppConfig.maxDailyLeaderboardSubmissions,
+  Future<void> setSubmittedAllTimeBest(GameType gameType, int score) async {
+    await _preferences.setInt(
+      '${submittedBestPrefix}${gameType.storageKey}',
+      score,
     );
   }
 
-  Future<void> recordLeaderboardSubmission() async {
-    _resetLeaderboardSubmissionsIfNewDay();
-    final count = _preferences.getInt(leaderboardSubmissionCountKey) ?? 0;
-    await _preferences.setInt(leaderboardSubmissionCountKey, count + 1);
-    await _preferences.setString(leaderboardSubmissionDateKey, _todayKey());
+  String? getLeaderboardCacheJson(GameType gameType) {
+    return _preferences.getString(
+      '${leaderboardCachePrefix}${gameType.storageKey}',
+    );
   }
 
-  void _resetLeaderboardSubmissionsIfNewDay() {
-    final storedDate = _preferences.getString(leaderboardSubmissionDateKey);
-    if (storedDate != _todayKey()) {
-      _preferences.setInt(leaderboardSubmissionCountKey, 0);
-      _preferences.setString(leaderboardSubmissionDateKey, _todayKey());
-    }
+  Future<void> setLeaderboardCacheJson(GameType gameType, String value) async {
+    await _preferences.setString(
+      '${leaderboardCachePrefix}${gameType.storageKey}',
+      value,
+    );
   }
+
+  String? getLeaderboardLastFetchedDate(GameType gameType) {
+    return _preferences.getString(
+      '${leaderboardFetchedDatePrefix}${gameType.storageKey}',
+    );
+  }
+
+  Future<void> setLeaderboardLastFetchedDate(
+    GameType gameType,
+    String dateKey,
+  ) async {
+    await _preferences.setString(
+      '${leaderboardFetchedDatePrefix}${gameType.storageKey}',
+      dateKey,
+    );
+  }
+
+  bool isLeaderboardFetchedToday(GameType gameType) {
+    return getLeaderboardLastFetchedDate(gameType) == _todayKey();
+  }
+
+  String? getScoreHistoryJson() => _preferences.getString(scoreHistoryKey);
+
+  Future<void> setScoreHistoryJson(String value) =>
+      _preferences.setString(scoreHistoryKey, value);
+
+  String? getPendingSubmissionsJson() =>
+      _preferences.getString(pendingSubmissionsKey);
+
+  Future<void> setPendingSubmissionsJson(String value) =>
+      _preferences.setString(pendingSubmissionsKey, value);
 
   String _todayKey() {
     final now = DateTime.now();

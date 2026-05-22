@@ -3,22 +3,22 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/brand/brand_palette.dart';
 import '../../../core/constants/app_routes.dart';
+import '../../../core/constants/life_game_constants.dart';
 import '../../../models/game_model.dart';
+import '../../../models/second_life_config.dart';
 import '../../../services/app_state.dart';
 import '../../../services/local_storage_service.dart';
 import '../../../services/sound_service.dart';
-import '../../../widgets/custom_app_bar.dart';
-import '../../../widgets/game_status_header.dart';
+import '../../../widgets/app_gradient_background.dart';
+import '../../../widgets/game_second_life_layer.dart';
+import '../../../widgets/game_screen_shell.dart';
 import '../../../widgets/primary_button.dart';
 import 'pattern_lock_controller.dart';
 import 'pattern_lock_widgets.dart';
 
 class PatternLockScreen extends StatefulWidget {
-  const PatternLockScreen({super.key, required this.difficulty});
-
-  final DifficultyLevel difficulty;
+  const PatternLockScreen({super.key});
 
   @override
   State<PatternLockScreen> createState() => _PatternLockScreenState();
@@ -34,9 +34,14 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
     _controller = PatternLockController(
       storage: context.read<LocalStorageService>(),
       soundService: context.read<SoundService>(),
-      difficulty: widget.difficulty,
     )..addListener(_handleControllerUpdate);
     unawaited(_controller.initialize());
+  }
+
+  Future<void> _onPlayAgain() async {
+    _didNavigate = false;
+    _controller.resetGame();
+    await _controller.initialize();
   }
 
   Future<void> _handleControllerUpdate() async {
@@ -49,8 +54,9 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
     _didNavigate = true;
     await context.read<AppState>().recordHighScore(
       _controller.gameType,
-      widget.difficulty,
+      LifeGameConstants.storageDifficulty,
       _controller.score,
+      highestLevel: _controller.level,
     );
     if (!mounted) {
       return;
@@ -70,103 +76,103 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final config = SecondLifeConfig.forGame(GameType.patternLock);
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
-        return Scaffold(
-          appBar: CustomAppBar(
+        return GameSecondLifeLayer(
+          config: config,
+          session: _controller.secondLife,
+          score: _controller.score,
+          bestScore: _controller.bestScore,
+          onEndGameFinal: _controller.endGameFinal,
+          onPlayAgain: _onPlayAgain,
+          onResumeFromSecondLife: _controller.resumeFromSecondLifeReward,
+          child: GameScreenShell(
             title: 'Pattern Lock',
-            subtitle: widget.difficulty.title,
-          ),
-          backgroundColor: BrandPalette.primaryNavy,
-          body: _controller.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      GameStatusHeader(
-                        score: _controller.score,
-                        lives: _controller.lives,
-                        round: _controller.round,
-                      ),
-                      const SizedBox(height: 18),
-                      Card(
-                        margin: EdgeInsets.zero,
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
+            score: _controller.score,
+            lives: _controller.lives,
+            level: _controller.level,
+            child: _controller.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        ThemedGamePanel(
+                          accent: const Color(0xFF818CF8),
                           child: Column(
                             children: [
                               Text(
                                 _controller.statusMessage,
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.titleMedium,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: AppGradientBackground.textPrimary,
+                                    ),
                               ),
-                              if (_controller.isAcceptingInput) ...[
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Pattern: ${_controller.playerPattern.map((i) => i + 1).join(' → ')}',
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ],
                             ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 18),
-                      AspectRatio(
-                        aspectRatio: 1,
-                        child: GridView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _controller.dotCount,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: _controller.config.gridSize,
-                                crossAxisSpacing: 24,
-                                mainAxisSpacing: 24,
-                              ),
-                          itemBuilder: (context, index) {
-                            return PatternDotTile(
-                              index: index,
-                              isActive: _controller.isDotActive(index),
-                              onTap: _controller.isAcceptingInput
-                                  ? () => _controller.addDot(index)
-                                  : null,
-                            );
-                          },
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: AspectRatio(
+                            aspectRatio: 1,
+                            child: GridView.builder(
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _controller.dotCount,
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3,
+                                    crossAxisSpacing: 24,
+                                    mainAxisSpacing: 24,
+                                  ),
+                              itemBuilder: (context, index) {
+                                return PatternDotTile(
+                                  index: index,
+                                  isActive: _controller.isDotActive(index),
+                                  onTap:
+                                      _controller.isAcceptingInput &&
+                                          !_controller.isGameplayPaused
+                                      ? () => _controller.addDot(index)
+                                      : null,
+                                );
+                              },
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: PrimaryButton(
-                              label: 'Clear',
-                              isSecondary: true,
-                              onPressed: _controller.isAcceptingInput
-                                  ? _controller.clearPlayerPattern
-                                  : null,
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: PrimaryButton(
+                                label: 'Clear',
+                                isSecondary: true,
+                                onPressed: _controller.isAcceptingInput
+                                    ? _controller.clearPlayerPattern
+                                    : null,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: PrimaryButton(
-                              label: 'Submit',
-                              onPressed:
-                                  _controller.isAcceptingInput &&
-                                      _controller.playerPattern.length ==
-                                          _controller.targetPattern.length
-                                  ? () => unawaited(_controller.submitPattern())
-                                  : null,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: PrimaryButton(
+                                label: 'Submit',
+                                onPressed:
+                                    _controller.isAcceptingInput &&
+                                        _controller.playerPattern.length ==
+                                            _controller.targetPattern.length
+                                    ? () =>
+                                          unawaited(_controller.submitPattern())
+                                    : null,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+          ),
         );
       },
     );

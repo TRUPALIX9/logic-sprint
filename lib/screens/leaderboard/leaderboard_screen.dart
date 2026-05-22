@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/leaderboard_score_model.dart';
+import '../../models/game_model.dart';
+import '../../models/leaderboard_entry.dart';
 import '../../services/leaderboard_service.dart';
-import '../../widgets/custom_app_bar.dart';
+import '../../widgets/app_gradient_background.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/leaderboard_tile.dart';
 
@@ -15,15 +16,11 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  LeaderboardGameFilter _gameFilter = LeaderboardGameFilter.all;
-  LeaderboardDifficultyFilter _difficultyFilter =
-      LeaderboardDifficultyFilter.all;
-
+  GameType _selectedGame = GameType.quickMath;
   bool _loading = true;
-  List<LeaderboardScoreModel> _allScores = [];
+  List<LeaderboardEntry> _entries = [];
   String? _errorMessage;
-  String? _infoMessage;
-  DateTime? _lastUpdated;
+  String? _lastFetchedDate;
   bool _fromCache = false;
 
   @override
@@ -34,235 +31,175 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   Future<void> _loadInitial() async {
     final service = context.read<LeaderboardService>();
-    setState(() => _loading = true);
-    final result = await service.loadLeaderboard();
-    if (!mounted) {
-      return;
-    }
-    _applyResult(result);
+    await service.syncPendingSubmissions();
+    await _load(gameType: _selectedGame);
   }
 
-  Future<void> _refresh() async {
+  Future<void> _load({required GameType gameType, bool force = false}) async {
     final service = context.read<LeaderboardService>();
     setState(() => _loading = true);
-    final result = await service.loadLeaderboard(forceRefresh: true);
+    final result = await service.loadLeaderboard(
+      gameType: gameType,
+      forceRefresh: force,
+    );
     if (!mounted) {
       return;
     }
-    _applyResult(result);
-  }
-
-  void _applyResult(LeaderboardLoadResult result) {
     setState(() {
       _loading = false;
-      _allScores = result.scores;
+      _entries = result.entries;
       _errorMessage = result.errorMessage;
-      _infoMessage = result.infoMessage;
-      _lastUpdated = result.lastUpdated;
+      _lastFetchedDate = result.lastFetchedDate;
       _fromCache = result.fromCache;
     });
   }
 
+  Future<void> _onGameChanged(GameType? game) async {
+    if (game == null) {
+      return;
+    }
+    setState(() => _selectedGame = game);
+    await _load(gameType: game);
+  }
+
+  String get _cacheStatusLabel {
+    if (_lastFetchedDate == null) {
+      return 'Not loaded yet';
+    }
+    final today = _formatTodayKey();
+    if (_lastFetchedDate == today) {
+      return 'Updated today${_fromCache ? ' (cached)' : ''}';
+    }
+    return 'Last updated $_lastFetchedDate';
+  }
+
+  String _formatTodayKey() {
+    final now = DateTime.now();
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final filtered = LeaderboardService.applyFilters(
-      _allScores,
-      gameFilter: _gameFilter,
-      difficultyFilter: _difficultyFilter,
-    );
-
-    final lastUpdatedLabel = _lastUpdated == null
-        ? 'Not loaded yet'
-        : 'Last updated ${_formatTimestamp(_lastUpdated!)}${_fromCache ? ' (cached)' : ''}';
-
     return Scaffold(
-      appBar: const CustomAppBar(
-        title: 'Global Leaderboard',
-        subtitle: 'Top 100 Scores',
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final stackFilters = constraints.maxWidth < 400;
-                if (stackFilters) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _gameFilterDropdown(),
-                      const SizedBox(height: 10),
-                      _difficultyFilterDropdown(),
-                    ],
-                  );
-                }
-                return Row(
+      backgroundColor: Colors.transparent,
+      body: AppGradientBackground(
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
+                child: Row(
                   children: [
-                    Expanded(child: _gameFilterDropdown()),
-                    const SizedBox(width: 12),
-                    Expanded(child: _difficultyFilterDropdown()),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      color: AppGradientBackground.textPrimary,
+                    ),
+                    Expanded(
+                      child: Text(
+                        'All-Time Leaderboard',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppGradientBackground.textPrimary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _loading
+                          ? null
+                          : () => _load(gameType: _selectedGame, force: true),
+                      icon: const Icon(Icons.refresh_rounded),
+                      color: AppGradientBackground.textPrimary,
+                      tooltip: 'Refresh',
+                    ),
                   ],
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    lastUpdatedLabel,
-                    style: Theme.of(context).textTheme.bodySmall,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: DropdownButtonFormField<GameType>(
+                  isExpanded: true,
+                  initialValue: _selectedGame,
+                  dropdownColor: const Color(0xFF1A2F5C),
+                  style: const TextStyle(
+                    color: AppGradientBackground.textPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: 'Game',
+                    labelStyle: TextStyle(
+                      color: AppGradientBackground.textSecondary,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: AppGradientBackground.cyanAccent.withValues(
+                          alpha: 0.4,
+                        ),
+                      ),
+                    ),
+                  ),
+                  items: [
+                    for (final game in homeLauncherGames)
+                      DropdownMenuItem(
+                        value: game.type,
+                        child: Text(game.title),
+                      ),
+                  ],
+                  onChanged: _onGameChanged,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Text(
+                  _cacheStatusLabel,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppGradientBackground.textSecondary,
                   ),
                 ),
-                TextButton.icon(
-                  onPressed: _loading ? null : _refresh,
-                  icon: const Icon(Icons.refresh_rounded, size: 20),
-                  label: const Text('Refresh'),
+              ),
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    _errorMessage!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppGradientBackground.orangeAccent,
+                    ),
+                  ),
                 ),
-              ],
-            ),
+              const SizedBox(height: 8),
+              Expanded(child: _buildList()),
+            ],
           ),
-          if (_infoMessage != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                _infoMessage!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.secondary,
-                ),
-              ),
-            ),
-          if (_errorMessage != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-              child: Text(
-                _errorMessage!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.error,
-                ),
-              ),
-            ),
-          const SizedBox(height: 8),
-          Expanded(child: _buildBody(filtered)),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildBody(List<LeaderboardScoreModel> filtered) {
+  Widget _buildList() {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (filtered.isEmpty) {
-      if (_errorMessage != null && _allScores.isEmpty) {
-        return const EmptyState(
-          icon: Icons.cloud_off_rounded,
-          title: 'Leaderboard unavailable',
-          message: 'Online leaderboard is temporarily unavailable.',
-        );
-      }
-      return const EmptyState(
+    if (_entries.isEmpty) {
+      return EmptyState(
         icon: Icons.leaderboard_rounded,
-        title: 'No scores yet',
+        title: _errorMessage == null
+            ? 'No scores yet'
+            : 'Leaderboard unavailable',
         message:
-            'No scores match these filters. Try All games and All difficulties.',
+            _errorMessage ??
+            'Be the first to set an all-time best for this game.',
       );
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-      itemCount: filtered.length,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+      itemCount: _entries.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        return LeaderboardTile(rank: index + 1, score: filtered[index]);
+        return LeaderboardTile(rank: index + 1, entry: _entries[index]);
       },
     );
-  }
-
-  Widget _gameFilterDropdown() {
-    return DropdownButtonFormField<LeaderboardGameFilter>(
-      isExpanded: true,
-      initialValue: _gameFilter,
-      decoration: const InputDecoration(
-        labelText: 'Game',
-        border: OutlineInputBorder(),
-        isDense: true,
-        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      ),
-      items: const [
-        DropdownMenuItem(
-          value: LeaderboardGameFilter.all,
-          child: Text('All Games', overflow: TextOverflow.ellipsis),
-        ),
-        DropdownMenuItem(
-          value: LeaderboardGameFilter.quickMath,
-          child: Text('Quick Math', overflow: TextOverflow.ellipsis),
-        ),
-        DropdownMenuItem(
-          value: LeaderboardGameFilter.colorSequence,
-          child: Text('Color Sequence', overflow: TextOverflow.ellipsis),
-        ),
-        DropdownMenuItem(
-          value: LeaderboardGameFilter.trueFalse,
-          child: Text('True or False', overflow: TextOverflow.ellipsis),
-        ),
-      ],
-      onChanged: (value) {
-        if (value == null) {
-          return;
-        }
-        setState(() => _gameFilter = value);
-      },
-    );
-  }
-
-  Widget _difficultyFilterDropdown() {
-    return DropdownButtonFormField<LeaderboardDifficultyFilter>(
-      isExpanded: true,
-      initialValue: _difficultyFilter,
-      decoration: const InputDecoration(
-        labelText: 'Difficulty',
-        border: OutlineInputBorder(),
-        isDense: true,
-        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      ),
-      items: const [
-        DropdownMenuItem(
-          value: LeaderboardDifficultyFilter.all,
-          child: Text('All Difficulties', overflow: TextOverflow.ellipsis),
-        ),
-        DropdownMenuItem(
-          value: LeaderboardDifficultyFilter.easy,
-          child: Text('Easy', overflow: TextOverflow.ellipsis),
-        ),
-        DropdownMenuItem(
-          value: LeaderboardDifficultyFilter.medium,
-          child: Text('Medium', overflow: TextOverflow.ellipsis),
-        ),
-        DropdownMenuItem(
-          value: LeaderboardDifficultyFilter.hard,
-          child: Text('Hard', overflow: TextOverflow.ellipsis),
-        ),
-      ],
-      onChanged: (value) {
-        if (value == null) {
-          return;
-        }
-        setState(() => _difficultyFilter = value);
-      },
-    );
-  }
-
-  String _formatTimestamp(DateTime value) {
-    final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
-    final minute = value.minute.toString().padLeft(2, '0');
-    final suffix = value.hour >= 12 ? 'PM' : 'AM';
-    return '${value.month}/${value.day}/${value.year} $hour:$minute $suffix';
   }
 }

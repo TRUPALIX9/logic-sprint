@@ -3,9 +3,11 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../core/constants/life_game_constants.dart';
 import '../../../core/utils/score_utils.dart';
 import '../../../models/game_model.dart';
 import '../../../models/score_model.dart';
+import '../../../models/second_life_session.dart';
 import '../../../services/local_storage_service.dart';
 import '../../../services/sound_service.dart';
 
@@ -32,28 +34,26 @@ class ColorSequenceController extends ChangeNotifier {
   ColorSequenceController({
     required this.storage,
     required this.soundService,
-    required this.difficulty,
     Random? random,
   }) : random = random ?? Random();
 
   final LocalStorageService storage;
   final SoundService soundService;
-  final DifficultyLevel difficulty;
   final Random random;
+  final SecondLifeSession secondLife = SecondLifeSession();
 
+  static const DifficultyLevel _storage = LifeGameConstants.storageDifficulty;
   static const List<SequenceColor> palette = SequenceColor.values;
 
-  Timer? _roundTimer;
   Timer? _phaseTimer;
 
-  int secondsRemaining = ScoreUtils.roundLengthSeconds;
+  int lives = LifeGameConstants.startingLives;
+  int level = 1;
   int score = 0;
   int bestScore = 0;
   int correctAnswers = 0;
   int wrongAnswers = 0;
   int currentStreak = 0;
-  int completedRounds = 0;
-  int sequenceLength = 3;
   int? highlightedIndex;
   bool isLoading = true;
   bool isRoundComplete = false;
@@ -64,56 +64,39 @@ class ColorSequenceController extends ChangeNotifier {
   List<SequenceColor> playerSequence = [];
   ScoreModel? result;
 
-  double get progress =>
-      secondsRemaining / ScoreUtils.roundLengthSeconds.clamp(1, 999);
+  int get sequenceLength => (level + 1).clamp(2, 12);
+
+  List<SequenceColor> get activePalette =>
+      level >= 3 ? palette : palette.take(3).toList();
 
   double get accuracy => ScoreUtils.accuracyPercentage(
     correctAnswers: correctAnswers,
     wrongAnswers: wrongAnswers,
   );
 
-  int get roundNumber => completedRounds + 1;
-
   bool get canTapColors =>
-      phase == ColorSequencePhase.repeating && !isRoundComplete;
+      phase == ColorSequencePhase.repeating &&
+      !isRoundComplete &&
+      !isGameplayPaused;
+
+  bool get isGameplayPaused =>
+      secondLife.isPausedForRewardAd || secondLife.awaitingSecondLifeDecision;
 
   Future<void> initialize() async {
-    bestScore = storage.getHighScore(GameType.colorSequence, difficulty);
-    sequenceLength = _startingSequenceLength;
+    resetGame();
+    bestScore = storage.getHighScore(GameType.colorSequence, _storage);
     isLoading = false;
     notifyListeners();
-    _startTimer();
     await _startRound();
   }
 
-  static int startingSequenceLengthFor(DifficultyLevel level) {
-    return switch (level) {
-      DifficultyLevel.easy => 3,
-      DifficultyLevel.medium => 4,
-      DifficultyLevel.hard => 5,
-    };
-  }
-
-  int get _startingSequenceLength => startingSequenceLengthFor(difficulty);
-
-  void _startTimer() {
-    _roundTimer?.cancel();
-    _roundTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (secondsRemaining <= 1) {
-        secondsRemaining = 0;
-        timer.cancel();
-        unawaited(finishRound());
-      } else {
-        secondsRemaining -= 1;
-        notifyListeners();
-      }
-    });
-  }
+  static int sequenceLengthForLevel(int level) => (level + 1).clamp(2, 12);
 
   List<SequenceColor> generateSequence(int length) {
+    final colors = activePalette;
     return List<SequenceColor>.generate(
       length,
-      (_) => palette[random.nextInt(palette.length)],
+      (_) => colors[random.nextInt(colors.length)],
     );
   }
 
@@ -131,16 +114,17 @@ class ColorSequenceController extends ChangeNotifier {
     instruction = 'Watch the pattern';
     notifyListeners();
 
+    final playbackMs = level >= 4 ? 420 : 550;
     for (var i = 0; i < targetSequence.length; i++) {
-      if (isRoundComplete) {
+      if (isRoundComplete || isGameplayPaused) {
         return;
       }
       highlightedIndex = i;
       notifyListeners();
-      await Future<void>.delayed(const Duration(milliseconds: 550));
+      await Future<void>.delayed(Duration(milliseconds: playbackMs));
       highlightedIndex = null;
       notifyListeners();
-      await Future<void>.delayed(const Duration(milliseconds: 180));
+      await Future<void>.delayed(const Duration(milliseconds: 160));
     }
 
     if (isRoundComplete) {
@@ -175,32 +159,43 @@ class ColorSequenceController extends ChangeNotifier {
   Future<void> _handleWrongTap() async {
     wrongAnswers += 1;
     currentStreak = 0;
+    lives -= 1;
     phase = ColorSequencePhase.feedback;
-    feedbackMessage = 'Try again';
-    instruction = 'Try again';
+    feedbackMessage = 'Wrong color';
+    instruction = 'Wrong color';
     await soundService.playWrong();
-    notifyListeners();
-
     _phaseTimer?.cancel();
-    _phaseTimer = Timer(const Duration(milliseconds: 450), () {
-      if (!isRoundComplete) {
-        unawaited(_startRound());
+
+    if (lives <= 0) {
+      _offerGameOverOrSecondLife();
+      return;
+    }
+
+    _phaseTimer = Timer(const Duration(milliseconds: 500), () {
+      if (!isRoundComplete && !isGameplayPaused) {
+        unawaited(_replayCurrentSequence());
       }
     });
+    notifyListeners();
+  }
+
+  void _offerGameOverOrSecondLife() {
+    if (!secondLife.secondLifeUsed) {
+      secondLife.pauseForSecondLifeOffer();
+      notifyListeners();
+      return;
+    }
+    unawaited(endGameFinal());
   }
 
   Future<void> _handleCorrectSequence() async {
     correctAnswers += 1;
     currentStreak += 1;
-    completedRounds += 1;
     score += ScoreUtils.correctAnswerPoints;
     if (currentStreak % ScoreUtils.streakBonusEvery == 0) {
       score += ScoreUtils.streakBonusPoints;
     }
-
-    if (completedRounds % 2 == 0) {
-      sequenceLength += 1;
-    }
+    level += 1;
 
     phase = ColorSequencePhase.feedback;
     feedbackMessage = 'Correct!';
@@ -210,42 +205,98 @@ class ColorSequenceController extends ChangeNotifier {
 
     _phaseTimer?.cancel();
     _phaseTimer = Timer(const Duration(milliseconds: 450), () {
-      if (!isRoundComplete) {
+      if (!isRoundComplete && !isGameplayPaused) {
         unawaited(_startRound());
       }
     });
   }
 
-  Future<void> finishRound() async {
+  Future<void> resumeFromSecondLifeReward() async {
+    secondLife.markSecondLifeUsed();
+    lives = 1;
+    feedbackMessage = null;
+    await _replayCurrentSequence();
+    notifyListeners();
+  }
+
+  Future<void> _replayCurrentSequence() async {
+    _phaseTimer?.cancel();
+    playerSequence = [];
+    highlightedIndex = null;
+    phase = ColorSequencePhase.watching;
+    instruction = 'Watch the pattern again';
+    notifyListeners();
+
+    for (var i = 0; i < targetSequence.length; i++) {
+      if (isRoundComplete || isGameplayPaused) {
+        return;
+      }
+      highlightedIndex = i;
+      notifyListeners();
+      await Future<void>.delayed(const Duration(milliseconds: 550));
+      highlightedIndex = null;
+      notifyListeners();
+      await Future<void>.delayed(const Duration(milliseconds: 180));
+    }
+
     if (isRoundComplete) {
       return;
     }
 
+    phase = ColorSequencePhase.repeating;
+    instruction = 'Repeat the sequence';
+    notifyListeners();
+  }
+
+  Future<void> endGameFinal() async {
+    if (isRoundComplete) {
+      return;
+    }
+
+    secondLife.endGameFinal();
     isRoundComplete = true;
-    _roundTimer?.cancel();
     _phaseTimer?.cancel();
     final previousBest = bestScore;
     bestScore = await storage.saveHighScoreIfHigher(
       GameType.colorSequence,
-      difficulty,
+      _storage,
       score,
     );
     result = ScoreModel(
       gameType: GameType.colorSequence,
-      difficulty: difficulty,
+      difficulty: _storage,
       finalScore: score,
       bestScore: bestScore,
       previousBestScore: previousBest,
       correctAnswers: correctAnswers,
       wrongAnswers: wrongAnswers,
       accuracyPercentage: accuracy,
+      level: level,
+      usedSecondLife: secondLife.secondLifeUsed,
     );
     notifyListeners();
   }
 
+  void resetGame() {
+    secondLife.reset();
+    isRoundComplete = false;
+    result = null;
+    lives = LifeGameConstants.startingLives;
+    level = 1;
+    score = 0;
+    correctAnswers = 0;
+    wrongAnswers = 0;
+    currentStreak = 0;
+    phase = ColorSequencePhase.idle;
+    instruction = 'Watch the pattern';
+    feedbackMessage = null;
+    targetSequence = [];
+    playerSequence = [];
+    isLoading = false;
+  }
+
   @override
   void dispose() {
-    _roundTimer?.cancel();
     _phaseTimer?.cancel();
     super.dispose();
   }

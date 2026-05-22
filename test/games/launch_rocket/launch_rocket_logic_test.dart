@@ -10,6 +10,7 @@ void main() {
       radius: 12,
       speed: 3,
       rotation: 0.5,
+      spriteIndex: 2,
     );
     asteroid.y += 5;
     asteroid.rotation += 0.1;
@@ -19,6 +20,7 @@ void main() {
     expect(asteroid.radius, 12);
     expect(asteroid.speed, 3);
     expect(asteroid.rotation, closeTo(0.6, 0.001));
+    expect(asteroid.spriteIndex, 2);
   });
 
   test('home launcher excludes True or False', () {

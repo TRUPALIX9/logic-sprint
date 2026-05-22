@@ -1,12 +1,21 @@
+import 'dart:async';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/constants/life_game_constants.dart';
 import '../../../models/game_model.dart';
+import '../../../models/second_life_config.dart';
+import '../../../models/second_life_session.dart';
 import '../../../services/app_state.dart';
 import '../../../services/local_storage_service.dart';
+import '../../../widgets/app_gradient_background.dart';
+import '../../../widgets/game_second_life_layer.dart';
+import '../../../widgets/game_screen_shell.dart';
+import 'launch_rocket_sprite_cache.dart';
 
 class RocketAsteroid {
   RocketAsteroid({
@@ -15,6 +24,7 @@ class RocketAsteroid {
     required this.radius,
     required this.speed,
     required this.rotation,
+    required this.spriteIndex,
   });
 
   double x;
@@ -22,6 +32,7 @@ class RocketAsteroid {
   final double radius;
   final double speed;
   double rotation;
+  final int spriteIndex;
 }
 
 class LaunchRocketScreen extends StatefulWidget {
@@ -33,25 +44,62 @@ class LaunchRocketScreen extends StatefulWidget {
 
 class _LaunchRocketScreenState extends State<LaunchRocketScreen>
     with SingleTickerProviderStateMixin {
-  static const _storageDifficulty = DifficultyLevel.easy;
+  static const _invincibilityAfterHitSeconds = 1.2;
+  static const _invincibilityAfterRewardSeconds = 2.0;
+  static const _nearbyAsteroidClearRadius = 150.0;
 
   Ticker? _ticker;
   Duration? _lastTick;
   final Random _random = Random();
+  final SecondLifeSession _secondLife = SecondLifeSession();
+  final LaunchRocketSpriteCache _sprites = LaunchRocketSpriteCache();
 
   double _rocketX = 0;
   double _rocketY = 0;
-  final double _rocketWidth = 48;
-  final double _rocketHeight = 56;
+  final double _rocketWidth = 52;
+  final double _rocketHeight = 72;
   final List<RocketAsteroid> _asteroids = [];
   int _score = 0;
   int _bestScore = 0;
+  int _lives = LifeGameConstants.startingLives;
   double _spawnTimer = 0;
   double _gameSpeed = 1;
-  bool _isGameOver = false;
+  double _invincibleSecondsRemaining = 0;
   bool _started = false;
   bool _loadedBest = false;
+  bool _assetsLoaded = false;
+  String? _assetLoadError;
   Size _gameSize = Size.zero;
+
+  bool get _isGameplayPaused =>
+      _secondLife.isPausedForRewardAd ||
+      _secondLife.awaitingSecondLifeDecision ||
+      _secondLife.isGameOver;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadSprites());
+  }
+
+  Future<void> _loadSprites() async {
+    try {
+      await _sprites.load();
+      if (mounted) {
+        setState(() {
+          _assetsLoaded = true;
+          _assetLoadError = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _assetsLoaded = false;
+          _assetLoadError = 'Could not load game graphics.';
+        });
+      }
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -60,21 +108,23 @@ class _LaunchRocketScreenState extends State<LaunchRocketScreen>
       _loadedBest = true;
       _bestScore = context.read<LocalStorageService>().getHighScore(
         GameType.launchRocket,
-        _storageDifficulty,
+        LifeGameConstants.storageDifficulty,
       );
     }
   }
 
   void _startGame() {
-    if (_gameSize == Size.zero) {
+    if (_gameSize == Size.zero || !_sprites.isReady) {
       return;
     }
     _ticker?.dispose();
     _asteroids.clear();
     _score = 0;
+    _lives = LifeGameConstants.startingLives;
     _spawnTimer = 0;
     _gameSpeed = 1;
-    _isGameOver = false;
+    _invincibleSecondsRemaining = 0;
+    _secondLife.reset();
     _rocketX = (_gameSize.width - _rocketWidth) / 2;
     _rocketY = _gameSize.height - _rocketHeight - 24;
     _lastTick = null;
@@ -84,8 +134,10 @@ class _LaunchRocketScreenState extends State<LaunchRocketScreen>
     setState(() {});
   }
 
+  int get _level => 1 + (_score / 150).floor();
+
   void _onTick(Duration elapsed) {
-    if (_isGameOver || !_started) {
+    if (!_started || _isGameplayPaused) {
       return;
     }
 
@@ -100,11 +152,18 @@ class _LaunchRocketScreenState extends State<LaunchRocketScreen>
       return;
     }
 
+    if (_invincibleSecondsRemaining > 0) {
+      _invincibleSecondsRemaining = (_invincibleSecondsRemaining - delta).clamp(
+        0.0,
+        10.0,
+      );
+    }
+
     _score += (delta * 10).floor();
-    _gameSpeed = 1 + (_score / 200).clamp(0, 8);
+    _gameSpeed = 1 + (_score / 200).clamp(0, 10);
     _spawnTimer += delta;
 
-    final spawnInterval = (1.2 - _gameSpeed * 0.08).clamp(0.45, 1.2);
+    final spawnInterval = (1.2 - _gameSpeed * 0.07).clamp(0.35, 1.2);
     if (_spawnTimer >= spawnInterval) {
       _spawnTimer = 0;
       _spawnAsteroid();
@@ -118,7 +177,7 @@ class _LaunchRocketScreenState extends State<LaunchRocketScreen>
     _asteroids.removeWhere((a) => a.y - a.radius > height + 40);
 
     if (_checkCollision()) {
-      _endGame();
+      _handleCollision();
       return;
     }
 
@@ -128,10 +187,10 @@ class _LaunchRocketScreenState extends State<LaunchRocketScreen>
   }
 
   void _spawnAsteroid() {
-    if (_gameSize == Size.zero) {
+    if (_gameSize == Size.zero || _sprites.asteroids.isEmpty) {
       return;
     }
-    final radius = 14 + _random.nextDouble() * 18;
+    final radius = 14 + _random.nextDouble() * (16 + _level * 0.5);
     _asteroids.add(
       RocketAsteroid(
         x: radius + _random.nextDouble() * (_gameSize.width - radius * 2),
@@ -139,16 +198,21 @@ class _LaunchRocketScreenState extends State<LaunchRocketScreen>
         radius: radius,
         speed: 2.5 + _random.nextDouble() * 2 + _gameSpeed * 0.15,
         rotation: _random.nextDouble() * pi,
+        spriteIndex: _random.nextInt(_sprites.asteroids.length),
       ),
     );
   }
 
   bool _checkCollision() {
+    if (_invincibleSecondsRemaining > 0) {
+      return false;
+    }
+
     final rocketCenter = Offset(
       _rocketX + _rocketWidth / 2,
       _rocketY + _rocketHeight / 2,
     );
-    final hitboxScale = 0.75;
+    final hitboxScale = 0.72;
     final rocketR = min(_rocketWidth, _rocketHeight) / 2 * hitboxScale;
 
     for (final asteroid in _asteroids) {
@@ -160,27 +224,69 @@ class _LaunchRocketScreenState extends State<LaunchRocketScreen>
     return false;
   }
 
-  Future<void> _endGame() async {
+  void _handleCollision() {
+    _lives -= 1;
+    _invincibleSecondsRemaining = _invincibilityAfterHitSeconds;
+    _clearNearbyAsteroids();
+
+    if (_lives <= 0) {
+      _ticker?.stop();
+      if (!_secondLife.secondLifeUsed) {
+        _secondLife.pauseForSecondLifeOffer();
+        setState(() {});
+        return;
+      }
+      unawaited(_endGameFinal());
+      return;
+    }
+
+    setState(() {});
+  }
+
+  void _clearNearbyAsteroids() {
+    final rocketCenter = Offset(
+      _rocketX + _rocketWidth / 2,
+      _rocketY + _rocketHeight / 2,
+    );
+    _asteroids.removeWhere((asteroid) {
+      final dist = (Offset(asteroid.x, asteroid.y) - rocketCenter).distance;
+      return dist < _nearbyAsteroidClearRadius;
+    });
+  }
+
+  Future<void> _resumeFromSecondLifeReward() async {
+    _clearNearbyAsteroids();
+    _lives = 1;
+    _invincibleSecondsRemaining = _invincibilityAfterRewardSeconds;
+    _lastTick = null;
+    _ticker?.start();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _endGameFinal() async {
     _ticker?.stop();
-    _isGameOver = true;
+    _secondLife.endGameFinal();
 
     final storage = context.read<LocalStorageService>();
     final previousBest = storage.getHighScore(
       GameType.launchRocket,
-      _storageDifficulty,
+      LifeGameConstants.storageDifficulty,
     );
     if (_score > previousBest) {
       await storage.saveHighScoreIfHigher(
         GameType.launchRocket,
-        _storageDifficulty,
+        LifeGameConstants.storageDifficulty,
         _score,
       );
       if (mounted) {
         await context.read<AppState>().recordHighScore(
-              GameType.launchRocket,
-              _storageDifficulty,
-              _score,
-            );
+          GameType.launchRocket,
+          LifeGameConstants.storageDifficulty,
+          _score,
+          highestLevel: _level,
+        );
       }
       if (mounted) {
         setState(() => _bestScore = _score);
@@ -201,142 +307,84 @@ class _LaunchRocketScreenState extends State<LaunchRocketScreen>
   @override
   void dispose() {
     _ticker?.dispose();
+    _sprites.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF050818),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
-        title: const Text('Launch Rocket'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.of(context).pop(),
+  Widget _buildGameArea() {
+    if (_assetLoadError != null) {
+      return Center(
+        child: Text(
+          _assetLoadError!,
+          style: const TextStyle(color: AppGradientBackground.textSecondary),
+          textAlign: TextAlign.center,
         ),
-      ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          _gameSize = Size(constraints.maxWidth, constraints.maxHeight);
-          if (!_started && !_isGameOver) {
-            WidgetsBinding.instance.addPostFrameCallback((_) => _startGame());
-          }
+      );
+    }
 
-          return Stack(
-            children: [
-              GestureDetector(
-                onHorizontalDragUpdate: (details) {
-                  if (_isGameOver) {
-                    return;
-                  }
-                  setState(() {
-                    _rocketX = (_rocketX + details.delta.dx).clamp(
-                      0,
-                      _gameSize.width - _rocketWidth,
-                    );
-                  });
-                },
-                child: CustomPaint(
-                  size: _gameSize,
-                  painter: _SpacePainter(
-                    asteroids: _asteroids,
-                    rocketX: _rocketX,
-                    rocketY: _rocketY,
-                    rocketWidth: _rocketWidth,
-                    rocketHeight: _rocketHeight,
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 12,
-                left: 16,
-                right: 16,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Score: $_score',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    Text(
-                      'Best: $_bestScore',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (_isGameOver)
-                _GameOverOverlay(
-                  score: _score,
-                  bestScore: _bestScore,
-                  onPlayAgain: _playAgain,
-                  onBack: () => Navigator.of(context).pop(),
-                ),
-            ],
-          );
-        },
-      ),
+    if (!_assetsLoaded || !_sprites.isReady) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: AppGradientBackground.cyanAccent,
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _gameSize = Size(constraints.maxWidth, constraints.maxHeight);
+        if (!_started && !_secondLife.isGameOver) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _startGame());
+        }
+
+        return GestureDetector(
+          onHorizontalDragUpdate: (details) {
+            if (_isGameplayPaused) {
+              return;
+            }
+            setState(() {
+              _rocketX = (_rocketX + details.delta.dx).clamp(
+                0,
+                _gameSize.width - _rocketWidth,
+              );
+            });
+          },
+          child: CustomPaint(
+            size: _gameSize,
+            painter: _SpacePainter(
+              sprites: _sprites,
+              asteroids: _asteroids,
+              rocketX: _rocketX,
+              rocketY: _rocketY,
+              rocketWidth: _rocketWidth,
+              rocketHeight: _rocketHeight,
+              invincible: _invincibleSecondsRemaining > 0,
+            ),
+          ),
+        );
+      },
     );
   }
-}
-
-class _GameOverOverlay extends StatelessWidget {
-  const _GameOverOverlay({
-    required this.score,
-    required this.bestScore,
-    required this.onPlayAgain,
-    required this.onBack,
-  });
-
-  final int score;
-  final int bestScore;
-  final VoidCallback onPlayAgain;
-  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black.withValues(alpha: 0.65),
-      alignment: Alignment.center,
-      child: Card(
-        margin: const EdgeInsets.all(28),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Game Over',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 12),
-              Text('Score: $score'),
-              Text('Best: $bestScore'),
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: onPlayAgain,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Play Again'),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: onBack,
-                icon: const Icon(Icons.home_rounded),
-                label: const Text('Back to Games'),
-              ),
-            ],
-          ),
-        ),
+    final config = SecondLifeConfig.forGame(GameType.launchRocket);
+
+    return GameSecondLifeLayer(
+      config: config,
+      session: _secondLife,
+      score: _score,
+      bestScore: _bestScore,
+      stayOnScreenAfterFinal: true,
+      onEndGameFinal: _endGameFinal,
+      onPlayAgain: _playAgain,
+      onResumeFromSecondLife: _resumeFromSecondLifeReward,
+      child: GameScreenShell(
+        title: 'Launch Rocket',
+        score: _score,
+        lives: _lives,
+        level: _level,
+        child: _buildGameArea(),
       ),
     );
   }
@@ -344,18 +392,22 @@ class _GameOverOverlay extends StatelessWidget {
 
 class _SpacePainter extends CustomPainter {
   _SpacePainter({
+    required this.sprites,
     required this.asteroids,
     required this.rocketX,
     required this.rocketY,
     required this.rocketWidth,
     required this.rocketHeight,
+    required this.invincible,
   });
 
+  final LaunchRocketSpriteCache sprites;
   final List<RocketAsteroid> asteroids;
   final double rocketX;
   final double rocketY;
   final double rocketWidth;
   final double rocketHeight;
+  final bool invincible;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -367,44 +419,69 @@ class _SpacePainter extends CustomPainter {
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
     canvas.drawRect(Offset.zero & size, bg);
 
-    final starPaint = Paint()..color = Colors.white.withValues(alpha: 0.5);
+    final starPaint = Paint()
+      ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.5);
     for (var i = 0; i < 40; i++) {
       final x = (i * 47.0) % size.width;
       final y = (i * 83.0) % size.height;
       canvas.drawCircle(Offset(x, y), 1.2, starPaint);
     }
 
+    final asteroidPaint = Paint()..filterQuality = FilterQuality.medium;
+
     for (final asteroid in asteroids) {
-      final paint = Paint()..color = const Color(0xFF8B7355);
+      final image = sprites.asteroidSprite(asteroid.spriteIndex);
+      final diameter = asteroid.radius * 2.2;
       canvas.save();
       canvas.translate(asteroid.x, asteroid.y);
       canvas.rotate(asteroid.rotation);
-      canvas.drawCircle(Offset.zero, asteroid.radius, paint);
-      canvas.drawCircle(
-        Offset(-asteroid.radius * 0.3, -asteroid.radius * 0.2),
-        asteroid.radius * 0.35,
-        Paint()..color = const Color(0xFF5C4A3A),
+      _drawImageCentered(
+        canvas,
+        image,
+        Offset.zero,
+        diameter,
+        diameter,
+        asteroidPaint,
       );
       canvas.restore();
     }
 
-    final rocketRect = Rect.fromLTWH(
-      rocketX,
-      rocketY,
-      rocketWidth,
-      rocketHeight,
+    final rocket = sprites.rocket;
+    if (rocket != null) {
+      final rocketPaint = Paint()
+        ..filterQuality = FilterQuality.medium
+        ..color = invincible
+            ? const Color(0xFFFFE082)
+            : const Color(0xFFFFFFFF);
+      _drawImageRect(
+        canvas,
+        rocket,
+        Rect.fromLTWH(rocketX, rocketY, rocketWidth, rocketHeight),
+        rocketPaint,
+      );
+    }
+  }
+
+  void _drawImageCentered(
+    Canvas canvas,
+    ui.Image image,
+    Offset center,
+    double width,
+    double height,
+    Paint paint,
+  ) {
+    final dst = Rect.fromCenter(center: center, width: width, height: height);
+    _drawImageRect(canvas, image, dst, paint);
+  }
+
+  void _drawImageRect(Canvas canvas, ui.Image image, Rect dst, Paint paint) {
+    final src = Rect.fromLTWH(
+      0,
+      0,
+      image.width.toDouble(),
+      image.height.toDouble(),
     );
-    final rocketPaint = Paint()..color = const Color(0xFFFF8A00);
-    final path = Path()
-      ..moveTo(rocketRect.center.dx, rocketRect.top)
-      ..lineTo(rocketRect.right, rocketRect.bottom)
-      ..lineTo(rocketRect.left, rocketRect.bottom)
-      ..close();
-    canvas.drawPath(path, rocketPaint);
-    canvas.drawRect(
-      Rect.fromLTWH(rocketRect.center.dx - 6, rocketRect.top + 12, 12, 18),
-      Paint()..color = const Color(0xFF45D7FF),
-    );
+    canvas.drawImageRect(image, src, dst, paint);
   }
 
   @override

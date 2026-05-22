@@ -69,6 +69,8 @@ class AppState extends ChangeNotifier {
         .fold<int>(0, (best, score) => score > best ? score : best);
   }
 
+  int highestLevelFor(GameType gameType) => storage.getHighestLevel(gameType);
+
   Future<void> setThemeMode(ThemeMode mode) async {
     _themeMode = mode;
     await storage.setThemeMode(mode);
@@ -96,14 +98,18 @@ class AppState extends ChangeNotifier {
   Future<void> recordHighScore(
     GameType gameType,
     DifficultyLevel difficulty,
-    int score,
-  ) async {
+    int score, {
+    int? highestLevel,
+  }) async {
     final best = await storage.saveHighScoreIfHigher(
       gameType,
       difficulty,
       score,
     );
     _highScores[_mapKey(gameType, difficulty)] = best;
+    if (highestLevel != null) {
+      await storage.saveHighestLevelIfHigher(gameType, highestLevel);
+    }
     notifyListeners();
   }
 

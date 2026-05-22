@@ -54,15 +54,15 @@ extension GameTypeX on GameType {
   String get description {
     switch (this) {
       case GameType.quickMath:
-        return 'Solve fast arithmetic before the clock runs out.';
+        return 'Solve arithmetic puzzles';
       case GameType.colorSequence:
-        return 'Watch the pattern and repeat the colors.';
+        return 'Watch and repeat colors';
       case GameType.emojiMatch:
-        return 'Flip cards and match all emoji pairs before time runs out.';
+        return 'Match emoji pairs';
       case GameType.patternLock:
-        return 'Memorize the dot pattern and recreate it from memory.';
+        return 'Remember the unlock path';
       case GameType.launchRocket:
-        return 'Dodge asteroids in space.';
+        return 'Dodge asteroids in space';
       case GameType.trueFalse:
         return 'Sort rapid-fire facts into true or false.';
     }
@@ -161,9 +161,10 @@ const List<GameModel> homeLauncherGames = [
   GameModel(
     type: GameType.quickMath,
     title: 'Quick Math',
-    description: 'Solve fast arithmetic',
+    description: 'Solve arithmetic puzzles',
     icon: Icons.calculate_rounded,
     emoji: '🧠',
+    skipsDifficulty: true,
   ),
   GameModel(
     type: GameType.colorSequence,
@@ -171,6 +172,7 @@ const List<GameModel> homeLauncherGames = [
     description: 'Watch and repeat colors',
     icon: Icons.palette_rounded,
     emoji: '🎨',
+    skipsDifficulty: true,
   ),
   GameModel(
     type: GameType.emojiMatch,
@@ -178,6 +180,7 @@ const List<GameModel> homeLauncherGames = [
     description: 'Match emoji pairs',
     icon: Icons.emoji_emotions_rounded,
     emoji: '🧩',
+    skipsDifficulty: true,
   ),
   GameModel(
     type: GameType.patternLock,
@@ -185,6 +188,7 @@ const List<GameModel> homeLauncherGames = [
     description: 'Remember the unlock path',
     icon: Icons.pattern_rounded,
     emoji: '🔐',
+    skipsDifficulty: true,
   ),
   GameModel(
     type: GameType.launchRocket,

@@ -16,21 +16,6 @@ bool patternsMatch(List<int> a, List<int> b) {
 }
 
 void main() {
-  group('PatternLockConfig', () {
-    test('easy has 3 lives and starting length 3', () {
-      final config = patternLockConfigFor(DifficultyLevel.easy);
-      expect(config.lives, 3);
-      expect(config.startingLength, 3);
-      expect(config.maxLength, 6);
-    });
-
-    test('hard has 1 life', () {
-      final config = patternLockConfigFor(DifficultyLevel.hard);
-      expect(config.lives, 1);
-      expect(config.startingLength, 5);
-    });
-  });
-
   group('Pattern matching', () {
     test('patterns must match order and length', () {
       expect(patternsMatch([0, 1, 4], [0, 1, 4]), isTrue);

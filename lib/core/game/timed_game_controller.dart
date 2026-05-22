@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
+import '../../models/second_life_session.dart';
 import '../utils/score_utils.dart';
 import '../../models/game_model.dart';
 import '../../models/question_model.dart';
@@ -17,6 +18,7 @@ abstract class TimedGameController extends ChangeNotifier {
     required this.gameType,
     required this.difficulty,
     Random? random,
+    this.offerSecondLifeOnWrongAnswer = false,
   }) : random = random ?? Random();
 
   final LocalStorageService storage;
@@ -24,6 +26,9 @@ abstract class TimedGameController extends ChangeNotifier {
   final GameType gameType;
   final DifficultyLevel difficulty;
   final Random random;
+  final bool offerSecondLifeOnWrongAnswer;
+
+  final SecondLifeSession secondLife = SecondLifeSession();
 
   Timer? _roundTimer;
   Timer? _nextQuestionTimer;
@@ -50,7 +55,11 @@ abstract class TimedGameController extends ChangeNotifier {
     wrongAnswers: wrongAnswers,
   );
 
+  bool get isGameplayPaused =>
+      secondLife.isPausedForRewardAd || secondLife.awaitingSecondLifeDecision;
+
   Future<void> initialize() async {
+    secondLife.reset();
     bestScore = storage.getHighScore(gameType, difficulty);
     currentQuestion = buildQuestion();
     isLoading = false;
@@ -63,10 +72,13 @@ abstract class TimedGameController extends ChangeNotifier {
   void _startTimer() {
     _roundTimer?.cancel();
     _roundTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (isGameplayPaused) {
+        return;
+      }
       if (secondsRemaining <= 1) {
         secondsRemaining = 0;
         timer.cancel();
-        finishRound();
+        unawaited(finishRound());
       } else {
         secondsRemaining -= 1;
         notifyListeners();
@@ -76,6 +88,9 @@ abstract class TimedGameController extends ChangeNotifier {
 
   Future<void> submitAnswer(String answer) async {
     if (isRoundComplete || isAnswerLocked || currentQuestion == null) {
+      return;
+    }
+    if (isGameplayPaused) {
       return;
     }
 
@@ -92,17 +107,38 @@ abstract class TimedGameController extends ChangeNotifier {
         score += ScoreUtils.streakBonusPoints;
       }
       await soundService.playCorrect();
-    } else {
-      wrongAnswers += 1;
-      currentStreak = 0;
-      await soundService.playWrong();
+      notifyListeners();
+
+      _nextQuestionTimer?.cancel();
+      _nextQuestionTimer = Timer(const Duration(milliseconds: 350), () {
+        if (isRoundComplete || isGameplayPaused) {
+          return;
+        }
+        currentQuestion = buildQuestion();
+        isAnswerLocked = false;
+        lastAnswerCorrect = null;
+        selectedAnswer = null;
+        notifyListeners();
+      });
+      return;
     }
 
+    wrongAnswers += 1;
+    currentStreak = 0;
+    await soundService.playWrong();
     notifyListeners();
+
+    if (offerSecondLifeOnWrongAnswer && !secondLife.secondLifeUsed) {
+      _roundTimer?.cancel();
+      _nextQuestionTimer?.cancel();
+      secondLife.pauseForSecondLifeOffer();
+      notifyListeners();
+      return;
+    }
 
     _nextQuestionTimer?.cancel();
     _nextQuestionTimer = Timer(const Duration(milliseconds: 350), () {
-      if (isRoundComplete) {
+      if (isRoundComplete || isGameplayPaused) {
         return;
       }
       currentQuestion = buildQuestion();
@@ -118,6 +154,37 @@ abstract class TimedGameController extends ChangeNotifier {
       return;
     }
 
+    _roundTimer?.cancel();
+    _nextQuestionTimer?.cancel();
+
+    if (!secondLife.secondLifeUsed) {
+      secondLife.pauseForSecondLifeOffer();
+      notifyListeners();
+      return;
+    }
+
+    await endGameFinal();
+  }
+
+  Future<void> resumeFromSecondLifeReward() async {
+    secondLife.markSecondLifeUsed();
+    isAnswerLocked = false;
+    lastAnswerCorrect = null;
+    selectedAnswer = null;
+    currentQuestion = buildQuestion();
+    if (secondsRemaining <= 0) {
+      secondsRemaining = ScoreUtils.roundLengthSeconds;
+    }
+    _startTimer();
+    notifyListeners();
+  }
+
+  Future<void> endGameFinal() async {
+    if (isRoundComplete) {
+      return;
+    }
+
+    secondLife.endGameFinal();
     isRoundComplete = true;
     _roundTimer?.cancel();
     _nextQuestionTimer?.cancel();
@@ -138,6 +205,21 @@ abstract class TimedGameController extends ChangeNotifier {
       accuracyPercentage: accuracy,
     );
     notifyListeners();
+  }
+
+  void resetGame() {
+    secondLife.reset();
+    isRoundComplete = false;
+    result = null;
+    score = 0;
+    correctAnswers = 0;
+    wrongAnswers = 0;
+    currentStreak = 0;
+    secondsRemaining = ScoreUtils.roundLengthSeconds;
+    isAnswerLocked = false;
+    lastAnswerCorrect = null;
+    selectedAnswer = null;
+    isLoading = false;
   }
 
   @override

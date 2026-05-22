@@ -18,7 +18,9 @@ class EmojiCardTile extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: showEmoji ? BrandPalette.softBackground : BrandPalette.deepPurple,
+          color: showEmoji
+              ? BrandPalette.softBackground
+              : BrandPalette.deepPurple,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: card.isMatched

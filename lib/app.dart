@@ -8,7 +8,6 @@ import 'models/game_model.dart';
 import 'models/score_model.dart';
 import 'screens/about/about_screen.dart';
 import 'screens/about/privacy_policy_screen.dart';
-import 'screens/difficulty/difficulty_screen.dart';
 import 'screens/game_select/game_select_screen.dart';
 import 'screens/games/color_sequence/color_sequence_screen.dart';
 import 'screens/games/emoji_match/emoji_match_screen.dart';
@@ -23,6 +22,7 @@ import 'screens/result/result_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/splash/splash_screen.dart';
 import 'services/app_state.dart';
+import 'services/final_score_service.dart';
 import 'services/leaderboard_service.dart';
 import 'services/local_storage_service.dart';
 import 'services/sound_service.dart';
@@ -34,12 +34,14 @@ class LogicSprintApp extends StatelessWidget {
     required this.storage,
     required this.soundService,
     required this.leaderboardService,
+    required this.finalScoreService,
   });
 
   final AppState appState;
   final LocalStorageService storage;
   final SoundService soundService;
   final LeaderboardService leaderboardService;
+  final FinalScoreService finalScoreService;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +51,7 @@ class LogicSprintApp extends StatelessWidget {
         Provider<LocalStorageService>.value(value: storage),
         Provider<SoundService>.value(value: soundService),
         Provider<LeaderboardService>.value(value: leaderboardService),
+        Provider<FinalScoreService>.value(value: finalScoreService),
       ],
       child: Consumer<AppState>(
         builder: (context, state, _) {
@@ -85,32 +88,34 @@ class LogicSprintApp extends StatelessWidget {
         );
       case AppRoutes.difficulty:
         final gameType = settings.arguments as GameType;
-        return MaterialPageRoute<void>(
-          builder: (_) => DifficultyScreen(gameType: gameType),
-          settings: settings,
+        if (gameType == GameType.trueFalse) {
+          return MaterialPageRoute<void>(
+            builder: (_) =>
+                const TrueFalseScreen(difficulty: DifficultyLevel.easy),
+            settings: settings,
+          );
+        }
+        return _onGenerateRoute(
+          RouteSettings(name: AppRoutes.gameRoute(gameType), arguments: null),
         );
       case AppRoutes.quickMath:
-        final difficulty = settings.arguments as DifficultyLevel;
         return MaterialPageRoute<void>(
-          builder: (_) => QuickMathScreen(difficulty: difficulty),
+          builder: (_) => const QuickMathScreen(),
           settings: settings,
         );
       case AppRoutes.colorSequence:
-        final difficulty = settings.arguments as DifficultyLevel;
         return MaterialPageRoute<void>(
-          builder: (_) => ColorSequenceScreen(difficulty: difficulty),
+          builder: (_) => const ColorSequenceScreen(),
           settings: settings,
         );
       case AppRoutes.emojiMatch:
-        final difficulty = settings.arguments as DifficultyLevel;
         return MaterialPageRoute<void>(
-          builder: (_) => EmojiMatchScreen(difficulty: difficulty),
+          builder: (_) => const EmojiMatchScreen(),
           settings: settings,
         );
       case AppRoutes.patternLock:
-        final difficulty = settings.arguments as DifficultyLevel;
         return MaterialPageRoute<void>(
-          builder: (_) => PatternLockScreen(difficulty: difficulty),
+          builder: (_) => const PatternLockScreen(),
           settings: settings,
         );
       case AppRoutes.launchRocket:

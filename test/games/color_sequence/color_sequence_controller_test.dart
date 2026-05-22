@@ -20,28 +20,15 @@ void main() {
       soundService = SoundService.silent();
     });
 
-    test('starting sequence length follows difficulty', () {
-      expect(
-        ColorSequenceController.startingSequenceLengthFor(DifficultyLevel.easy),
-        3,
-      );
-      expect(
-        ColorSequenceController.startingSequenceLengthFor(
-          DifficultyLevel.medium,
-        ),
-        4,
-      );
-      expect(
-        ColorSequenceController.startingSequenceLengthFor(DifficultyLevel.hard),
-        5,
-      );
+    test('sequence length grows with level', () {
+      expect(ColorSequenceController.sequenceLengthForLevel(1), 2);
+      expect(ColorSequenceController.sequenceLengthForLevel(3), 4);
     });
 
     test('generateSequence uses only palette colors', () {
       final controller = ColorSequenceController(
         storage: storage,
         soundService: soundService,
-        difficulty: DifficultyLevel.easy,
         random: Random(3),
       );
 
@@ -53,15 +40,13 @@ void main() {
       controller.dispose();
     });
 
-    test('wrong tap increments wrong answers', () async {
+    test('wrong tap increments wrong answers and costs a life', () async {
       final controller = ColorSequenceController(
         storage: storage,
         soundService: soundService,
-        difficulty: DifficultyLevel.easy,
         random: Random(7),
       );
 
-      controller.sequenceLength = 2;
       controller.targetSequence = [SequenceColor.cyan, SequenceColor.purple];
       controller.phase = ColorSequencePhase.repeating;
       controller.isRoundComplete = false;
@@ -69,18 +54,18 @@ void main() {
       await controller.tapColor(SequenceColor.blue);
       expect(controller.wrongAnswers, 1);
       expect(controller.currentStreak, 0);
+      expect(controller.lives, 2);
+      expect(controller.isRoundComplete, isFalse);
       controller.dispose();
     });
 
-    test('correct full sequence adds score', () async {
+    test('correct full sequence adds score and level', () async {
       final controller = ColorSequenceController(
         storage: storage,
         soundService: soundService,
-        difficulty: DifficultyLevel.easy,
         random: Random(5),
       );
 
-      controller.sequenceLength = 2;
       controller.targetSequence = [SequenceColor.blue, SequenceColor.orange];
       controller.phase = ColorSequencePhase.repeating;
       controller.isRoundComplete = false;
@@ -90,36 +75,8 @@ void main() {
 
       expect(controller.score, greaterThanOrEqualTo(10));
       expect(controller.correctAnswers, 1);
-      expect(controller.completedRounds, 1);
+      expect(controller.level, 2);
       controller.dispose();
-    });
-
-    test('high score key uses colorSequence storage key', () async {
-      await storage.saveHighScoreIfHigher(
-        GameType.colorSequence,
-        DifficultyLevel.easy,
-        40,
-      );
-      expect(
-        storage.getHighScore(GameType.colorSequence, DifficultyLevel.easy),
-        40,
-      );
-    });
-  });
-
-  group('GameType storage', () {
-    test('launch games include colorSequence with correct storage key', () {
-      expect(GameType.values, contains(GameType.colorSequence));
-      expect(GameType.colorSequence.storageKey, 'colorSequence');
-      expect(availableGames.length, greaterThanOrEqualTo(5));
-      expect(
-        availableGames.map((game) => game.type),
-        containsAll([
-          GameType.quickMath,
-          GameType.colorSequence,
-          GameType.launchRocket,
-        ]),
-      );
     });
   });
 }

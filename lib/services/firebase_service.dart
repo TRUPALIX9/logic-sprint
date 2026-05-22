@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import '../firebase_options.dart';
@@ -24,6 +25,22 @@ abstract final class AppFirebaseService {
     } on Object {
       _initialized = false;
       return false;
+    }
+  }
+
+  /// Anonymous auth for leaderboard writes. Returns UID or null.
+  static Future<String?> ensureAnonymousUser() async {
+    if (!_initialized) {
+      return null;
+    }
+    try {
+      final auth = FirebaseAuth.instance;
+      if (auth.currentUser == null) {
+        await auth.signInAnonymously();
+      }
+      return auth.currentUser?.uid;
+    } on Object {
+      return null;
     }
   }
 }

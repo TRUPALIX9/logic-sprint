@@ -3,10 +3,12 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../core/constants/life_game_constants.dart';
 import '../../../core/game/score_calculator.dart';
 import '../../../core/utils/score_utils.dart';
 import '../../../models/game_model.dart';
 import '../../../models/score_model.dart';
+import '../../../models/second_life_session.dart';
 import '../../../services/local_storage_service.dart';
 import '../../../services/sound_service.dart';
 import 'emoji_match_models.dart';
@@ -15,48 +17,58 @@ class EmojiMatchController extends ChangeNotifier {
   EmojiMatchController({
     required this.storage,
     required this.soundService,
-    required this.difficulty,
     Random? random,
-  }) : random = random ?? Random(),
-       config = emojiMatchConfigFor(difficulty);
+  }) : random = random ?? Random();
 
   final LocalStorageService storage;
   final SoundService soundService;
-  final DifficultyLevel difficulty;
   final Random random;
   final GameType gameType = GameType.emojiMatch;
-  final EmojiMatchConfig config;
+  final SecondLifeSession secondLife = SecondLifeSession();
 
-  Timer? _timer;
+  static const DifficultyLevel _storage = LifeGameConstants.storageDifficulty;
+
+  EmojiMatchConfig config = emojiMatchConfigForLevel(1);
   List<EmojiCard> cards = [];
   final List<int> selectedIndexes = [];
 
+  int lives = LifeGameConstants.startingLives;
+  int level = 1;
   int score = 0;
+  int bestScore = 0;
   int streak = 0;
-  int remainingSeconds = 0;
   int correctMatches = 0;
   int wrongMatches = 0;
   bool isCheckingPair = false;
   bool isRoundComplete = false;
-  bool isWin = false;
   bool isLoading = true;
   ScoreModel? result;
 
   int get matchedPairCount => cards.where((card) => card.isMatched).length ~/ 2;
 
+  bool get isGameplayPaused =>
+      secondLife.isPausedForRewardAd || secondLife.awaitingSecondLifeDecision;
+
   String get statusMessage {
     if (isRoundComplete) {
-      return isWin ? 'All pairs matched!' : "Time's up!";
+      return 'Game over';
     }
-    return 'Find all matching pairs before time runs out.';
+    return 'Match all emoji pairs. Wrong matches cost a life.';
   }
 
   Future<void> initialize() async {
-    remainingSeconds = config.totalTime.inSeconds;
-    _createCards();
+    resetGame();
+    bestScore = storage.getHighScore(gameType, _storage);
+    _setupLevelBoard();
     isLoading = false;
     notifyListeners();
-    _startTimer();
+  }
+
+  void _setupLevelBoard() {
+    config = emojiMatchConfigForLevel(level);
+    _createCards();
+    selectedIndexes.clear();
+    isCheckingPair = false;
   }
 
   void _createCards() {
@@ -70,23 +82,8 @@ class EmojiMatchController extends ChangeNotifier {
     ]..shuffle(random);
   }
 
-  void _startTimer() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (isRoundComplete) {
-        return;
-      }
-
-      remainingSeconds--;
-      if (remainingSeconds <= 0) {
-        unawaited(_endGame(win: matchedPairCount == config.pairCount));
-      }
-      notifyListeners();
-    });
-  }
-
   Future<void> handleCardTap(int index) async {
-    if (isRoundComplete || isCheckingPair || isLoading) {
+    if (isRoundComplete || isCheckingPair || isLoading || isGameplayPaused) {
       return;
     }
 
@@ -126,45 +123,66 @@ class EmojiMatchController extends ChangeNotifier {
       selectedIndexes.clear();
 
       if (cards.every((card) => card.isMatched)) {
-        await _endGame(win: true);
+        level += 1;
+        isCheckingPair = false;
+        notifyListeners();
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+        if (!isRoundComplete && !isGameplayPaused) {
+          _setupLevelBoard();
+          notifyListeners();
+        }
         return;
       }
     } else {
       wrongMatches++;
       streak = 0;
-      if (config.hasMismatchPenalty) {
-        score = ScoreCalculator.applyMismatchPenalty(score, penalty: 2);
-      }
+      lives -= 1;
       await soundService.playWrong();
       await Future<void>.delayed(config.mismatchRevealDuration);
       first.isFaceUp = false;
       second.isFaceUp = false;
       selectedIndexes.clear();
+
+      if (lives <= 0) {
+        isCheckingPair = false;
+        _offerGameOverOrSecondLife();
+        return;
+      }
     }
 
     isCheckingPair = false;
     notifyListeners();
   }
 
-  Future<void> _endGame({required bool win}) async {
+  void _offerGameOverOrSecondLife() {
+    if (!secondLife.secondLifeUsed) {
+      secondLife.pauseForSecondLifeOffer();
+      notifyListeners();
+      return;
+    }
+    unawaited(endGameFinal());
+  }
+
+  Future<void> resumeFromSecondLifeReward() async {
+    secondLife.markSecondLifeUsed();
+    lives = 1;
+    notifyListeners();
+  }
+
+  Future<void> endGameFinal() async {
     if (isRoundComplete) {
       return;
     }
 
+    secondLife.endGameFinal();
     isRoundComplete = true;
-    isWin = win;
-    _timer?.cancel();
 
-    final previousBest = storage.getHighScore(gameType, difficulty);
-    final bestScore = await storage.saveHighScoreIfHigher(
-      gameType,
-      difficulty,
-      score,
-    );
+    final previousBest = bestScore;
+    bestScore = await storage.saveHighScoreIfHigher(gameType, _storage, score);
 
     result = ScoreModel(
       gameType: gameType,
-      difficulty: difficulty,
+      difficulty: _storage,
       finalScore: score,
       bestScore: bestScore,
       previousBestScore: previousBest,
@@ -174,13 +192,24 @@ class EmojiMatchController extends ChangeNotifier {
         correctAnswers: correctMatches,
         wrongAnswers: wrongMatches,
       ),
+      level: level,
+      usedSecondLife: secondLife.secondLifeUsed,
     );
     notifyListeners();
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  void resetGame() {
+    secondLife.reset();
+    isRoundComplete = false;
+    result = null;
+    lives = LifeGameConstants.startingLives;
+    level = 1;
+    score = 0;
+    streak = 0;
+    correctMatches = 0;
+    wrongMatches = 0;
+    isCheckingPair = false;
+    selectedIndexes.clear();
+    isLoading = false;
   }
 }

@@ -2,39 +2,26 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /leaderboardScores/{scoreId} {
+    match /leaderboards/{gameType}/scores/{userId} {
       allow read: if true;
 
-      allow create: if
-      request.resource.data.keys().hasOnly([
-      'playerName',
-      'score',
-      'gameType',
-      'difficulty',
-      'createdAt',
-      'appVersion'
-      ]) &&
-      request.resource.data.playerName is string &&
-      request.resource.data.playerName.size() >= 1 &&
-      request.resource.data.playerName.size() <= 20 &&
-      request.resource.data.score is int &&
-      request.resource.data.score >= 1 &&
-      request.resource.data.score <= 999999 &&
-      request.resource.data.gameType in [
-      'quickMath',
-      'colorSequence',
-      'trueFalse'
-      ] &&
-      request.resource.data.difficulty in [
-      'easy',
-      'medium',
-      'hard'
-      ] &&
-      request.resource.data.appVersion is string &&
-      request.resource.data.appVersion.size() <= 20 &&
-      request.resource.data.createdAt == request.time;
-
-      allow update, delete: if false;
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && gameType in [
+          'quick_math',
+          'color_sequence',
+          'emoji_match',
+          'pattern_lock',
+          'launch_rocket'
+        ]
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 999999
+        && request.resource.data.playerName is string
+        && request.resource.data.playerName.size() >= 2
+        && request.resource.data.playerName.size() <= 16
+        && request.resource.data.playerId == userId
+        && request.resource.data.gameType == gameType;
     }
   }
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../app_gradient_background.dart';
 import '../custom_app_bar.dart';
 
+/// Scaffold with global gradient — no light/white page backgrounds.
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
     super.key,
@@ -19,11 +21,12 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: title == null
           ? null
           : CustomAppBar(title: title!, subtitle: subtitle),
       floatingActionButton: floatingActionButton,
-      body: SafeArea(child: body),
+      body: AppGradientBackground(child: SafeArea(child: body)),
     );
   }
 }

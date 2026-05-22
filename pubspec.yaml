@@ -37,6 +37,8 @@ dependencies:
   flutter_animate: ^4.5.2
   firebase_core: ^4.9.0
   cloud_firestore: ^6.4.1
+  firebase_auth: ^6.1.4
+  connectivity_plus: ^7.0.0
   package_info_plus: ^9.0.0
   google_mobile_ads: ^6.0.0
 
@@ -73,3 +75,4 @@ flutter:
     - assets/brand/games/color_sequence/
     - assets/brand/games/true_false/
     - assets/images/
+    - assets/rocket-launch/

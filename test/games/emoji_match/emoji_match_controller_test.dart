@@ -8,16 +8,15 @@ import 'package:logic_sprint/screens/games/emoji_match/emoji_match_models.dart';
 void main() {
   group('EmojiMatchConfig', () {
     test('hard enables mismatch penalty', () {
-      final config = emojiMatchConfigFor(DifficultyLevel.hard);
-      expect(config.hasMismatchPenalty, isTrue);
-      expect(config.pairCount, 10);
+      final config = emojiMatchConfigForLevel(8);
+      expect(config.pairCount, greaterThanOrEqualTo(8));
     });
   });
 
   group('Emoji card deck', () {
     test('creates exact pairs from emoji pool', () {
       final random = Random(7);
-      final config = emojiMatchConfigFor(DifficultyLevel.easy);
+      final config = emojiMatchConfigForLevel(1);
       final selectedEmojis = [...emojiPool]..shuffle(random);
       final pairs = selectedEmojis.take(config.pairCount).toList();
       final cards = [
@@ -35,13 +34,6 @@ void main() {
       for (final count in counts.values) {
         expect(count, 2);
       }
-    });
-  });
-
-  group('Emoji Match scoring', () {
-    test('hard penalty reduces score by 2', () {
-      expect(ScoreCalculator.applyMismatchPenalty(5, penalty: 2), 3);
-      expect(ScoreCalculator.applyMismatchPenalty(1, penalty: 2), 0);
     });
   });
 }

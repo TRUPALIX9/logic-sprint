@@ -9,21 +9,21 @@ abstract final class AppTheme {
       primary: AppColors.primary,
       secondary: AppColors.accent,
       brightness: Brightness.light,
-      surface: AppColors.cardLight,
+      surface: AppColors.cardDark,
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AppColors.surfaceLight,
+      scaffoldBackgroundColor: AppColors.surfaceDark,
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
-        foregroundColor: AppColors.textDark,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: false,
       ),
       cardTheme: CardThemeData(
-        color: AppColors.cardLight,
+        color: AppColors.cardDark,
         elevation: 2,
         shadowColor: AppColors.primaryDark.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -43,23 +43,23 @@ abstract final class AppTheme {
       textTheme: const TextTheme(
         displaySmall: TextStyle(
           fontWeight: FontWeight.w800,
-          color: AppColors.textDark,
+          color: AppColors.textPrimary,
         ),
         headlineMedium: TextStyle(
           fontWeight: FontWeight.w800,
-          color: AppColors.textDark,
+          color: AppColors.textPrimary,
         ),
         titleLarge: TextStyle(
           fontWeight: FontWeight.w800,
-          color: AppColors.textDark,
+          color: AppColors.textPrimary,
         ),
         titleMedium: TextStyle(
           fontWeight: FontWeight.w700,
-          color: AppColors.textDark,
+          color: AppColors.textPrimary,
         ),
-        bodyLarge: TextStyle(height: 1.35, color: AppColors.textDark),
-        bodyMedium: TextStyle(color: AppColors.textMuted),
-        bodySmall: TextStyle(color: AppColors.textMuted),
+        bodyLarge: TextStyle(height: 1.35, color: AppColors.textPrimary),
+        bodyMedium: TextStyle(color: AppColors.textSecondary),
+        bodySmall: TextStyle(color: AppColors.textSecondary),
       ),
       dividerColor: AppColors.textMuted.withValues(alpha: 0.2),
     );

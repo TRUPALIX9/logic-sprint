@@ -3,38 +3,41 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../core/constants/life_game_constants.dart';
 import '../../../core/game/score_calculator.dart';
 import '../../../core/utils/score_utils.dart';
 import '../../../models/game_model.dart';
 import '../../../models/score_model.dart';
+import '../../../models/second_life_session.dart';
 import '../../../services/local_storage_service.dart';
 import '../../../services/sound_service.dart';
-import 'pattern_lock_models.dart';
 
 class PatternLockController extends ChangeNotifier {
   PatternLockController({
     required this.storage,
     required this.soundService,
-    required this.difficulty,
     Random? random,
   }) : random = random ?? Random(),
-       config = patternLockConfigFor(difficulty);
+       gridSize = 3;
 
   final LocalStorageService storage;
   final SoundService soundService;
-  final DifficultyLevel difficulty;
   final Random random;
+  final int gridSize;
   final GameType gameType = GameType.patternLock;
-  final PatternLockConfig config;
+  final SecondLifeSession secondLife = SecondLifeSession();
+
+  static const DifficultyLevel _storage = LifeGameConstants.storageDifficulty;
+  static const Duration previewDuration = Duration(milliseconds: 1400);
 
   List<int> targetPattern = [];
   List<int> playerPattern = [];
 
+  int lives = LifeGameConstants.startingLives;
+  int level = 1;
   int score = 0;
+  int bestScore = 0;
   int streak = 0;
-  int round = 1;
-  int lives = 0;
-  int currentPatternLength = 0;
   int correctPatterns = 0;
   int wrongAttempts = 0;
 
@@ -44,7 +47,11 @@ class PatternLockController extends ChangeNotifier {
   bool isLoading = true;
   ScoreModel? result;
 
-  int get dotCount => config.gridSize * config.gridSize;
+  int get dotCount => gridSize * gridSize;
+  int get patternLength => (level + 2).clamp(3, 9);
+
+  bool get isGameplayPaused =>
+      secondLife.isPausedForRewardAd || secondLife.awaitingSecondLifeDecision;
 
   String get statusMessage {
     if (isRoundComplete) {
@@ -60,27 +67,27 @@ class PatternLockController extends ChangeNotifier {
   }
 
   Future<void> initialize() async {
-    lives = config.lives;
-    currentPatternLength = config.startingLength;
+    resetGame();
+    bestScore = storage.getHighScore(gameType, _storage);
     isLoading = false;
     notifyListeners();
     await _startRound();
   }
 
   Future<void> _startRound() async {
-    if (isRoundComplete) {
+    if (isRoundComplete || isGameplayPaused) {
       return;
     }
 
     playerPattern = [];
-    targetPattern = _generatePattern(currentPatternLength);
+    targetPattern = _generatePattern(patternLength);
     isPreviewing = true;
     isAcceptingInput = false;
     notifyListeners();
 
-    await Future<void>.delayed(config.previewDuration);
+    await Future<void>.delayed(previewDuration);
 
-    if (isRoundComplete) {
+    if (isRoundComplete || isGameplayPaused) {
       return;
     }
 
@@ -96,7 +103,10 @@ class PatternLockController extends ChangeNotifier {
   }
 
   void addDot(int dotIndex) {
-    if (!isAcceptingInput || isRoundComplete || isPreviewing) {
+    if (!isAcceptingInput ||
+        isRoundComplete ||
+        isPreviewing ||
+        isGameplayPaused) {
       return;
     }
     if (playerPattern.contains(dotIndex)) {
@@ -116,7 +126,7 @@ class PatternLockController extends ChangeNotifier {
   }
 
   Future<void> submitPattern() async {
-    if (!isAcceptingInput || isRoundComplete) {
+    if (!isAcceptingInput || isRoundComplete || isGameplayPaused) {
       return;
     }
 
@@ -149,11 +159,7 @@ class PatternLockController extends ChangeNotifier {
       streakAfterCorrect: streak,
     );
     await soundService.playCorrect();
-
-    round++;
-    if (currentPatternLength < config.maxLength) {
-      currentPatternLength++;
-    }
+    level += 1;
 
     notifyListeners();
     await _startRound();
@@ -162,37 +168,68 @@ class PatternLockController extends ChangeNotifier {
   Future<void> _handleWrongPattern() async {
     wrongAttempts++;
     streak = 0;
-    lives--;
+    lives -= 1;
     await soundService.playWrong();
 
     if (lives <= 0) {
-      await finishRound();
+      _offerGameOverOrSecondLife();
       return;
     }
 
     notifyListeners();
-    await _startRound();
+    await _replayCurrentPattern();
   }
 
-  Future<void> finishRound() async {
+  void _offerGameOverOrSecondLife() {
+    if (!secondLife.secondLifeUsed) {
+      secondLife.pauseForSecondLifeOffer();
+      notifyListeners();
+      return;
+    }
+    unawaited(endGameFinal());
+  }
+
+  Future<void> resumeFromSecondLifeReward() async {
+    secondLife.markSecondLifeUsed();
+    lives = 1;
+    playerPattern = [];
+    await _replayCurrentPattern();
+    notifyListeners();
+  }
+
+  Future<void> _replayCurrentPattern() async {
+    isPreviewing = true;
+    isAcceptingInput = false;
+    notifyListeners();
+
+    await Future<void>.delayed(previewDuration);
+
+    if (isRoundComplete || isGameplayPaused) {
+      return;
+    }
+
+    isPreviewing = false;
+    isAcceptingInput = true;
+    playerPattern = [];
+    notifyListeners();
+  }
+
+  Future<void> endGameFinal() async {
     if (isRoundComplete) {
       return;
     }
 
+    secondLife.endGameFinal();
     isRoundComplete = true;
     isAcceptingInput = false;
     isPreviewing = false;
 
-    final previousBest = storage.getHighScore(gameType, difficulty);
-    final bestScore = await storage.saveHighScoreIfHigher(
-      gameType,
-      difficulty,
-      score,
-    );
+    final previousBest = bestScore;
+    bestScore = await storage.saveHighScoreIfHigher(gameType, _storage, score);
 
     result = ScoreModel(
       gameType: gameType,
-      difficulty: difficulty,
+      difficulty: _storage,
       finalScore: score,
       bestScore: bestScore,
       previousBestScore: previousBest,
@@ -202,8 +239,27 @@ class PatternLockController extends ChangeNotifier {
         correctAnswers: correctPatterns,
         wrongAnswers: wrongAttempts,
       ),
+      level: level,
+      usedSecondLife: secondLife.secondLifeUsed,
     );
     notifyListeners();
+  }
+
+  void resetGame() {
+    secondLife.reset();
+    isRoundComplete = false;
+    result = null;
+    lives = LifeGameConstants.startingLives;
+    level = 1;
+    score = 0;
+    streak = 0;
+    correctPatterns = 0;
+    wrongAttempts = 0;
+    isPreviewing = false;
+    isAcceptingInput = false;
+    targetPattern = [];
+    playerPattern = [];
+    isLoading = false;
   }
 
   bool isDotActive(int index) {

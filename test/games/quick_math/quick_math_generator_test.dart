@@ -7,8 +7,8 @@ import 'package:logic_sprint/screens/games/quick_math/quick_math_controller.dart
 void main() {
   group('QuickMathQuestionFactory', () {
     test('creates four unique options including the correct answer', () {
-      final question = QuickMathQuestionFactory.create(
-        DifficultyLevel.medium,
+      final question = QuickMathQuestionFactory.createForLevel(
+        3,
         random: Random(4),
       );
 
@@ -21,8 +21,8 @@ void main() {
       final random = Random(6);
 
       for (var index = 0; index < 20; index++) {
-        final question = QuickMathQuestionFactory.create(
-          DifficultyLevel.hard,
+        final question = QuickMathQuestionFactory.createForLevel(
+          5,
           random: random,
         );
 
