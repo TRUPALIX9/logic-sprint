@@ -1,4 +1,4 @@
-package com.logicsprint.logic_sprint
+package com.trupal.logicsprint
 
 import io.flutter.embedding.android.FlutterActivity
 

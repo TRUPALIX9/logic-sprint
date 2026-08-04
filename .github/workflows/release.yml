@@ -1,94 +1,99 @@
-name: Build Production Release
+name: Production Release
 
 on:
   push:
     branches:
       - production
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  build-release:
-    name: Build Android AAB & iOS IPA
-    runs-on: macos-latest # macOS runner allows compiling both Android AAB and iOS IPA!
-
+  release:
+    name: Build, Deploy and Release
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Java 17 (Required for Android)
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
-
-      - name: Setup Node.js (For Firebase CLI)
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
           cache: true
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Restore Firebase Configs and Android Keystores from Secrets
+      - name: Run Static Analysis
+        run: flutter analyze
+
+      - name: Run Tests
+        run: flutter test
+
+      - name: Deploy Firestore Rules
+        uses: w9jds/firebase-action@v2.2.0
+        with:
+          args: deploy --only firestore:rules
+        env:
+          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          PROJECT_ID: "logic-sprint"
+
+      - name: Decode Android Keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
         run: |
-          # Create credentials & keys directories
-          mkdir -p credentials
-          mkdir -p android/app
-
-          # Write Firebase Service Account
-          if [ ! -z "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]; then
-            echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > credentials/logic-sprint-firebase.json
-            echo "FIREBASE_SERVICE_ACCOUNT restored successfully."
-
-            # Fetch fresh client configs automatically using our refresh script
-            chmod +x scripts/refresh_firebase_client_config.sh
-            ./scripts/refresh_firebase_client_config.sh
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$ANDROID_KEY_PROPERTIES" ]; then
+            echo "Signing keys found. Preparing release signing configurations..."
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
+            echo "$ANDROID_KEY_PROPERTIES" > android/key.properties
           else
-            echo "FIREBASE_SERVICE_ACCOUNT secret not found. Using placeholder configs."
+            echo "No release signing keys configured in secrets. Falling back to debug signing configuration."
           fi
 
-          # Restore Android release keystore & key.properties if available
-          if [ ! -z "${{ secrets.ANDROID_KEY_PROPERTIES }}" ]; then
-            echo '${{ secrets.ANDROID_KEY_PROPERTIES }}' > android/key.properties
-            echo "ANDROID_KEY_PROPERTIES restored successfully."
-          fi
-
-          if [ ! -z "${{ secrets.UPLOAD_KEYSTORE_JKS_BASE64 }}" ]; then
-            echo '${{ secrets.UPLOAD_KEYSTORE_JKS_BASE64 }}' | base64 -d > android/upload-keystore.jks
-            echo "UPLOAD_KEYSTORE_JKS restored successfully."
-          fi
+      - name: Build Android APK
+        run: flutter build apk --release
 
       - name: Build Android App Bundle (AAB)
+        run: flutter build appbundle --release
+
+      - name: Extract Version
+        id: get_version
         run: |
-          if [ -f "android/key.properties" ]; then
-            echo "Building signed Android release AAB..."
-            flutter build appbundle --release
-          else
-            echo "Signing keys not found. Building unsigned release AAB..."
-            flutter build appbundle --release --no-shrink
-          fi
+          VERSION=$(grep '^version: ' pubspec.yaml | cut -d' ' -f2)
+          TAG_VERSION=$(echo "$VERSION" | tr '+' '-')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag_version=$TAG_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Build iOS IPA (Unsigned / Store Ready)
-        run: |
-          echo "Building iOS IPA..."
-          flutter build ipa --release --no-codesign
-
-      - name: Upload Android Release AAB Artifact
-        uses: actions/upload-artifact@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: logic-sprint-android-release
-          path: build/app/outputs/bundle/release/app-release.aab
-
-      - name: Upload iOS Release IPA Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: logic-sprint-ios-release
-          path: build/ios/ipa/*.ipa
+          tag_name: ${{ github.event.release.tag_name || format('v{0}', steps.get_version.outputs.tag_version) }}
+          name: ${{ github.event.release.name || format('Release v{0}', steps.get_version.outputs.version) }}
+          draft: false
+          prerelease: false
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+          body: |
+            LogicSprint Production Release for version ${{ steps.get_version.outputs.version }}.
+            
+            ### Artifacts Included
+            * **Android APK (`app-release.apk`):** For direct installation and manual QA testing.
+            * **Android App Bundle (`app-release.aab`):** Signed bundle for Google Play Console deployment.
+            
+            ### Actions Taken
+            * Ran code quality checks (`flutter analyze`) and all unit tests.
+            * Automatically deployed the updated Firestore Rules to the Firebase project.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

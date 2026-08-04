@@ -1,0 +1,11 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.trupal.logicsprint",
+      "sha256_cert_fingerprints":
+        ["8C:1D:FC:B1:3B:83:0F:B4:13:45:7C:6C:5E:07:B7:3F:C9:0A:EA:21:47:29:90:6A:9D:E0:01:D1:B9:BC:DC:54"]
+    }
+  }
+]

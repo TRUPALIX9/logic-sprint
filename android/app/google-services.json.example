@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "REPLACE_ANDROID_APP_ID",
         "android_client_info": {
-          "package_name": "com.logicsprint.logic_sprint"
+          "package_name": "com.trupal.logicsprint"
         }
       },
       "oauth_client": [],
