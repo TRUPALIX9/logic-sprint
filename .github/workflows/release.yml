@@ -40,19 +40,6 @@ jobs:
       - name: Run Tests
         run: flutter test
 
-      - name: Deploy Firestore Rules
-        env:
-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-        run: |
-          if [ -n "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
-            echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > firebase-key.json
-            export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/firebase-key.json"
-            npx firebase-tools deploy --only firestore:rules --project logic-sprint || echo "WARNING: Firestore rules deployment failed (likely due to missing Service Usage Consumer IAM role on the service account). Skipping rules deployment."
-            rm firebase-key.json
-          else
-            echo "FIREBASE_SERVICE_ACCOUNT_JSON secret not found. Skipping Firestore rules deployment."
-          fi
-
       - name: Decode Android Keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -92,13 +79,13 @@ jobs:
             build/app/outputs/bundle/release/app-release.aab
           body: |
             LogicSprint Production Release for version ${{ steps.get_version.outputs.version }}.
-            
+
             ### Artifacts Included
             * **Android APK (`app-release.apk`):** For direct installation and manual QA testing.
             * **Android App Bundle (`app-release.aab`):** Signed bundle for Google Play Console deployment.
-            
+
             ### Actions Taken
             * Ran code quality checks (`flutter analyze`) and all unit tests.
-            * Automatically deployed the updated Firestore Rules to the Firebase project.
+            * Built release APK and AAB signed with the upload keystore.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

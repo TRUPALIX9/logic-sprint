@@ -3,7 +3,6 @@ import 'package:flutter/widgets.dart';
 import 'app.dart';
 import 'services/ad_service.dart';
 import 'services/app_state.dart';
-import 'services/firebase_service.dart';
 import 'services/supabase_service.dart';
 import 'services/leaderboard_cache_service.dart';
 import 'services/leaderboard_service.dart';
@@ -13,7 +12,6 @@ import 'services/sound_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await AppFirebaseService.initialize();
   await AppSupabaseService.initialize();
 
   final storage = await LocalStorageService.create();
