@@ -66,7 +66,7 @@ class _AboutScreenState extends State<AboutScreen> {
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    'LogicSprint is a free brain game app with quick mini-games for math, memory, and logic. Play offline anytime; optionally submit scores to the Global Top 100 when Firebase is configured.',
+                    'LogicSprint is a free brain game app with quick mini-games for math, memory, and logic. Play offline anytime; optionally submit scores to the Global Top 10 leaderboard powered by Supabase.',
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 ],
