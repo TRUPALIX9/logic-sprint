@@ -41,12 +41,17 @@ jobs:
         run: flutter test
 
       - name: Deploy Firestore Rules
-        uses: w9jds/firebase-action@v2.2.0
-        with:
-          args: deploy --only firestore:rules
         env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          PROJECT_ID: "logic-sprint"
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -n "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
+            echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > firebase-key.json
+            export GOOGLE_APPLICATION_CREDENTIALS=firebase-key.json
+            npx firebase-tools deploy --only firestore:rules --project logic-sprint
+            rm firebase-key.json
+          else
+            echo "FIREBASE_SERVICE_ACCOUNT_JSON secret not found. Skipping Firestore rules deployment."
+          fi
 
       - name: Decode Android Keystore
         env:
