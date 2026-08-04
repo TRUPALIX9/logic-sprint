@@ -13,6 +13,7 @@ import '../../../services/sound_service.dart';
 import '../../../widgets/custom_app_bar.dart';
 import '../../../widgets/game_status_header.dart';
 import '../../../widgets/timer_bar.dart';
+import '../../../widgets/ui/game_tactile_button.dart';
 import 'rocket_launch_controller.dart';
 
 class RocketLaunchScreen extends StatefulWidget {
@@ -129,9 +130,19 @@ class _RocketLaunchScreenState extends State<RocketLaunchScreen> {
                               },
                               child: Container(
                                 decoration: BoxDecoration(
-                                  // ignore: deprecated_member_use
-                                  color: Colors.black.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(16),
+                                  color: Colors.black.withValues(alpha: 0.45),
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: const Color(0xFF10BDEB).withValues(alpha: 0.5),
+                                    width: 2.0,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF10BDEB).withValues(alpha: 0.15),
+                                      blurRadius: 10,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
                                 ),
                                 margin: const EdgeInsets.symmetric(horizontal: 16),
                                 clipBehavior: Clip.antiAlias,
@@ -182,8 +193,7 @@ class _RocketLaunchScreenState extends State<RocketLaunchScreen> {
                                         '← Drag screen to steer rocket →',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
-                                          // ignore: deprecated_member_use
-                                          color: Colors.white.withOpacity(0.5),
+                                          color: Colors.white.withValues(alpha: 0.5),
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -198,25 +208,41 @@ class _RocketLaunchScreenState extends State<RocketLaunchScreen> {
                       ),
                       // Button controls
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                            Expanded(
+                              child: GameTactileButton(
+                                color: const Color(0xFF10BDEB),
+                                bottomColor: const Color(0xFF0B8EA1),
+                                height: 52,
+                                onPressed: _controller.moveRocketLeft,
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.arrow_back_rounded, color: Colors.white),
+                                    SizedBox(width: 8),
+                                    Text('STEER LEFT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                                  ],
+                                ),
                               ),
-                              onPressed: _controller.moveRocketLeft,
-                              icon: const Icon(Icons.arrow_back_rounded),
-                              label: const Text('LEFT'),
                             ),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: GameTactileButton(
+                                color: const Color(0xFF10BDEB),
+                                bottomColor: const Color(0xFF0B8EA1),
+                                height: 52,
+                                onPressed: _controller.moveRocketRight,
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text('STEER RIGHT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                                  ],
+                                ),
                               ),
-                              onPressed: _controller.moveRocketRight,
-                              icon: const Icon(Icons.arrow_forward_rounded),
-                              label: const Text('RIGHT'),
                             ),
                           ],
                         ),
@@ -237,16 +263,31 @@ class _StarryBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        for (var i = 0; i < 25; i++)
+        for (var i = 0; i < 35; i++)
           Positioned(
-            left: (i * 17) % 360 / 360 * MediaQuery.of(context).size.width,
-            top: (i * 29) % 600 / 600 * MediaQuery.of(context).size.height,
-            child: Container(
-              width: (i % 3 == 0) ? 3 : 1.5,
-              height: (i % 3 == 0) ? 3 : 1.5,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
+            left: (i * 23) % 360 / 360 * MediaQuery.of(context).size.width,
+            top: (i * 31) % 600 / 600 * MediaQuery.of(context).size.height,
+            child: Opacity(
+              opacity: (i % 2 == 0) ? 0.85 : 0.4,
+              child: Container(
+                width: (i % 5 == 0) ? 4.0 : (i % 3 == 0) ? 2.5 : 1.5,
+                height: (i % 5 == 0) ? 4.0 : (i % 3 == 0) ? 2.5 : 1.5,
+                decoration: BoxDecoration(
+                  color: (i % 4 == 0)
+                      ? const Color(0xFF45D7FF) // cyan star
+                      : (i % 7 == 0)
+                          ? const Color(0xFFFF8A00) // orange star hint
+                          : Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: (i % 5 == 0)
+                      ? [
+                          BoxShadow(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            blurRadius: 4,
+                          ),
+                        ]
+                      : null,
+                ),
               ),
             ),
           ),
