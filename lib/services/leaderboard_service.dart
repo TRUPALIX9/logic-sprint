@@ -184,7 +184,7 @@ class LeaderboardService {
 
     try {
       if (_insertScoreOverride != null) {
-        final ok = await _insertScoreOverride!(
+        final ok = await _insertScoreOverride(
           playerName: playerName,
           score: score,
           gameType: gameType.storageKey,
@@ -224,7 +224,7 @@ class LeaderboardService {
 
   Future<List<LeaderboardScoreModel>?> _fetchTopScores() async {
     if (_fetchScoresOverride != null) {
-      return _fetchScoresOverride!();
+      return _fetchScoresOverride();
     }
     if (!AppSupabaseService.isAvailable) {
       return null;

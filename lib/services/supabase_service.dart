@@ -12,7 +12,7 @@ abstract final class AppSupabaseService {
     try {
       await Supabase.initialize(
         url: 'https://axucnwnzuhdsiggqyjqf.supabase.co',
-        anonKey: 'sb_publishable_dzJkARQ59BSHuvJIlhnoTg_4NI5kWo0',
+        publishableKey: 'sb_publishable_dzJkARQ59BSHuvJIlhnoTg_4NI5kWo0',
       );
       _initialized = true;
       return true;
