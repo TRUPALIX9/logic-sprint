@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class LeaderboardScoreModel {
   const LeaderboardScoreModel({
     required this.id,
@@ -19,24 +17,8 @@ class LeaderboardScoreModel {
   final DateTime? createdAt;
   final String appVersion;
 
-  factory LeaderboardScoreModel.fromFirestore(
-    QueryDocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data();
-    final timestamp = data['createdAt'];
-    return LeaderboardScoreModel(
-      id: doc.id,
-      playerName: data['playerName'] as String? ?? 'Player',
-      score: (data['score'] as num?)?.toInt() ?? 0,
-      gameType: data['gameType'] as String? ?? '',
-      difficulty: data['difficulty'] as String? ?? '',
-      createdAt: timestamp is Timestamp ? timestamp.toDate() : null,
-      appVersion: data['appVersion'] as String? ?? '',
-    );
-  }
-
   factory LeaderboardScoreModel.fromJson(Map<String, dynamic> json) {
-    final createdAtRaw = json['createdAt'];
+    final createdAtRaw = json['createdAt'] ?? json['created_at'];
     DateTime? createdAt;
     if (createdAtRaw is String) {
       createdAt = DateTime.tryParse(createdAtRaw);
@@ -45,13 +27,13 @@ class LeaderboardScoreModel {
     }
 
     return LeaderboardScoreModel(
-      id: json['id'] as String? ?? '',
-      playerName: json['playerName'] as String? ?? 'Player',
+      id: (json['id'] ?? '').toString(),
+      playerName: (json['playerName'] ?? json['player_name'] ?? 'Player') as String,
       score: (json['score'] as num?)?.toInt() ?? 0,
-      gameType: json['gameType'] as String? ?? '',
-      difficulty: json['difficulty'] as String? ?? '',
+      gameType: (json['gameType'] ?? json['game_type'] ?? '') as String,
+      difficulty: (json['difficulty'] ?? json['difficulty'] ?? '') as String,
       createdAt: createdAt,
-      appVersion: json['appVersion'] as String? ?? '',
+      appVersion: (json['appVersion'] ?? json['app_version'] ?? '') as String,
     );
   }
 
