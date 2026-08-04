@@ -62,3 +62,6 @@ credentials/**
 # lib/firebase_options.dart is committed with REPLACE_* placeholders only
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
+
+# Local environment variables
+.env

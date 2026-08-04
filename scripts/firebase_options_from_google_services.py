@@ -28,7 +28,7 @@ def main() -> None:
 
     ios_key = "REPLACE_IOS_API_KEY"
     ios_app = "REPLACE_IOS_APP_ID"
-    bundle = "com.logicsprint.logicSprint"
+    bundle = "com.trupal.logicsprint"
     if IOS_PLIST.is_file():
         plist = plistlib.loads(IOS_PLIST.read_bytes())
         ios_key = plist.get("API_KEY", ios_key)

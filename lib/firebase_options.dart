@@ -45,6 +45,6 @@ abstract final class DefaultFirebaseOptions {
     messagingSenderId: 'REPLACE_SENDER_ID',
     projectId: _projectId,
     storageBucket: 'logic-sprint.firebasestorage.app',
-    iosBundleId: 'com.logicsprint.logicSprint',
+    iosBundleId: 'com.trupal.logicsprint',
   );
 }
