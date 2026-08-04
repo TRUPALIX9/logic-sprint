@@ -23,18 +23,18 @@ Without the above, the app still runs offline; leaderboard submit/fetch shows un
 
 ## Pre-release verification
 
-- [ ] `make check` (or `flutter analyze` + `flutter test`) — no errors
-- [ ] `make hooks-install` on dev machines (pre-push runs same checks as CI)
-- [ ] App name: **LogicSprint** (display: **LogicSprint: Brain Games**)
-- [ ] Version in `pubspec.yaml` matches `0.0.1+1` (via `package_info_plus`)
-- [ ] **INTERNET** permission present in `AndroidManifest.xml` (required for optional Firestore leaderboard + Google Mobile Ads)
-- [ ] Dynamic Ads: Simulated overlay, Real AdMob, and Disabled modes switch successfully in Settings
-- [ ] Privacy policy screen present
-- [ ] High scores and settings persist locally
-- [ ] Light and dark mode work without text contrast issues
-- [ ] Exactly two v1 games playable end-to-end (Rocket Launch, Memory Lane)
-- [ ] Android splash uses brand Midnight Purple (`#12002F`) + launcher icon
-- [ ] Custom 3D tactile buttons (`GameTactileButton`) press down dynamically with haptic vibration responses
+- [x] `make check` (or `flutter analyze` + `flutter test`) — no errors
+- [x] `make hooks-install` on dev machines (pre-push runs same checks as CI)
+- [x] App name: **LogicSprint** (display: **LogicSprint: Brain Games**)
+- [x] Version in `pubspec.yaml` matches `0.0.1+1` (via `package_info_plus`)
+- [x] **INTERNET** permission present in `AndroidManifest.xml` (required for optional Firestore leaderboard + Google Mobile Ads)
+- [x] Dynamic Ads: Simulated overlay, Real AdMob, and Disabled modes switch successfully in Settings
+- [x] Privacy policy screen present
+- [x] High scores and settings persist locally
+- [x] Light and dark mode work without text contrast issues
+- [x] Exactly two v1 games playable end-to-end (Rocket Launch, Memory Lane)
+- [x] Android splash uses brand Midnight Purple (`#12002F`) + launcher icon
+- [x] Custom 3D tactile buttons (`GameTactileButton`) press down dynamically with haptic vibration responses
 
 ## Build commands
 
