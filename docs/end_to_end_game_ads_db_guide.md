@@ -117,11 +117,9 @@ We have created an automated release workflow in `.github/workflows/release.yml`
 
 To make the build fully connected and automatically signed/configured with your Firebase database and Google AdMob, go to your GitHub Repository -> **Settings** -> **Secrets and variables** -> **Actions** -> **Repository secrets**, and add the following secrets:
 
-### Required Firebase Config Secrets
+### Required Firebase Config Secret
 - `FIREBASE_SERVICE_ACCOUNT`: Copy and paste the entire JSON object of your Admin SDK service account (the one you provided).
-- `GOOGLE_SERVICES_JSON`: Copy and paste the raw content of your `android/app/google-services.json` file.
-- `GOOGLE_SERVICES_INFO_PLIST`: Copy and paste the raw content of your `ios/Runner/GoogleService-Info.plist` file.
-- `FIREBASE_OPTIONS_DART`: Copy and paste the raw content of your custom `lib/firebase_options.dart` file.
+  *Our CI/CD pipeline is fully automated—it will use this single service account to securely fetch your Android `google-services.json`, iOS `GoogleService-Info.plist`, and generate your real `lib/firebase_options.dart` files directly during compile time! There is no need to copy-paste multiple config files into your secrets.*
 
 ### Required Android Release Signing Secrets (Optional but recommended for Production)
 - `ANDROID_KEY_PROPERTIES`: Copy and paste the contents of your `android/key.properties` file:
