@@ -8,7 +8,7 @@ import 'firebase_service.dart';
 import 'leaderboard_cache_service.dart';
 import 'local_storage_service.dart';
 
-enum LeaderboardGameFilter { all, quickMath, colorSequence, trueFalse }
+enum LeaderboardGameFilter { all, rocketLaunch, memoryLane }
 
 enum LeaderboardDifficultyFilter { all, easy, medium, hard }
 
