@@ -47,12 +47,10 @@ abstract final class BrandAssets {
   /// Bundled brand art for game select / home cards until custom tiles exist.
   static String gameListingArt(GameType type) {
     switch (type) {
-      case GameType.quickMath:
+      case GameType.rocketLaunch:
         return logoMark;
-      case GameType.colorSequence:
+      case GameType.memoryLane:
         return appIcon512;
-      case GameType.trueFalse:
-        return lockupTransparent;
     }
   }
 }

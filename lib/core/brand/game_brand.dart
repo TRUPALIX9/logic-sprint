@@ -23,58 +23,36 @@ class GameBrand {
 
   static GameBrand forGame(GameType type) {
     switch (type) {
-      case GameType.quickMath:
-        return quickMath;
-      case GameType.colorSequence:
-        return colorSequence;
-      case GameType.trueFalse:
-        return trueFalse;
+      case GameType.rocketLaunch:
+        return rocketLaunch;
+      case GameType.memoryLane:
+        return memoryLane;
     }
   }
 
-  static const quickMath = GameBrand(
-    type: GameType.quickMath,
-    label: 'Quick Math',
-    accent: BrandPalette.electricBlue,
-    secondary: BrandPalette.brainCyan,
-    gradient: LinearGradient(
-      colors: [BrandPalette.deepPurple, BrandPalette.electricBlue],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ),
-    iconBackground: Color(0x3310BDEB),
-  );
-
-  static const colorSequence = GameBrand(
-    type: GameType.colorSequence,
-    label: 'Color Sequence',
+  static const rocketLaunch = GameBrand(
+    type: GameType.rocketLaunch,
+    label: 'Rocket Launch',
     accent: BrandPalette.energyOrange,
-    secondary: BrandPalette.brainCyan,
+    secondary: BrandPalette.electricBlue,
     gradient: LinearGradient(
-      colors: [
-        BrandPalette.energyOrange,
-        BrandPalette.brainCyan,
-        BrandPalette.electricBlue,
-      ],
+      colors: [BrandPalette.deepPurple, BrandPalette.energyOrange],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
     iconBackground: Color(0x33FF8A00),
   );
 
-  static const trueFalse = GameBrand(
-    type: GameType.trueFalse,
-    label: 'True or False',
-    accent: BrandPalette.successGreen,
-    secondary: BrandPalette.electricBlue,
+  static const memoryLane = GameBrand(
+    type: GameType.memoryLane,
+    label: 'Memory Lane',
+    accent: BrandPalette.electricBlue,
+    secondary: BrandPalette.brainCyan,
     gradient: LinearGradient(
-      colors: [
-        BrandPalette.successGreen,
-        BrandPalette.electricBlue,
-      ],
+      colors: [BrandPalette.primaryNavy, BrandPalette.electricBlue],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
-    iconBackground: Color(0x3322C55E),
+    iconBackground: Color(0x3310BDEB),
   );
 }

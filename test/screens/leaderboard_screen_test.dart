@@ -33,11 +33,10 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('All Games'), findsOneWidget);
-    expect(find.text('Number Sequence'), findsNothing);
 
     await tester.tap(find.byType(DropdownButtonFormField<LeaderboardGameFilter>));
     await tester.pumpAndSettle();
 
-    expect(find.text('Color Sequence'), findsOneWidget);
+    expect(find.text('Rocket Launch'), findsOneWidget);
   });
 }

@@ -73,7 +73,7 @@ void main() {
       final result = await service.submitScore(
         playerName: 'Player',
         score: 50,
-        gameType: GameType.quickMath,
+        gameType: GameType.rocketLaunch,
         difficulty: DifficultyLevel.easy,
       );
       expect(result.success, isFalse);
@@ -89,7 +89,7 @@ void main() {
           id: '1',
           playerName: 'Cached',
           score: 90,
-          gameType: 'quickMath',
+          gameType: 'rocketLaunch',
           difficulty: 'easy',
           createdAt: null,
           appVersion: '1.0.0',
@@ -109,7 +109,7 @@ void main() {
           id: '1',
           playerName: 'Cached',
           score: 40,
-          gameType: 'trueFalse',
+          gameType: 'memoryLane',
           difficulty: 'medium',
           createdAt: null,
           appVersion: '1.0.0',
@@ -137,7 +137,7 @@ void main() {
           id: '1',
           playerName: 'A',
           score: 10,
-          gameType: 'quickMath',
+          gameType: 'rocketLaunch',
           difficulty: 'easy',
           createdAt: null,
           appVersion: '1.0.0',
@@ -146,7 +146,7 @@ void main() {
           id: '2',
           playerName: 'B',
           score: 20,
-          gameType: 'trueFalse',
+          gameType: 'memoryLane',
           difficulty: 'hard',
           createdAt: null,
           appVersion: '1.0.0',
@@ -155,7 +155,7 @@ void main() {
 
       final filtered = LeaderboardService.applyFilters(
         scores,
-        gameFilter: LeaderboardGameFilter.trueFalse,
+        gameFilter: LeaderboardGameFilter.memoryLane,
         difficultyFilter: LeaderboardDifficultyFilter.hard,
       );
 
@@ -175,7 +175,7 @@ void main() {
           id: '1',
           playerName: 'Old',
           score: 15,
-          gameType: 'quickMath',
+          gameType: 'rocketLaunch',
           difficulty: 'easy',
           createdAt: null,
           appVersion: '1.0.0',

@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import '../core/brand/game_brand.dart';
 
 enum GameType {
-  quickMath,
-  colorSequence,
-  trueFalse,
+  rocketLaunch,
+  memoryLane,
 }
 
 enum DifficultyLevel { easy, medium, hard }
@@ -29,45 +28,37 @@ class GameModel {
 extension GameTypeX on GameType {
   String get title {
     switch (this) {
-      case GameType.quickMath:
-        return 'Quick Math';
-      case GameType.colorSequence:
-        return 'Color Sequence';
-      case GameType.trueFalse:
-        return 'True or False';
+      case GameType.rocketLaunch:
+        return 'Rocket Launch';
+      case GameType.memoryLane:
+        return 'Memory Lane';
     }
   }
 
   String get description {
     switch (this) {
-      case GameType.quickMath:
-        return 'Solve fast arithmetic before the clock runs out.';
-      case GameType.colorSequence:
-        return 'Watch the pattern and repeat the colors.';
-      case GameType.trueFalse:
-        return 'Sort rapid-fire facts into true or false.';
+      case GameType.rocketLaunch:
+        return 'Dodge incoming asteroids to navigate your rocket ship through space.';
+      case GameType.memoryLane:
+        return 'Watch sequentially flashing blocks and repeat the exact order.';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case GameType.quickMath:
-        return Icons.calculate_rounded;
-      case GameType.colorSequence:
-        return Icons.palette_rounded;
-      case GameType.trueFalse:
-        return Icons.fact_check_rounded;
+      case GameType.rocketLaunch:
+        return Icons.rocket_launch_rounded;
+      case GameType.memoryLane:
+        return Icons.grid_on_rounded;
     }
   }
 
   String get storageKey {
     switch (this) {
-      case GameType.quickMath:
-        return 'quickMath';
-      case GameType.colorSequence:
-        return 'colorSequence';
-      case GameType.trueFalse:
-        return 'trueFalse';
+      case GameType.rocketLaunch:
+        return 'rocketLaunch';
+      case GameType.memoryLane:
+        return 'memoryLane';
     }
   }
 
@@ -102,32 +93,26 @@ extension DifficultyLevelX on DifficultyLevel {
   String get shortHint {
     switch (this) {
       case DifficultyLevel.easy:
-        return 'Warm up with shorter patterns.';
+        return 'Start slow with manageable challenges.';
       case DifficultyLevel.medium:
-        return 'Mix speed with longer sequences.';
+        return 'Speed increases and patterns lengthen.';
       case DifficultyLevel.hard:
-        return 'Handle the longest memory challenges.';
+        return 'Maximum speed and expert sequences.';
     }
   }
 }
 
 const List<GameModel> availableGames = [
   GameModel(
-    type: GameType.quickMath,
-    title: 'Quick Math',
-    description: 'Solve fast arithmetic before time runs out.',
-    icon: Icons.calculate_rounded,
+    type: GameType.rocketLaunch,
+    title: 'Rocket Launch',
+    description: 'Dodge incoming asteroids to navigate your rocket ship through space.',
+    icon: Icons.rocket_launch_rounded,
   ),
   GameModel(
-    type: GameType.colorSequence,
-    title: 'Color Sequence',
-    description: 'Watch the pattern and repeat the colors.',
-    icon: Icons.palette_rounded,
-  ),
-  GameModel(
-    type: GameType.trueFalse,
-    title: 'True or False',
-    description: 'Answer rapid-fire facts as true or false.',
-    icon: Icons.fact_check_rounded,
+    type: GameType.memoryLane,
+    title: 'Memory Lane',
+    description: 'Watch sequentially flashing blocks and repeat the exact order.',
+    icon: Icons.grid_on_rounded,
   ),
 ];

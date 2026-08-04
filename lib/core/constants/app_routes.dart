@@ -5,9 +5,8 @@ abstract final class AppRoutes {
   static const String home = '/home';
   static const String gameSelect = '/game-select';
   static const String difficulty = '/difficulty';
-  static const String quickMath = '/games/quick-math';
-  static const String colorSequence = '/games/color-sequence';
-  static const String trueFalse = '/games/true-false';
+  static const String rocketLaunch = '/games/rocket-launch';
+  static const String memoryLane = '/games/memory-lane';
   static const String result = '/result';
   static const String highScores = '/high-scores';
   static const String leaderboard = '/leaderboard';
@@ -17,12 +16,10 @@ abstract final class AppRoutes {
 
   static String gameRoute(GameType gameType) {
     switch (gameType) {
-      case GameType.quickMath:
-        return quickMath;
-      case GameType.colorSequence:
-        return colorSequence;
-      case GameType.trueFalse:
-        return trueFalse;
+      case GameType.rocketLaunch:
+        return rocketLaunch;
+      case GameType.memoryLane:
+        return memoryLane;
     }
   }
 }

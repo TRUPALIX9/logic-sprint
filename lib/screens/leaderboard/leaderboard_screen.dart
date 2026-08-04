@@ -204,16 +204,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           child: Text('All Games', overflow: TextOverflow.ellipsis),
         ),
         DropdownMenuItem(
-          value: LeaderboardGameFilter.quickMath,
-          child: Text('Quick Math', overflow: TextOverflow.ellipsis),
+          value: LeaderboardGameFilter.rocketLaunch,
+          child: Text('Rocket Launch', overflow: TextOverflow.ellipsis),
         ),
         DropdownMenuItem(
-          value: LeaderboardGameFilter.colorSequence,
-          child: Text('Color Sequence', overflow: TextOverflow.ellipsis),
-        ),
-        DropdownMenuItem(
-          value: LeaderboardGameFilter.trueFalse,
-          child: Text('True or False', overflow: TextOverflow.ellipsis),
+          value: LeaderboardGameFilter.memoryLane,
+          child: Text('Memory Lane', overflow: TextOverflow.ellipsis),
         ),
       ],
       onChanged: (value) {
