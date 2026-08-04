@@ -108,3 +108,35 @@ static const String iosInterstitialUnitId = 'ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYY
 - **Ad Client:** `lib/services/ad_service.dart` acts as the single source of truth for loading, showing, and switching ads.
 - **In-App Banner Widget:** `lib/widgets/ad_banner_widget.dart` is placed dynamically at the bottom of the Home and Game Select Screens.
 - **End-of-Round Interstitial:** Located inside gameplay state handlers (`QuickMathScreen`, `ColorSequenceScreen`, `TrueFalseScreen`) to intercept transitions and present an interstitial ad before navigating to the result screen.
+
+---
+
+## 5. GitHub Actions Production CI/CD Release Pipeline
+
+We have created an automated release workflow in `.github/workflows/release.yml` that builds and compiles your Android AAB and iOS IPA every time you push code to the `production` branch.
+
+To make the build fully connected and automatically signed/configured with your Firebase database and Google AdMob, go to your GitHub Repository -> **Settings** -> **Secrets and variables** -> **Actions** -> **Repository secrets**, and add the following secrets:
+
+### Required Firebase Config Secrets
+- `FIREBASE_SERVICE_ACCOUNT`: Copy and paste the entire JSON object of your Admin SDK service account (the one you provided).
+- `GOOGLE_SERVICES_JSON`: Copy and paste the raw content of your `android/app/google-services.json` file.
+- `GOOGLE_SERVICES_INFO_PLIST`: Copy and paste the raw content of your `ios/Runner/GoogleService-Info.plist` file.
+- `FIREBASE_OPTIONS_DART`: Copy and paste the raw content of your custom `lib/firebase_options.dart` file.
+
+### Required Android Release Signing Secrets (Optional but recommended for Production)
+- `ANDROID_KEY_PROPERTIES`: Copy and paste the contents of your `android/key.properties` file:
+  ```text
+  storePassword=YOUR_STORE_PASSWORD
+  keyPassword=YOUR_KEY_PASSWORD
+  keyAlias=upload
+  storeFile=upload-keystore.jks
+  ```
+- `UPLOAD_KEYSTORE_JKS_BASE64`: Your Android keystore is a binary file and cannot be pasted as text. Run this terminal command to convert it to a safe Base64 string, and copy the output:
+  - **macOS/Linux:** `base64 -i android/upload-keystore.jks`
+  - **Windows (PowerShell):** `[Convert]::ToBase64String([IO.File]::ReadAllBytes("android/upload-keystore.jks"))`
+
+### Downloadable Build Artifacts
+Once you push to `production`, GitHub Actions will spin up a macOS builder, restore all configurations, build the app, and generate:
+1. **`logic-sprint-android-release`**: A production-ready Google Play `.aab` file.
+2. **`logic-sprint-ios-release`**: A production-ready App Store `.ipa` folder.
+You can download these files directly from the finished Action run summary!
