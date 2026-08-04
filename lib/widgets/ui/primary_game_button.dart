@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/brand/brand_palette.dart';
+import 'game_tactile_button.dart';
 
 class PrimaryGameButton extends StatelessWidget {
   const PrimaryGameButton({
@@ -20,59 +20,63 @@ class PrimaryGameButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final child = Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 18),
+          Icon(icon),
           const SizedBox(width: 8),
         ],
-        Text(label),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+        ),
       ],
     );
 
-    final height = compact ? 44.0 : 48.0;
+    final height = compact ? 44.0 : 50.0;
 
     if (isSecondary) {
-      return SizedBox(
-        width: double.infinity,
+      final Color faceColor = isDark ? const Color(0xFF221752) : Colors.white;
+      final Color depthColor = isDark ? const Color(0xFF100A30) : const Color(0xFFCBD5E1);
+      final Color textColor = isDark ? Colors.white : const Color(0xFF120A3D);
+
+      return GameTactileButton(
+        color: faceColor,
+        bottomColor: depthColor,
         height: height,
-        child: OutlinedButton(
-          onPressed: onPressed,
-          style: OutlinedButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+        onPressed: onPressed,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: textColor),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          child: child,
+          ],
         ),
       );
     }
 
-    return SizedBox(
-      width: double.infinity,
+    return GameTactileButton(
+      color: const Color(0xFFFF8A00),
+      bottomColor: const Color(0xFFCC5F00),
       height: height,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: onPressed == null ? null : BrandPalette.ctaGradient,
-          borderRadius: BorderRadius.circular(14),
-          color: onPressed == null ? Colors.grey.shade400 : null,
-        ),
-        child: ElevatedButton(
-          onPressed: onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            padding: EdgeInsets.zero,
-          ),
-          child: child,
-        ),
-      ),
+      onPressed: onPressed,
+      child: child,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/brand/brand_palette.dart';
@@ -116,17 +117,13 @@ class _MemoryLaneScreenState extends State<MemoryLaneScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             color: _controller.isTouchEnabled
-                                // ignore: deprecated_member_use
-                                ? BrandPalette.successGreen.withOpacity(0.12)
-                                // ignore: deprecated_member_use
-                                : BrandPalette.energyOrange.withOpacity(0.12),
+                                ? BrandPalette.successGreen.withValues(alpha: 0.12)
+                                : BrandPalette.energyOrange.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: _controller.isTouchEnabled
-                                  // ignore: deprecated_member_use
-                                  ? BrandPalette.successGreen.withOpacity(0.4)
-                                  // ignore: deprecated_member_use
-                                  : BrandPalette.energyOrange.withOpacity(0.4),
+                                  ? BrandPalette.successGreen.withValues(alpha: 0.4)
+                                  : BrandPalette.energyOrange.withValues(alpha: 0.4),
                               width: 1.5,
                             ),
                           ),
@@ -181,30 +178,27 @@ class _MemoryLaneScreenState extends State<MemoryLaneScreen> {
                                   itemBuilder: (context, index) {
                                     final isFlashing = _controller.flashingTileIndex == index;
 
-                                    // Custom colors for different tiles to make it vibrant!
-                                    final tileColor = isFlashing
-                                        ? _colorForIndex(index)
-                                        : (isDark ? BrandPalette.cardDark : const Color(0xFFE2EFF5));
-
-                                    return Material(
-                                      color: tileColor,
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: InkWell(
-                                        onTap: _controller.isTouchEnabled
-                                            ? () => _controller.tapTile(index)
-                                            : null,
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Center(
-                                          child: isFlashing
-                                              ? Icon(
-                                                  Icons.star_rounded,
-                                                  color: Colors.white,
-                                                  size: _controller.gridSize == 5 ? 24 : 32,
-                                                )
-                                              : null,
-                                        ),
-                                      ),
-                                    );
+                                    return _MemoryLaneTile(
+                                      index: index,
+                                      gridSize: _controller.gridSize,
+                                      isFlashing: isFlashing,
+                                      isDark: isDark,
+                                      isTouchEnabled: _controller.isTouchEnabled,
+                                      flashColor: _colorForIndex(index),
+                                      onTap: () => _controller.tapTile(index),
+                                    )
+                                        .animate(target: isFlashing ? 1.0 : 0.0)
+                                        .scale(
+                                          begin: const Offset(1.0, 1.0),
+                                          end: const Offset(1.08, 1.08),
+                                          duration: 120.ms,
+                                          curve: Curves.easeOutBack,
+                                        )
+                                        .shimmer(
+                                          delay: 50.ms,
+                                          duration: 250.ms,
+                                          color: Colors.white.withValues(alpha: 0.45),
+                                        );
                                   },
                                 ),
                               ),
@@ -231,5 +225,71 @@ class _MemoryLaneScreenState extends State<MemoryLaneScreen> {
       const Color(0xFFFBBF24), // amber yellow
     ];
     return colors[index % colors.length];
+  }
+}
+
+class _MemoryLaneTile extends StatelessWidget {
+  const _MemoryLaneTile({
+    required this.index,
+    required this.gridSize,
+    required this.isFlashing,
+    required this.isDark,
+    required this.isTouchEnabled,
+    required this.onTap,
+    required this.flashColor,
+  });
+
+  final int index;
+  final int gridSize;
+  final bool isFlashing;
+  final bool isDark;
+  final bool isTouchEnabled;
+  final VoidCallback onTap;
+  final Color flashColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final double depth = 4.0;
+    final Color baseColor = isDark ? const Color(0xFF1E1452) : const Color(0xFFE2EFF5);
+    final Color baseShadowColor = isDark ? const Color(0xFF100B30) : const Color(0xFFCBD5E1);
+
+    final Color surfaceColor = isFlashing ? flashColor : baseColor;
+    final Color shadowColor = isFlashing
+        ? flashColor.withValues(alpha: 0.6)
+        : baseShadowColor;
+
+    final Widget tileContent = Center(
+      child: isFlashing
+          ? Icon(
+              Icons.star_rounded,
+              color: Colors.white,
+              size: gridSize == 5 ? 24 : 32,
+            )
+          : null,
+    );
+
+    return GestureDetector(
+      onTap: isTouchEnabled ? onTap : null,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: shadowColor,
+        ),
+        child: Container(
+          margin: EdgeInsets.only(bottom: isFlashing ? 0.0 : depth),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isFlashing
+                  ? Colors.white.withValues(alpha: 0.6)
+                  : Colors.white.withValues(alpha: isDark ? 0.05 : 0.65),
+              width: 1.5,
+            ),
+          ),
+          child: tileContent,
+        ),
+      ),
+    );
   }
 }

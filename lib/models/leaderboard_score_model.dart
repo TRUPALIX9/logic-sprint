@@ -69,6 +69,10 @@ class LeaderboardScoreModel {
 
   String get gameTypeLabel {
     switch (gameType) {
+      case 'rocketLaunch':
+        return 'Rocket Launch';
+      case 'memoryLane':
+        return 'Memory Lane';
       case 'quickMath':
         return 'Quick Math';
       case 'colorSequence':
