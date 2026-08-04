@@ -1,0 +1,96 @@
+name: Production Release
+
+on:
+  push:
+    branches:
+      - production
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, Deploy and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run Static Analysis
+        run: flutter analyze
+
+      - name: Run Tests
+        run: flutter test
+
+      - name: Deploy Firestore Rules
+        uses: w9jds/firebase-action@v2.2.0
+        with:
+          args: deploy --only firestore:rules
+        env:
+          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          PROJECT_ID: "logic-sprint"
+
+      - name: Decode Android Keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$ANDROID_KEY_PROPERTIES" ]; then
+            echo "Signing keys found. Preparing release signing configurations..."
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
+            echo "$ANDROID_KEY_PROPERTIES" > android/key.properties
+          else
+            echo "No release signing keys configured in secrets. Falling back to debug signing configuration."
+          fi
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Build Android App Bundle (AAB)
+        run: flutter build appbundle --release
+
+      - name: Extract Version
+        id: get_version
+        run: |
+          VERSION=$(grep '^version: ' pubspec.yaml | cut -d' ' -f2)
+          TAG_VERSION=$(echo "$VERSION" | tr '+' '-')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag_version=$TAG_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.get_version.outputs.tag_version }}
+          name: Release v${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+          body: |
+            LogicSprint Automated Production Release for version ${{ steps.get_version.outputs.version }}.
+            
+            ### Artifacts Included
+            * **Android APK (`app-release.apk`):** For direct installation and manual QA testing.
+            * **Android App Bundle (`app-release.aab`):** Signed bundle for Google Play Console deployment.
+            
+            ### Actions Taken
+            * Ran code quality checks (`flutter analyze`) and all unit tests.
+            * Automatically deployed the updated Firestore Rules to the Firebase project.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
