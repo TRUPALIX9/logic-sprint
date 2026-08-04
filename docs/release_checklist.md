@@ -1,4 +1,4 @@
-# LogicSprint Release Checklist
+# LogicSprint Release Checklist (v0.0.1)
 
 ## Critical blockers (before store upload)
 
@@ -26,14 +26,15 @@ Without the above, the app still runs offline; leaderboard submit/fetch shows un
 - [ ] `make check` (or `flutter analyze` + `flutter test`) — no errors
 - [ ] `make hooks-install` on dev machines (pre-push runs same checks as CI)
 - [ ] App name: **LogicSprint** (display: **LogicSprint: Brain Games**)
-- [ ] Version in `pubspec.yaml` matches About screen (via `package_info_plus`)
-- [ ] **INTERNET** permission present in `AndroidManifest.xml` (required for optional Firestore leaderboard)
-- [ ] No analytics, ads, or login
+- [ ] Version in `pubspec.yaml` matches `0.0.1+1` (via `package_info_plus`)
+- [ ] **INTERNET** permission present in `AndroidManifest.xml` (required for optional Firestore leaderboard + Google Mobile Ads)
+- [ ] Dynamic Ads: Simulated overlay, Real AdMob, and Disabled modes switch successfully in Settings
 - [ ] Privacy policy screen present
 - [ ] High scores and settings persist locally
-- [ ] Light and dark mode work
-- [ ] All three v1 games playable end-to-end (Quick Math, Color Sequence, True or False)
+- [ ] Light and dark mode work without text contrast issues
+- [ ] Exactly two v1 games playable end-to-end (Rocket Launch, Memory Lane)
 - [ ] Android splash uses brand Midnight Purple (`#12002F`) + launcher icon
+- [ ] Custom 3D tactile buttons (`GameTactileButton`) press down dynamically with haptic vibration responses
 
 ## Build commands
 
@@ -46,13 +47,13 @@ flutter build ipa --release
 ## Google Play Store
 
 **Short description (80 chars max):**
-Fast brain games: math, color memory, and true/false — offline or Top 100.
+Fast brain games: asteroid survival and memory grids — offline or Top 100.
 
 **Full description:**
-LogicSprint: Brain Games is a free app with quick 30-second mini-games that train speed, logic, and focus. Play Quick Math, Color Sequence, and True or False at Easy, Medium, or Hard difficulty. Track local high scores, toggle sound and theme, and optionally compete on the Global Top 100 leaderboard.
+LogicSprint: Brain Games is a free app with quick 30-second mini-games that train speed, logic, and focus. Play Rocket Launch or Memory Lane at Easy, Medium, or Hard difficulty. Track local high scores, toggle sound and theme, customize ad simulation mode, and optionally compete on the Global Top 100 leaderboard.
 
 **Category:** Puzzle / Educational  
-**Keywords:** brain games, math, logic, offline, puzzle, quick thinking  
+**Keywords:** brain games, space coordination, memory grid, logic, offline, puzzle, quick thinking
 **Data safety:** Local scores on device; optional leaderboard writes (display name, score, game, difficulty) if user submits  
 **Content rating:** Everyone / 3+
 
@@ -60,7 +61,7 @@ LogicSprint: Brain Games is a free app with quick 30-second mini-games that trai
 
 ## Apple App Store
 
-**Subtitle:** Fast logic & math challenges  
+**Subtitle:** Fast logic & memory challenges
 **Category:** Games → Puzzle or Education  
 **Privacy nutrition:** Data not collected (except optional leaderboard submission)  
 **Age rating:** 4+
@@ -80,5 +81,5 @@ LogicSprint: Brain Games is a free app with quick 30-second mini-games that trai
 4. Result screen stats match gameplay
 5. High score updates and persists after restart
 6. Leaderboard: loads or shows graceful offline message
-7. Settings: sound, vibration, theme, reset scores
-8. About shows version from `pubspec.yaml`; Privacy Policy screen
+7. Settings: sound, vibration, ads mode, reset scores
+8. About shows version `0.0.1+1` from `pubspec.yaml`; Privacy Policy screen

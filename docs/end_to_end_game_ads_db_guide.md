@@ -15,7 +15,7 @@ LogicSprint is configured out-of-the-box to run under the **Firebase Spark (Free
 To protect you from ever exceeding these limits or incurring unexpected costs, we have implemented four layers of client-side optimization and query shielding:
 
 ### Layer A: Local-Only Filtering & Sorting
-- Standard database designs run query filters against the backend (e.g., "Get only Easy difficulty Quick Math scores"). This generates new reads every time a user toggles a tab.
+- Standard database designs run query filters against the backend (e.g., "Get only Easy difficulty Rocket Launch scores"). This generates new reads every time a user toggles a tab.
 - **Our Solution:** LogicSprint fetches at most the **Top 100 scores globally** in a single query (`leaderboardScores` collection ordered by score descending). When the user toggles games or difficulty levels on the screen, **filtering and sorting are performed in local device memory (RAM) on the cached list!** This results in exactly **zero** additional database queries when switching tabs.
 
 ### Layer B: 10-Minute Cache Window (`LeaderboardCacheService`)
@@ -107,7 +107,7 @@ static const String iosInterstitialUnitId = 'ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYY
 - **Database Client:** `lib/services/leaderboard_service.dart` handles database submissions and list loading.
 - **Ad Client:** `lib/services/ad_service.dart` acts as the single source of truth for loading, showing, and switching ads.
 - **In-App Banner Widget:** `lib/widgets/ad_banner_widget.dart` is placed dynamically at the bottom of the Home and Game Select Screens.
-- **End-of-Round Interstitial:** Located inside gameplay state handlers (`QuickMathScreen`, `ColorSequenceScreen`, `TrueFalseScreen`) to intercept transitions and present an interstitial ad before navigating to the result screen.
+- **End-of-Round Interstitial:** Located inside gameplay state handlers (`RocketLaunchScreen`, `MemoryLaneScreen`) to intercept transitions and present an interstitial ad before navigating to the result screen.
 
 ---
 
