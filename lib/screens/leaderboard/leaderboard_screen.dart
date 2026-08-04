@@ -78,7 +78,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     return Scaffold(
       appBar: const CustomAppBar(
         title: 'Global Leaderboard',
-        subtitle: 'Top 100 Scores',
+        subtitle: 'Top 10 Scores',
       ),
       body: Column(
         children: [

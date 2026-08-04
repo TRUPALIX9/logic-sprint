@@ -60,7 +60,13 @@ void main() {
       service = LeaderboardService(
         storage: storage,
         cache: cache,
-        firestore: null,
+        fetchScores: () async => null,
+        insertScore: ({
+          required String playerName,
+          required int score,
+          required String gameType,
+          required String difficulty,
+        }) async => false,
       );
     });
 
@@ -122,7 +128,7 @@ void main() {
       expect(result.infoMessage, contains('Refresh available'));
     });
 
-    test('returns unavailable message when firestore fails without cache', () async {
+    test('returns unavailable message when supabase fails without cache', () async {
       final result = await service.loadLeaderboard();
       expect(result.scores, isEmpty);
       expect(

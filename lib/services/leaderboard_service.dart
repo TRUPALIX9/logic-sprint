@@ -1,12 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/constants/app_config.dart';
 import '../core/utils/player_name_validator.dart';
 import '../models/game_model.dart';
 import '../models/leaderboard_score_model.dart';
-import 'firebase_service.dart';
 import 'leaderboard_cache_service.dart';
 import 'local_storage_service.dart';
+import 'supabase_service.dart';
 
 enum LeaderboardGameFilter { all, rocketLaunch, memoryLane }
 
@@ -38,25 +38,29 @@ class LeaderboardSubmitResult {
   final String? message;
 }
 
+typedef SupabaseFetchScoresCallback = Future<List<LeaderboardScoreModel>?> Function();
+typedef SupabaseInsertScoreCallback = Future<bool> Function({
+  required String playerName,
+  required int score,
+  required String gameType,
+  required String difficulty,
+});
+
 class LeaderboardService {
   LeaderboardService({
     required LocalStorageService storage,
     required LeaderboardCacheService cache,
-    FirebaseFirestore? firestore,
+    SupabaseFetchScoresCallback? fetchScores,
+    SupabaseInsertScoreCallback? insertScore,
   })  : _storage = storage,
         _cache = cache,
-        _firestore = firestore;
+        _fetchScoresOverride = fetchScores,
+        _insertScoreOverride = insertScore;
 
   final LocalStorageService _storage;
   final LeaderboardCacheService _cache;
-  final FirebaseFirestore? _firestore;
-
-  FirebaseFirestore? get _db {
-    if (!AppFirebaseService.isAvailable) {
-      return null;
-    }
-    return _firestore ?? FirebaseFirestore.instance;
-  }
+  final SupabaseFetchScoresCallback? _fetchScoresOverride;
+  final SupabaseInsertScoreCallback? _insertScoreOverride;
 
   String? get savedPlayerName {
     final name = _storage.getPlayerName();
@@ -117,9 +121,7 @@ class LeaderboardService {
         scores: cached ?? const [],
         fromCache: true,
         lastUpdated: _cache.cacheTimestamp,
-        infoMessage: seconds > 0
-            ? 'Refresh available in ${seconds}s.'
-            : null,
+        infoMessage: seconds > 0 ? 'Refresh available in ${seconds}s.' : null,
       );
     }
 
@@ -127,7 +129,7 @@ class LeaderboardService {
       await _cache.markRefreshAttempt();
     }
 
-    final remote = await _fetchTop100FromFirestore();
+    final remote = await _fetchTopScores();
     if (remote != null) {
       await _cache.saveScores(remote);
       return LeaderboardLoadResult(
@@ -180,35 +182,37 @@ class LeaderboardService {
       );
     }
 
-    final db = _db;
-    if (db == null) {
-      return const LeaderboardSubmitResult(
-        success: false,
-        message:
-            'Online leaderboard is temporarily unavailable. Your local score is saved.',
-      );
-    }
-
     try {
-      await db.collection(AppConfig.leaderboardCollection).add({
-        'playerName': PlayerNameValidator.normalize(playerName),
-        'score': score,
-        'gameType': gameType.storageKey,
-        'difficulty': difficulty.storageKey,
-        'createdAt': FieldValue.serverTimestamp(),
-        'appVersion': AppConfig.appVersion,
-      });
+      if (_insertScoreOverride != null) {
+        final ok = await _insertScoreOverride!(
+          playerName: playerName,
+          score: score,
+          gameType: gameType.storageKey,
+          difficulty: difficulty.storageKey,
+        );
+        if (!ok) throw Object();
+      } else {
+        if (!AppSupabaseService.isAvailable) {
+          return const LeaderboardSubmitResult(
+            success: false,
+            message:
+                'Online leaderboard is temporarily unavailable. Your local score is saved.',
+          );
+        }
+        await Supabase.instance.client.from('leaderboard_scores').insert({
+          'player_name': PlayerNameValidator.normalize(playerName),
+          'score': score,
+          'game_type': gameType.storageKey,
+          'difficulty': difficulty.storageKey,
+          'app_version': AppConfig.appVersion,
+        });
+      }
       await _storage.recordLeaderboardSubmission();
       await savePlayerName(playerName);
       return const LeaderboardSubmitResult(
         success: true,
         message: 'Score submitted to the Global Leaderboard.',
       );
-    } on FirebaseException catch (error) {
-      return LeaderboardSubmitResult(
-        success: false,
-        message: _messageForFirebaseError(error),
-      );
     } on Object {
       return const LeaderboardSubmitResult(
         success: false,
@@ -218,41 +222,27 @@ class LeaderboardService {
     }
   }
 
-  Future<List<LeaderboardScoreModel>?> _fetchTop100FromFirestore() async {
-    final db = _db;
-    if (db == null) {
+  Future<List<LeaderboardScoreModel>?> _fetchTopScores() async {
+    if (_fetchScoresOverride != null) {
+      return _fetchScoresOverride!();
+    }
+    if (!AppSupabaseService.isAvailable) {
       return null;
     }
 
     try {
-      final snapshot = await db
-          .collection(AppConfig.leaderboardCollection)
-          .orderBy('score', descending: true)
-          .limit(AppConfig.leaderboardLimit)
-          .get();
+      final response = await Supabase.instance.client
+          .from('leaderboard_scores')
+          .select()
+          .order('score', ascending: false)
+          .limit(AppConfig.leaderboardLimit);
 
-      return snapshot.docs
-          .map(LeaderboardScoreModel.fromFirestore)
+      return (response as List)
+          .map((data) =>
+              LeaderboardScoreModel.fromJson(data as Map<String, dynamic>))
           .toList(growable: false);
-    } on FirebaseException {
-      return null;
     } on Object {
       return null;
-    }
-  }
-
-  static String _messageForFirebaseError(FirebaseException error) {
-    switch (error.code) {
-      case 'permission-denied':
-        return 'Online leaderboard is temporarily unavailable. Your local score is saved.';
-      case 'unavailable':
-      case 'resource-exhausted':
-      case 'deadline-exceeded':
-        return 'Online leaderboard is temporarily unavailable. Your local score is saved.';
-      case 'unauthenticated':
-        return 'Online leaderboard is temporarily unavailable. Your local score is saved.';
-      default:
-        return 'Online leaderboard is temporarily unavailable. Your local score is saved.';
     }
   }
 }
