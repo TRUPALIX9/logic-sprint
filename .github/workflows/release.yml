@@ -46,7 +46,7 @@ jobs:
         run: |
           if [ -n "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
             echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > firebase-key.json
-            export GOOGLE_APPLICATION_CREDENTIALS=firebase-key.json
+            export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/firebase-key.json"
             npx firebase-tools deploy --only firestore:rules --project logic-sprint
             rm firebase-key.json
           else
