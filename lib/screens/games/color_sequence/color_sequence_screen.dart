@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../models/game_model.dart';
+import '../../../services/ad_service.dart';
 import '../../../services/app_state.dart';
 import '../../../services/local_storage_service.dart';
 import '../../../services/sound_service.dart';
@@ -52,9 +53,17 @@ class _ColorSequenceScreenState extends State<ColorSequenceScreen> {
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pushReplacementNamed(
-      AppRoutes.result,
-      arguments: _controller.result,
+
+    context.read<AdService>().showInterstitialAd(
+      context: context,
+      onAdClosed: () {
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed(
+            AppRoutes.result,
+            arguments: _controller.result,
+          );
+        }
+      },
     );
   }
 

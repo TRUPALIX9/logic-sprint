@@ -11,10 +11,12 @@ class AppState extends ChangeNotifier {
     required ThemeMode themeMode,
     required bool isSoundEnabled,
     required bool isVibrationEnabled,
+    required String adMode,
     required Map<String, int> highScores,
   })  : _themeMode = themeMode,
         _isSoundEnabled = isSoundEnabled,
         _isVibrationEnabled = isVibrationEnabled,
+        _adMode = adMode,
         _highScores = highScores;
 
   final LocalStorageService storage;
@@ -23,6 +25,7 @@ class AppState extends ChangeNotifier {
   ThemeMode _themeMode;
   bool _isSoundEnabled;
   bool _isVibrationEnabled;
+  String _adMode;
   final Map<String, int> _highScores;
 
   static Future<AppState> create({
@@ -36,6 +39,7 @@ class AppState extends ChangeNotifier {
       themeMode: storage.getThemeMode(),
       isSoundEnabled: soundEnabled,
       isVibrationEnabled: storage.getVibrationEnabled(),
+      adMode: storage.getAdMode(),
       highScores: <String, int>{},
     );
     await state.refreshHighScores();
@@ -46,6 +50,7 @@ class AppState extends ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
   bool get isSoundEnabled => _isSoundEnabled;
   bool get isVibrationEnabled => _isVibrationEnabled;
+  String get adMode => _adMode;
 
   Future<void> refreshHighScores() async {
     for (final gameType in GameType.values.where((game) => game.isPlayable)) {
@@ -83,6 +88,12 @@ class AppState extends ChangeNotifier {
   Future<void> setVibrationEnabled(bool value) async {
     _isVibrationEnabled = value;
     await storage.setVibrationEnabled(value);
+    notifyListeners();
+  }
+
+  Future<void> setAdMode(String mode) async {
+    _adMode = mode;
+    await storage.setAdMode(mode);
     notifyListeners();
   }
 

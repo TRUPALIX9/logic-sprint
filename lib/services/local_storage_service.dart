@@ -11,6 +11,7 @@ class LocalStorageService {
   static const String vibrationKey = 'isVibrationEnabled';
   static const String themeModeKey = 'themeMode';
   static const String playerNameKey = 'playerName';
+  static const String adModeKey = 'adMode';
   static const String leaderboardCacheJsonKey = 'leaderboardCacheJson';
   static const String leaderboardCacheTimestampKey = 'leaderboardCacheTimestamp';
   static const String leaderboardLastRefreshKey = 'leaderboardLastRefreshAt';
@@ -61,6 +62,11 @@ class LocalStorageService {
 
   Future<void> setVibrationEnabled(bool value) =>
       _preferences.setBool(vibrationKey, value);
+
+  String getAdMode() => _preferences.getString(adModeKey) ?? 'simulated';
+
+  Future<void> setAdMode(String value) =>
+      _preferences.setString(adModeKey, value);
 
   ThemeMode getThemeMode() {
     switch (_preferences.getString(themeModeKey)) {

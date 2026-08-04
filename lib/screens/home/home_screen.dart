@@ -8,6 +8,7 @@ import '../../models/game_model.dart';
 import '../../services/app_state.dart';
 import '../../widgets/ui/brand_gradient_header.dart';
 import '../../widgets/ui/game_mode_card.dart';
+import '../../widgets/ad_banner_widget.dart';
 import '../../widgets/ui/primary_game_button.dart';
 import '../../widgets/ui/section_title.dart';
 import '../../widgets/ui/stat_chip.dart';
@@ -131,7 +132,9 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
+              const AdBannerWidget(),
+              const SizedBox(height: 16),
               Text(
                 AppStrings.appTitle,
                 textAlign: TextAlign.center,
