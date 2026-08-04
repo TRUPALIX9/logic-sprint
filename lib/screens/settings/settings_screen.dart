@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_routes.dart';
+import '../../services/ad_service.dart';
 import '../../services/app_state.dart';
 import '../../widgets/ui/app_scaffold.dart';
 import '../../widgets/ui/section_title.dart';
@@ -67,6 +68,41 @@ class SettingsScreen extends StatelessWidget {
                       DropdownMenuItem(
                         value: ThemeMode.dark,
                         child: Text('Dark'),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  title: const Text('Ads Mode'),
+                  subtitle: Text(
+                    switch (appState.adMode) {
+                      'simulated' => 'Simulated (In-App)',
+                      'real' => 'Real AdMob Ads',
+                      'disabled' || _ => 'Disabled (No Ads)',
+                    },
+                  ),
+                  trailing: DropdownButton<String>(
+                    value: appState.adMode,
+                    underline: const SizedBox.shrink(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        appState.setAdMode(value);
+                        context.read<AdService>().initialize();
+                      }
+                    },
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'simulated',
+                        child: Text('Simulated'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'real',
+                        child: Text('Real AdMob'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'disabled',
+                        child: Text('Disabled'),
                       ),
                     ],
                   ),

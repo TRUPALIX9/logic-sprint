@@ -19,6 +19,7 @@ import 'screens/home/home_screen.dart';
 import 'screens/result/result_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/splash/splash_screen.dart';
+import 'services/ad_service.dart';
 import 'services/app_state.dart';
 import 'services/leaderboard_service.dart';
 import 'services/local_storage_service.dart';
@@ -31,12 +32,14 @@ class LogicSprintApp extends StatelessWidget {
     required this.storage,
     required this.soundService,
     required this.leaderboardService,
+    required this.adService,
   });
 
   final AppState appState;
   final LocalStorageService storage;
   final SoundService soundService;
   final LeaderboardService leaderboardService;
+  final AdService adService;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +49,7 @@ class LogicSprintApp extends StatelessWidget {
         Provider<LocalStorageService>.value(value: storage),
         Provider<SoundService>.value(value: soundService),
         Provider<LeaderboardService>.value(value: leaderboardService),
+        Provider<AdService>.value(value: adService),
       ],
       child: Consumer<AppState>(
         builder: (context, state, _) {

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import 'app.dart';
+import 'services/ad_service.dart';
 import 'services/app_state.dart';
 import 'services/firebase_service.dart';
 import 'services/leaderboard_cache_service.dart';
@@ -19,6 +20,9 @@ Future<void> main() async {
     storage: storage,
     cache: LeaderboardCacheService(storage),
   );
+  final adService = AdService(storage: storage);
+  await adService.initialize();
+
   final appState = await AppState.create(
     storage: storage,
     soundService: soundService,
@@ -30,6 +34,7 @@ Future<void> main() async {
       storage: storage,
       soundService: soundService,
       leaderboardService: leaderboardService,
+      adService: adService,
     ),
   );
 }
