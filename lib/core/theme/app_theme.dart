@@ -9,7 +9,7 @@ abstract final class AppTheme {
       primary: AppColors.primary,
       secondary: AppColors.accent,
       brightness: Brightness.light,
-      surface: Colors.white,
+      surface: AppColors.cardLight,
     );
 
     return ThemeData(
@@ -18,24 +18,26 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: AppColors.surfaceLight,
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
-        foregroundColor: Colors.black87,
+        foregroundColor: AppColors.textDark,
         elevation: 0,
         centerTitle: false,
       ),
       cardTheme: CardThemeData(
-        color: Colors.white,
-        elevation: 0,
+        color: AppColors.cardLight,
+        elevation: 2,
+        shadowColor: AppColors.primaryDark.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          minimumSize: const Size(0, 48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(14),
           ),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,
@@ -44,20 +46,37 @@ abstract final class AppTheme {
         ),
       ),
       textTheme: const TextTheme(
-        displaySmall: TextStyle(fontWeight: FontWeight.w800),
-        headlineMedium: TextStyle(fontWeight: FontWeight.w800),
-        titleLarge: TextStyle(fontWeight: FontWeight.w800),
-        titleMedium: TextStyle(fontWeight: FontWeight.w700),
-        bodyLarge: TextStyle(height: 1.35),
+        displaySmall: TextStyle(
+          fontWeight: FontWeight.w800,
+          color: AppColors.textDark,
+        ),
+        headlineMedium: TextStyle(
+          fontWeight: FontWeight.w800,
+          color: AppColors.textDark,
+        ),
+        titleLarge: TextStyle(
+          fontWeight: FontWeight.w800,
+          color: AppColors.textDark,
+        ),
+        titleMedium: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: AppColors.textDark,
+        ),
+        bodyLarge: TextStyle(
+          height: 1.35,
+          color: AppColors.textDark,
+        ),
+        bodyMedium: TextStyle(color: AppColors.textMuted),
+        bodySmall: TextStyle(color: AppColors.textMuted),
       ),
-      dividerColor: AppColors.surfaceLight,
+      dividerColor: AppColors.textMuted.withValues(alpha: 0.2),
     );
   }
 
   static ThemeData get darkTheme {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      primary: const Color(0xFF88A9FF),
+      seedColor: AppColors.brainCyan,
+      primary: AppColors.brainCyan,
       secondary: AppColors.accent,
       brightness: Brightness.dark,
       surface: AppColors.cardDark,
@@ -75,18 +94,20 @@ abstract final class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: AppColors.cardDark,
-        elevation: 0,
+        elevation: 2,
+        shadowColor: Colors.black.withValues(alpha: 0.3),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          backgroundColor: AppColors.brainCyan,
+          foregroundColor: AppColors.primaryDark,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          minimumSize: const Size(0, 48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(14),
           ),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,

@@ -1,0 +1,94 @@
+name: Build Production Release
+
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  build-release:
+    name: Build Android AAB & iOS IPA
+    runs-on: macos-latest # macOS runner allows compiling both Android AAB and iOS IPA!
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17 (Required for Android)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Node.js (For Firebase CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Restore Firebase Configs and Android Keystores from Secrets
+        run: |
+          # Create credentials & keys directories
+          mkdir -p credentials
+          mkdir -p android/app
+
+          # Write Firebase Service Account
+          if [ ! -z "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]; then
+            echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > credentials/logic-sprint-firebase.json
+            echo "FIREBASE_SERVICE_ACCOUNT restored successfully."
+
+            # Fetch fresh client configs automatically using our refresh script
+            chmod +x scripts/refresh_firebase_client_config.sh
+            ./scripts/refresh_firebase_client_config.sh
+          else
+            echo "FIREBASE_SERVICE_ACCOUNT secret not found. Using placeholder configs."
+          fi
+
+          # Restore Android release keystore & key.properties if available
+          if [ ! -z "${{ secrets.ANDROID_KEY_PROPERTIES }}" ]; then
+            echo '${{ secrets.ANDROID_KEY_PROPERTIES }}' > android/key.properties
+            echo "ANDROID_KEY_PROPERTIES restored successfully."
+          fi
+
+          if [ ! -z "${{ secrets.UPLOAD_KEYSTORE_JKS_BASE64 }}" ]; then
+            echo '${{ secrets.UPLOAD_KEYSTORE_JKS_BASE64 }}' | base64 -d > android/upload-keystore.jks
+            echo "UPLOAD_KEYSTORE_JKS restored successfully."
+          fi
+
+      - name: Build Android App Bundle (AAB)
+        run: |
+          if [ -f "android/key.properties" ]; then
+            echo "Building signed Android release AAB..."
+            flutter build appbundle --release
+          else
+            echo "Signing keys not found. Building unsigned release AAB..."
+            flutter build appbundle --release --no-shrink
+          fi
+
+      - name: Build iOS IPA (Unsigned / Store Ready)
+        run: |
+          echo "Building iOS IPA..."
+          flutter build ipa --release --no-codesign
+
+      - name: Upload Android Release AAB Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: logic-sprint-android-release
+          path: build/app/outputs/bundle/release/app-release.aab
+
+      - name: Upload iOS Release IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: logic-sprint-ios-release
+          path: build/ios/ipa/*.ipa

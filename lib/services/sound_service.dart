@@ -1,7 +1,16 @@
 import 'package:audioplayers/audioplayers.dart';
 
 class SoundService {
-  final AudioPlayer _audioPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+  SoundService._({AudioPlayer? audioPlayer}) : _audioPlayer = audioPlayer;
+
+  factory SoundService() => SoundService._(
+        audioPlayer: AudioPlayer()..setReleaseMode(ReleaseMode.stop),
+      );
+
+  /// No-op implementation for unit tests (avoids platform channel plugins).
+  factory SoundService.silent() => SoundService._();
+
+  final AudioPlayer? _audioPlayer;
   bool _isEnabled = true;
 
   void setEnabled(bool enabled) {
@@ -9,16 +18,18 @@ class SoundService {
   }
 
   Future<void> playCorrect() async {
-    if (!_isEnabled) {
+    final player = _audioPlayer;
+    if (!_isEnabled || player == null) {
       return;
     }
-    await _audioPlayer.stop();
+    await player.stop();
   }
 
   Future<void> playWrong() async {
-    if (!_isEnabled) {
+    final player = _audioPlayer;
+    if (!_isEnabled || player == null) {
       return;
     }
-    await _audioPlayer.stop();
+    await player.stop();
   }
 }

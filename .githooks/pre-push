@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Runs the same checks as CI before git push.
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+if ! command -v flutter >/dev/null 2>&1; then
+  echo "pre-push: flutter not found on PATH — install Flutter or skip with: git push --no-verify"
+  exit 1
+fi
+
+echo "pre-push: running make check (flutter analyze + flutter test)..."
+make check
+
+echo "pre-push: all checks passed."

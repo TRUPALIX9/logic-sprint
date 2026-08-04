@@ -24,7 +24,12 @@ Production kit (original artwork crops). **Use the paths in `lib/core/brand/bran
 
 ## Per-game assets
 
-Drop game tile PNGs into `games/<game_id>/` when available. Until then, the app uses `GameBrand` color accents + Material icons.
+| Game ID | Folder | Listing art (until `tile.png` exists) |
+|---------|--------|----------------------------------------|
+| Rocket Launch | `games/rocket_launch/` | `logo_mark_original_transparent.png` |
+| Memory Lane | `games/memory_lane/` | `app_icon_512.png` |
+
+Drop **`tile.png`** into each folder for dedicated game-select artwork. Until then, the app uses the listing art above via `BrandAssets.gameListingArt()` and `GameBrandArt`.
 
 ## Regenerate launcher icons
 

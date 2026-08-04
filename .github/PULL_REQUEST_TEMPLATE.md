@@ -11,4 +11,4 @@
 ## Target branch
 
 - [ ] PR targets `develop` (normal work)
-- [ ] PR targets `main` (release or hotfix only)
+- [ ] PR targets `production` (release or hotfix only)

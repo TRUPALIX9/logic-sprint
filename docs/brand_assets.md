@@ -19,32 +19,23 @@ Code: `lib/core/brand/brand_palette.dart`, `lib/core/brand/brand_assets.dart`, `
 
 Each mini-game has its own accent layer on the master palette:
 
-### Quick Math
+### Rocket Launch
 
-- **Accent:** Electric Blue + Sky Blue gradient
-- **Motif:** Calculator / arithmetic
-- **Code:** `GameBrand.quickMath`
+- **Accent:** Deep Blue + Electric Blue gradient
+- **Motif:** Spaceship / asteroids avoidance / survival
+- **Code:** `GameBrand.rocketLaunch`
+- **Listing art:** `BrandAssets.gameListingArt(GameType.rocketLaunch)` -> `logoMark`
 
-### Number Sequence
+### Memory Lane
 
-- **Accent:** Blue → Orange progression (sequence arrow)
-- **Motif:** Numbered circles, pattern line
-- **Code:** `GameBrand.numberSequence`
-
-### True or False
-
-- **Accent:** Orange + Gold (decisive true/false)
-- **Motif:** Fact check, lightning speed
-- **Code:** `GameBrand.trueFalse`
-
-### Coming soon
-
-- **Memory Pattern:** Orbit purple + grid motif — `GameBrand.memoryPattern`
-- **Color Confusion:** Orange + purple contrast — `GameBrand.colorConfusion`
+- **Accent:** Sprint Orange + Deep Purple gradient
+- **Motif:** Bright flashing sequential blocks / grid cells
+- **Code:** `GameBrand.memoryLane`
+- **Listing art:** `BrandAssets.gameListingArt(GameType.memoryLane)` -> `appIcon512`
 
 ## Differentiation rules
 
-1. **Shared:** Logo mark, navy surfaces, typography, 30s round UX.
+1. **Shared:** Logo mark, navy surfaces, typography, 30s round UX, GameTactileButton elements.
 2. **Game-specific:** Card accent color, difficulty strip gradient, game select icon tint.
 3. **Do not mix:** Use `GameBrand.forGame()` — never hard-code per-game colors in shared widgets.
 
@@ -53,6 +44,5 @@ Each mini-game has its own accent layer on the master palette:
 - [ ] App icon 1024×1024 (no text)
 - [ ] Feature graphic 1024×500
 - [ ] Screenshots per game (light + dark)
-- [ ] Quick Math tile PNG → `assets/brand/games/quick_math/`
-- [ ] Number Sequence tile PNG → `assets/brand/games/number_sequence/`
-- [ ] True or False tile PNG → `assets/brand/games/true_false/`
+- [ ] Rocket Launch tile PNG → `assets/brand/games/rocket_launch/tile.png`
+- [ ] Memory Lane tile PNG → `assets/brand/games/memory_lane/tile.png`
