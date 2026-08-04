@@ -105,6 +105,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
+            // ignore: deprecated_member_use
             color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
@@ -159,6 +160,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
                       Text(
                         'Zero Ads, offline database, and more games.',
                         style: theme.textTheme.bodySmall?.copyWith(
+                          // ignore: deprecated_member_use
                           color: Colors.white.withOpacity(0.85),
                           fontSize: 11,
                         ),
