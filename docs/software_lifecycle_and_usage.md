@@ -1,6 +1,6 @@
 # LogicSprint: Software Lifecycle, Architecture, and Usage Manual
 
-Welcome to the **LogicSprint: Brain Games** Software Lifecycle, Architecture, and Usage manual. This document covers the comprehensive details of the application structure, game loop mechanics, database cost-mitigation strategies, cybersecurity design, and branching/release operations for the **Beta 0.0.1 Release**.
+Welcome to the **LogicSprint: Brain Games** Software Lifecycle, Architecture, and Usage manual. This document covers the comprehensive details of the application structure, game loop mechanics, database cost-mitigation strategies, cybersecurity design, and branching/release operations for the **v0.0.1 Release**.
 
 ---
 
@@ -73,7 +73,7 @@ LogicSprint implements exactly two responsive mini-games optimized for high-perf
 #### A. Rocket Launch (Space Survival Coordination)
 - **Concept:** Asteroid-dodging space survival game.
 - **Controls:** Supports both touch dragging (translating horizontal coordinates from 5% to 95% of screen width) and large 3D physical steering arrow buttons (`LEFT` and `RIGHT`).
-- **Loop Logic:** Game generates asteroids at randomized positions spawning from `y = 0.0`. They accelerate downward towards the rocket at `y = 0.85`. Points are awarded for survival over time, with streak multipliers triggering for successive flawless seconds. Collisions instantly trigger clean sound triggers and reset the streak.
+- **Loop Logic:** Game generates asteroids at randomized positions spawning from `y = 0.0`. They accelerate downward towards the rocket at `y = 0.85`. Points are awarded for survival over time, with streak multipliers triggering for successive flawless seconds. Collisions instantly trigger clean sound triggers, reset the streak, and subtract a life/penalty depending on difficulty.
 
 #### B. Memory Lane (Visual Spatial Sequencer)
 - **Concept:** Grid block pattern sequencer (Simon style).
@@ -82,7 +82,7 @@ LogicSprint implements exactly two responsive mini-games optimized for high-perf
   - **Medium:** 4x4 layout (starting sequence: 4 blocks)
   - **Hard:** 5x5 layout (starting sequence: 5 blocks)
 - **Loop Logic:**
-  1. **Playback Stage:** Board locks touch input. Sequencer flashes blocks in random sequence with custom highlight colors and glowing star vectors. Playback uses spring animations (`flutter_animate`) with a tactile shimmer.
+  1. **Playback Stage:** Board locks touch input. Sequencer flashes blocks in random sequence with custom highlight colors. Playback uses spring animations (`flutter_animate`) with a tactile shimmer.
   2. **Input Stage:** Board unlocks touch input. Player repeats the sequence. Tapping correct blocks depresses the physical 3D tile and plays correct tone triggers. Tapping an incorrect block resets level progression. Correct sequence repetition advances level and increases block sequence length by 1.
 
 ---
@@ -113,13 +113,13 @@ A formal analysis of LogicSprint's codebase confirms a highly secure, hardened a
 3. **Firestore Security Rules:**
    Our backend `firestore.rules` is configured strictly to enforce structural integrity. It prevents updates and deletes from client devices (`allow update, delete: if false`). Create payloads are schema-checked: they must strictly contain only valid fields, validate that `score` is a positive integer under `999,999`, verify that `playerName` conforms to size constraints, enforce server-side time matching (`createdAt == request.time`), and validate game and difficulty against an enum whitelist:
    ```javascript
-   request.resource.data.gameType in ['rocketLaunch', 'memoryLane', 'quickMath', 'colorSequence', 'trueFalse']
+   request.resource.data.gameType in ['rocketLaunch', 'memoryLane']
    request.resource.data.difficulty in ['easy', 'medium', 'hard']
    ```
 
 ---
 
-## 5. Software Development & Release Operations (Beta 0.0.1)
+## 5. Software Development & Release Operations (v0.0.1)
 
 LogicSprint utilizes a rigid branch isolation and pipeline model to ensure build stability:
 
@@ -128,7 +128,7 @@ LogicSprint utilizes a rigid branch isolation and pipeline model to ensure build
 - **`develop`**: Daily development integration branch. All features target this branch.
 - **`feature/*`**: Individual features or UI polishes branched from and merged into `develop`.
 
-*For Beta 0.0.1, we are submitting our UI Polish and Rules updates via a Pull Request branch targeting `develop` to verify QA/CI before final release packaging.*
+*For version 0.0.1, we are submitting our final verified build via a Release Pull Request from `develop` to `production`.*
 
 ### 5.2 Build & Verification Commands
 Always run static analysis and tests locally before initiating a merge:

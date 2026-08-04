@@ -1,10 +1,10 @@
 # LogicSprint: Brain Games
 
-**LogicSprint** is a free Flutter brain-training app for **Android** and **iOS**. Play fast mini-games, chase local high scores, and optionally compete on a global Top 100 leaderboard — no login, no ads.
+**LogicSprint** is a free Flutter brain-training app for **Android** and **iOS**. Play fast mini-games, chase local high scores, and optionally compete on a global Top 100 leaderboard — no login, no ads by default (fully customizable ads simulation mode included).
 
 | | |
 |---|---|
-| **Version** | 1.0.0 |
+| **Version** | 0.0.1 |
 | **Platform** | Android, iOS |
 | **Stack** | Flutter 3.x, Dart 3.12+ |
 | **Storage** | `shared_preferences` (device); optional Firestore for leaderboard |
@@ -15,13 +15,10 @@
 
 | Game | Mode | Description |
 |------|------|-------------|
-| **Quick Math** | 30 sec timed | Addition, subtraction, multiplication, and division by difficulty |
-| **Color Sequence** | 30 sec timed | Simon-style color patterns — watch, then repeat |
-| **True or False** | 30 sec timed | Math, shape, and number facts — tap true or false |
+| **Rocket Launch** | 30 sec timed | Dodge incoming asteroids to navigate your rocket ship through space using drag or 3D direction buttons |
+| **Memory Lane** | 30 sec timed | Watch sequentially flashing blocks on 3x3, 4x4, or 5x5 grids and repeat the exact order |
 
-**Scoring:** +10 per correct answer; **+20 bonus** every 5 correct in a row. High scores save locally per game and difficulty (Easy / Medium / Hard). Submit a run to the **Global Top 100** from the Result screen when Firebase is configured.
-
-**Roadmap:** Emoji Match, Pattern Lock, Memory Pattern, and more — see [docs/new_memory_games_plan.md](docs/new_memory_games_plan.md).
+**Scoring:** +10 per correct action/survival milestone; **+20 bonus** every 5-streak of flawless performance. High scores save locally per game and difficulty (Easy / Medium / Hard). Submit a run to the **Global Top 100** from the Result screen when Firebase is configured.
 
 ---
 
@@ -56,11 +53,6 @@ assets/brand/
 | Brand colors | `tokens/brand_tokens.json` |
 | Privacy policy text | `docs/privacy_policy.md` |
 | Store listing copy | `docs/store_listing.md` |
-
-**Reference only (do not use in production UI):**
-
-- `logicsprint/brand_kit_master.png` — full brand board
-- `logos/png/original_*_crop.png` — early crops; superseded by cleaned PNGs above
 
 ### Brand colors
 
@@ -107,9 +99,9 @@ lib/
   services/       # storage, sound, app state, brand content
   screens/        # splash, home, games, settings, about, …
   widgets/        # buttons, cards, brand logo, timer, …
-test/             # question generator unit tests
+test/             # controller and unit/widget test suites
 assets/brand/     # brand kit (see above)
-docs/             # epic plan, release checklist, git workflow
+docs/             # epic plan, release checklist, git workflow, user guides
 ```
 
 ---
@@ -150,7 +142,7 @@ CI runs the same steps on pushes and PRs to `production` and `develop` (see [.gi
 | `feature/*` | Short-lived work off `develop` |
 
 - Normal PRs target **`develop`**
-- Releases merge **`develop` → `production`**, then tag (e.g. `v1.0.0`)
+- Releases merge **`develop` → `production`**, then tag (e.g. `v0.0.1`)
 
 Full guide: [docs/git_workflow.md](docs/git_workflow.md) · [CONTRIBUTING.md](CONTRIBUTING.md)
 
@@ -183,11 +175,28 @@ Setup: [docs/firebase_setup.md](docs/firebase_setup.md) · Rules: [firestore.rul
 
 **Credentials:** Admin SDK JSON lives in `credentials/` (gitignored). Client config is in `lib/firebase_options.dart` + platform Firebase files — see [credentials/README.md](credentials/README.md).
 
+---
+
+## Dual-Mode Ad System (AdService)
+
+We support non-intrusive ads that can be customized or entirely disabled:
+- **Simulated Mode:** Show elegant custom mock in-app advertisements/overlays promoting "LogicSprint Premium" without needing external SDK connections.
+- **Real AdMob Mode:** Fully integrated with official Google Mobile Ads SDK for displaying real test/production banners and end-of-round interstitial ads.
+- **Disabled Mode:** Completely turns off all ads across the app.
+
+---
+
+## Custom Physical UI Mechanics (GameTactileButton)
+
+Features custom-engineered physical 3D button animations under `lib/widgets/ui/game_tactile_button.dart` to simulate physical spring depress interactions, fully integrated with the user's vibration settings for localized haptic feedback.
+
+---
+
 ## Privacy & architecture
 
 LogicSprint is **offline-first**:
 
-- No login, ads, or analytics
+- No login or unexpected background analytics
 - Local gameplay and high scores use `shared_preferences` only
 - Optional leaderboard writes: display name, score, game, difficulty, app version, timestamp
 
@@ -205,6 +214,8 @@ Privacy text is bundled from `assets/brand/docs/privacy_policy.md` and shown in 
 | [docs/release_checklist.md](docs/release_checklist.md) | Play Store & App Store prep |
 | [assets/brand/docs/README.md](assets/brand/docs/README.md) | Brand kit file index |
 | [assets/brand/docs/store_listing.md](assets/brand/docs/store_listing.md) | Store description draft |
+| [docs/software_lifecycle_and_usage.md](docs/software_lifecycle_and_usage.md) | Architecture, state, and mini-game loops |
+| [docs/end_to_end_game_ads_db_guide.md](docs/end_to_end_game_ads_db_guide.md) | Firestore caching & dual-mode AdService config |
 
 ---
 
@@ -215,6 +226,7 @@ Privacy text is bundled from `assets/brand/docs/privacy_policy.md` and shown in 
 - `firebase_core` + `cloud_firestore` — optional Global Top 100 leaderboard
 - `audioplayers` — sound (optional)
 - `flutter_animate` — light UI motion
+- `google_mobile_ads` — AdMob monetization integration
 
 Dev: `flutter_launcher_icons` — sync launcher icons from brand PNGs.
 
