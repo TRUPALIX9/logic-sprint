@@ -78,6 +78,60 @@
       "page": "page-3"
     },
     {
+      "file": "RuleAInk.dc.html",
+      "x": 0,
+      "y": 1164,
+      "w": 390,
+      "h": 844,
+      "title": "A · Color",
+      "page": "page-3"
+    },
+    {
+      "file": "RuleAWord.dc.html",
+      "x": 470,
+      "y": 1164,
+      "w": 390,
+      "h": 844,
+      "title": "A · Text",
+      "page": "page-3"
+    },
+    {
+      "file": "RuleBInk.dc.html",
+      "x": 940,
+      "y": 1164,
+      "w": 390,
+      "h": 844,
+      "title": "B · Color",
+      "page": "page-3"
+    },
+    {
+      "file": "RuleBWord.dc.html",
+      "x": 1410,
+      "y": 1164,
+      "w": 390,
+      "h": 844,
+      "title": "B · Text",
+      "page": "page-3"
+    },
+    {
+      "file": "RuleCInk.dc.html",
+      "x": 1880,
+      "y": 1164,
+      "w": 390,
+      "h": 844,
+      "title": "C · Color",
+      "page": "page-3"
+    },
+    {
+      "file": "RuleCWord.dc.html",
+      "x": 2350,
+      "y": 1164,
+      "w": 390,
+      "h": 844,
+      "title": "C · Text",
+      "page": "page-3"
+    },
+    {
       "file": "ThemeSystem.dc.html",
       "x": 1520,
       "y": 0,
@@ -265,7 +319,7 @@
       "y": 1130,
       "w": 420,
       "page": "page-1",
-      "text": "CORE LOOP\nSplash → Play → Game sheet → run → Result. Endless runs: the first mistake ends a run; one rewarded-ad revive per run; run time recorded. Each run is saved to local history, then one call records the play and any new best (name chosen once, no Post button). Memory Lane and Quick Math pick Easy / Medium / Hard on the sheet; Rocket Launch and Guess Color ramp up during the run. The in-game bar shows only the game, difficulty (or skill) and score."
+      "text": "CORE LOOP\nSplash → Play → Game sheet → run → Result. Endless runs: the first mistake ends a run; one rewarded-ad revive per run; run time recorded for Memory Lane and Quick Math only. Each run is saved to local history, then one call records the play and any new best (name chosen once, no Post button). Memory Lane and Quick Math pick Easy / Medium / Hard on the sheet; Rocket Launch and Guess Color ramp up during the run. The in-game bar shows only the game, difficulty (or skill) and score."
     },
     {
       "id": "rocket-run",
@@ -297,7 +351,7 @@
       "y": 3128,
       "w": 390,
       "page": "page-1",
-      "text": "RANKS\nOne Global Top 10 at a time: pick a game, then a difficulty. The Easy / Medium / Hard row only appears for Memory Lane and Quick Math; Rocket Launch and Guess Color have a single board. There is no \"All\" view. Each row shows the run time; ties rank the faster run higher. Refreshes once a day and right after your new best (subtitle UPDATED TODAY). When you are outside the Top 10, your own rank is pinned above the nav (YOU · #57 · 420 · 1:31). Opens on the game you last played."
+      "text": "RANKS\nOne Global Top 10 at a time: pick a game, then a difficulty. The Easy / Medium / Hard row only appears for Memory Lane and Quick Math; Rocket Launch and Guess Color have a single board. There is no \"All\" view. Each row shows the run time — time shown only for Memory Lane and Quick Math, where ties rank the faster run higher; other games break ties by who scored first. Refreshes once a day and right after your new best (subtitle UPDATED TODAY). When you are outside the Top 10, your own rank is pinned above the nav (YOU · #57 · 420 · 1:31). Opens on the game you last played."
     },
     {
       "id": "identity-brief",
@@ -306,6 +360,14 @@
       "w": 560,
       "page": "page-2",
       "text": "IDENTITY OPTIONS\nChosen: LogicSprint with the double chevron (Option A). It is the name and mark used on every screen and in the app.\n\nOptions B–D are kept here for reference only."
+    },
+    {
+      "id": "result-stats",
+      "x": 4230,
+      "y": 2114,
+      "w": 390,
+      "page": "page-1",
+      "text": "RESULT\nQuick Math example: CORRECT + TIME. Rocket Launch and Guess Color show CORRECT + BEST instead of TIME (run time only matters for Memory Lane and Quick Math)."
     },
     {
       "id": "name-once",
@@ -321,7 +383,7 @@
       "y": 3128,
       "w": 390,
       "page": "page-1",
-      "text": "PROFILE (proposed)\nPer difficulty: best, its run time and how often it was played. HISTORY lists recent runs (BEST tag on records) and is stored on this device only; it scrolls."
+      "text": "PROFILE (proposed)\nPer difficulty: best, its run time (Memory Lane and Quick Math only) and how often it was played. Rocket Launch and Guess Color show BEST and PLAYED only, and their history rows have no time. HISTORY lists recent runs (BEST tag on records) and is stored on this device only; it scrolls."
     },
     {
       "id": "gc-brief",
@@ -337,7 +399,7 @@
       "y": 874,
       "w": 390,
       "page": "page-3",
-      "text": "CLASSIC · words 1–5\nTap the button that matches the INK color. Four solid colors with matching labels, fixed order."
+      "text": "CLASSIC · words 1–5\nTAP THE COLOR: tap the color the word is painted in. Four solid colors with matching labels, fixed order."
     },
     {
       "id": "gc-2",
@@ -361,7 +423,7 @@
       "y": 874,
       "w": 390,
       "page": "page-3",
-      "text": "RULE SWAP · words 21–30\nSome words flip the rule to TAP THE WORD: blue banner, Aa icon and a flip highlight. RED in green ink → the RED-filled button is correct (teal ring = wireframe marker only)."
+      "text": "RULE SWAP · words 21–30\nSome words flip the rule to TAP THE TEXT (tap what the word says): blue banner, Aa icon and a flip highlight. RED painted green → the RED-filled button is correct (teal ring = wireframe marker only)."
     },
     {
       "id": "gc-5",
@@ -369,7 +431,7 @@
       "y": 874,
       "w": 390,
       "page": "page-3",
-      "text": "MISMATCHED LABELS · words 31–40\nThe fill is the answer — labels are traps. Labels are near-white on a dark chip so they read on every fill. Here: GREEN in coral ink → the red-filled button (labeled BLUE)."
+      "text": "MISMATCHED LABELS · words 31–40\nThe fill is the answer — labels are traps. Labels are near-white on a dark chip so they read on every fill. Here: GREEN painted coral → the red-filled button (labeled BLUE)."
     },
     {
       "id": "gc-6",
@@ -377,7 +439,39 @@
       "y": 874,
       "w": 390,
       "page": "page-3",
-      "text": "NEUTRAL + DISTRACTIONS · words 41+\nINK rule only. Neutral words (TABLE) and shapes (e.g. a blue circle, shown bottom-left of the card) appear only on INK turns; slight rotation and a faint pulsing glow ring. Motion respects Reduce Motion; nothing flashes faster than 3×/s."
+      "text": "NEUTRAL + DISTRACTIONS · words 41+\nCOLOR rule only. Neutral words (TABLE) and shapes (e.g. a blue circle, shown bottom-left of the card) appear only on COLOR turns; slight rotation and a faint pulsing glow ring. Motion respects Reduce Motion; nothing flashes faster than 3×/s."
+    },
+    {
+      "id": "rule-options",
+      "x": 0,
+      "y": 1034,
+      "w": 900,
+      "page": "page-3",
+      "text": "RULE OPTIONS — pick A, B or C. Each shown with the COLOR rule and the TEXT rule; the word is RED painted green (COLOR → tap green, TEXT → tap red).\n\nAll six echo the rule on every answer button (corner icon: drop = COLOR, Aa = TEXT). Teal ring = correct answer, wireframe marker only."
+    },
+    {
+      "id": "rule-a",
+      "x": 0,
+      "y": 2038,
+      "w": 860,
+      "page": "page-3",
+      "text": "A · RULE ON THE CARD\nRule and word are one object. On a rule change the whole card flips (0.3 s) to its new color."
+    },
+    {
+      "id": "rule-b",
+      "x": 940,
+      "y": 2038,
+      "w": 860,
+      "page": "page-3",
+      "text": "B · RULE AS THE QUESTION\nYou read the rule and the word in one pass — nothing to look away to."
+    },
+    {
+      "id": "rule-c",
+      "x": 1880,
+      "y": 2038,
+      "w": 860,
+      "page": "page-3",
+      "text": "C · RULE SWITCH\nBoth rules are always visible; a change is a visible slide + haptic, hard to miss."
     }
   ],
   "launch": {
