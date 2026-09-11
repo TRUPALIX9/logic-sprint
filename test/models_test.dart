@@ -1,36 +1,36 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logic_sprint/core/config.dart';
+import 'package:logic_sprint/core/format.dart';
 import 'package:logic_sprint/models/game.dart';
 import 'package:logic_sprint/models/leaderboard_entry.dart';
 import 'package:logic_sprint/models/round_result.dart';
 
-RoundResult _result({
-  int score = 10,
-  int correct = 1,
-  int wrong = 0,
-  int previousBest = 0,
-}) => RoundResult(
+RoundResult _result({int score = 10, int previousBest = 0}) => RoundResult(
   game: GameId.quickMath,
   difficulty: Difficulty.easy,
   score: score,
-  correct: correct,
-  wrong: wrong,
+  correct: 1,
+  duration: const Duration(seconds: 42),
   previousBest: previousBest,
 );
 
 void main() {
   group('RoundResult', () {
-    test('accuracy is a rounded percentage, 0 with no attempts', () {
-      expect(_result(correct: 2, wrong: 1).accuracy, 67);
-      expect(_result(correct: 0, wrong: 0).accuracy, 0);
-    });
-
     test('new best only when the score beats the previous best', () {
       expect(_result(score: 50, previousBest: 40).isNewBest, isTrue);
       expect(_result(score: 50, previousBest: 40).improvement, 10);
       expect(_result(score: 40, previousBest: 40).isNewBest, isFalse);
       expect(_result(score: 0, previousBest: 0).isNewBest, isFalse);
     });
+  });
+
+  test('formatDuration shows m:ss, or h:mm:ss past an hour', () {
+    expect(formatDuration(const Duration(seconds: 5)), '0:05');
+    expect(formatDuration(const Duration(minutes: 1, seconds: 24)), '1:24');
+    expect(
+      formatDuration(const Duration(hours: 1, minutes: 2, seconds: 10)),
+      '1:02:10',
+    );
   });
 
   group('GameId', () {
@@ -81,7 +81,8 @@ void main() {
       'player_name': 'AXON',
       'score': 980,
       'game_type': 'rocketLaunch',
-      'difficulty': 'hard',
+      'difficulty': 'medium',
+      'duration_ms': 84000,
       'created_at': '2026-09-11T10:00:00.000Z',
     };
 
@@ -89,8 +90,17 @@ void main() {
       final entry = LeaderboardEntry.fromRow(row)!;
       expect(entry.playerName, 'AXON');
       expect(entry.game, GameId.rocketLaunch);
-      expect(entry.difficulty, Difficulty.hard);
-      expect(LeaderboardEntry.fromRow(entry.toRow())!.score, 980);
+      expect(entry.duration, const Duration(seconds: 84));
+      final again = LeaderboardEntry.fromRow(entry.toRow())!;
+      expect(again.score, 980);
+      expect(again.duration, entry.duration);
+    });
+
+    test('rows without a duration still parse', () {
+      expect(
+        LeaderboardEntry.fromRow({...row}..remove('duration_ms'))!.duration,
+        isNull,
+      );
     });
 
     test('skips rows for games this build does not know', () {

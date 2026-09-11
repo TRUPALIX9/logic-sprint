@@ -9,6 +9,7 @@ class LeaderboardEntry {
     required this.game,
     required this.difficulty,
     this.createdAt,
+    this.duration,
   });
 
   final String id;
@@ -17,6 +18,9 @@ class LeaderboardEntry {
   final GameId game;
   final Difficulty difficulty;
   final DateTime? createdAt;
+
+  /// How long the run took (older rows may not have it).
+  final Duration? duration;
 
   /// Parses a Supabase row; returns null for games or difficulties this
   /// build doesn't know.
@@ -35,6 +39,9 @@ class LeaderboardEntry {
       game: game,
       difficulty: difficulty,
       createdAt: DateTime.tryParse('${row['created_at'] ?? ''}'),
+      duration: row['duration_ms'] is num
+          ? Duration(milliseconds: (row['duration_ms'] as num).toInt())
+          : null,
     );
   }
 
@@ -46,5 +53,6 @@ class LeaderboardEntry {
     'game_type': game.name,
     'difficulty': difficulty.name,
     'created_at': createdAt?.toIso8601String(),
+    'duration_ms': duration?.inMilliseconds,
   };
 }

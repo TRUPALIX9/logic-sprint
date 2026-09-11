@@ -1,6 +1,4 @@
 abstract final class AppConfig {
-  static const roundSeconds = 30;
-
   // Scoring shared by every game.
   static const pointsPerCorrect = 10;
   static const streakBonusEvery = 5;

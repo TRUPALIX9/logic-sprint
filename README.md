@@ -13,14 +13,14 @@
 
 ## Games
 
-Every round lasts 30 seconds (the clock is never shown). +10 per correct action, plus a hidden +20 bonus every 5-in-a-row.
+Every game is an **endless run**: it keeps getting harder until your first mistake. Once per run you can watch a rewarded ad for **one more life**. +10 per correct action, plus a hidden +20 bonus every 5-in-a-row. Each run's time is recorded; on the leaderboard a faster run wins a tie.
 
 | Game | Skill | How it plays | Difficulty |
 |------|-------|--------------|------------|
-| **Rocket Launch** | Reflex | Touch and drag anywhere to steer through an asteroid field; hits cost 15 points | Ramps from calm to meteor storm |
-| **Memory Lane** | Memory | Tiles flash in sequence; tap them back in order, one more tile each level | Easy 3×3 · Medium 4×4 · Hard 5×5 |
-| **Quick Math** | Arithmetic | Tap the right answer of four | Easy + − · Medium + − × · Hard + − × ÷ |
-| **Guess Color** | Focus | Tap the ink color, not the word (Stroop) | Ramps from 4 colors to 6, then shuffled buttons |
+| **Rocket Launch** | Reflex | Touch and drag anywhere to steer through a green asteroid storm; one hit ends the run | Speeds up the longer you survive |
+| **Memory Lane** | Memory | Tiles flash in sequence; tap them back in order, one more tile each level; one wrong tap ends the run | Easy 3×3 · Medium 4×4 · Hard 5×5 |
+| **Quick Math** | Arithmetic | Tap the right answer of four; numbers and operations grow every 10 problems; one wrong answer ends the run | Easy + − · Medium + − × · Hard + − × ÷ |
+| **Guess Color** | Focus | Tap the ink color, not the word (Stroop); buttons start shuffling, then their names and colors stop matching | Gets trickier as you go |
 
 ---
 
@@ -46,7 +46,7 @@ supabase/schema.sql          # leaderboard table, RLS, index
 config/admob.example.json    # AdMob config template (real config is gitignored)
 ```
 
-Each game is an engine (`RoundEngine` subclass: pure logic, unit-tested with `fake_async`) plus a screen hosted by `RoundScreen`, which runs the round, saves the best, shows the between-round ad and opens Result.
+Each game is an engine (`RoundEngine` subclass: pure logic, unit-tested with `fake_async`) plus a screen hosted by `RoundScreen`, which runs the endless run, offers the one rewarded-ad revive when it goes down, saves the best (score and time) and opens Result.
 
 ---
 
@@ -85,7 +85,7 @@ Gradle refuses release builds without `ADMOB_APP_ID`, and bundles without a rele
 
 ## Leaderboard
 
-- One Top 10 per game (and per difficulty for Memory Lane and Quick Math), queried server-side
+- One Top 10 per game (and per difficulty for Memory Lane and Quick Math), queried server-side; ties go to the faster run
 - Post from the Result screen only; 5 posts per device per day
 - Each board cached 10 minutes; manual refresh has a 60 s cooldown; requests time out after 8 s
 - Fully playable offline
@@ -96,7 +96,7 @@ Setup: run [supabase/schema.sql](supabase/schema.sql) in the Supabase SQL editor
 
 ## Ads
 
-AdMob banner on the Play tab and an interstitial after every 2nd round. Consent is gathered with Google's UMP SDK before any ad request; users in consent regions get **Privacy choices** in Settings.
+AdMob banner on the Play tab, and a rewarded ad ("Game Life") offered once per run for one more life — no interstitials. Consent is gathered with Google's UMP SDK before any ad request; users in consent regions get **Privacy choices** in Settings. IDs live in `config/admob.json` (`ADMOB_APP_ID`, `ADMOB_BANNER_ID`, `ADMOB_REWARDED_ID`).
 
 ---
 

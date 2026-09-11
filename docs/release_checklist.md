@@ -12,14 +12,16 @@
 - [ ] Keystore and passwords backed up in a password manager
 
 ### AdMob
-- [ ] AdMob app linked to the Play listing; one **banner** and one **interstitial** unit created
-- [ ] `config/admob.json` filled from [config/admob.example.json](../config/admob.example.json) (gitignored)
+- [x] AdMob app `ca-app-pub-4460198288175671~6905071306` with a **banner** unit and a **rewarded** unit ("Game Life Reward Ad", 1 reward = one more life)
+- [x] `config/admob.json` filled locally (gitignored); template in [config/admob.example.json](../config/admob.example.json)
+- [ ] Link the AdMob app to the Play listing once the app exists in Play Console
 - [ ] AdMob → Privacy & messaging → **GDPR** message published (drives the in-app consent form)
 - [ ] `app-ads.txt` hosted on the developer website listed in Play Console
 
 ### Supabase leaderboard
-- [ ] Project reachable — the URL in `lib/core/config.dart` currently does not resolve; fix it in the Supabase dashboard or update the URL and publishable key
-- [ ] [supabase/schema.sql](../supabase/schema.sql) run in the SQL editor (table, RLS, per-board index; allows all four games)
+- [x] Project reachable (`axucnwnzuhdsiggqyjqf`)
+- [ ] [supabase/schema.sql](../supabase/schema.sql) pasted into the SQL editor and run (table, RLS, per-board index, run time column; allows all four games) — the table doesn't exist yet
+- [ ] Database password rotated (it was shared in chat)
 
 ### Privacy policy
 - [x] Support email (trupal.work@gmail.com) in [assets/brand/docs/privacy_policy.md](../assets/brand/docs/privacy_policy.md)
@@ -32,7 +34,7 @@ make check
 make build-aab   # → build/app/outputs/bundle/release/app-release.aab
 ```
 
-CI (`.github/workflows/release.yml`) builds the same on pushes to `production` and needs repo secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEY_PROPERTIES` and `ADMOB_CONFIG_JSON`.
+Pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`, which builds the same and needs repo secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEY_PROPERTIES` and `ADMOB_CONFIG_JSON` (see [git_workflow.md](git_workflow.md)).
 
 ## 3. Play Console forms
 
@@ -57,15 +59,16 @@ CI (`.github/workflows/release.yml`) builds the same on pushes to `production` a
 ## 5. QA smoke test (release build on a real device)
 
 1. Cold launch → splash → Play tab; consent form appears once (EEA VPN or AdMob test device)
-2. Rocket Launch: rocket follows your finger; the storm speeds up; round ends on Result
-3. Memory Lane on each difficulty: "Repeat the pattern X/Y" counts taps; level grows
-4. Quick Math on each difficulty: correct answer turns teal, wrong turns coral and reveals the answer
-5. Guess Color: 4 colors at first, 6 later, buttons reshuffle near the end
-6. Interstitial after every 2nd round returns to Result; banner shows on the Play tab
-7. Post a score → Ranks opens on that game's board with your row marked "YOU"; airplane mode shows the offline message within ~8 s
-8. Profile shows your display name and bests; Settings → Reset high scores clears them
-9. Settings footer shows `1.0.0 (1)`; Privacy policy screen shows the current text
+2. Rocket Launch: rocket follows your finger; green asteroids speed up the longer you last; one hit ends the run
+3. Memory Lane on each difficulty: "Repeat the pattern X/Y" counts taps; levels go on until a wrong tap
+4. Quick Math on each difficulty: correct turns teal; a wrong answer turns coral, reveals the answer and ends the run; problems get harder every 10
+5. Guess Color: 4 colors, then 6, then shuffled buttons, then mismatched names and tints; a wrong tap ends the run
+6. On the first mistake, "Watch ad · +1 life" appears once per run; watching it continues the run, "End run" goes to Result; a second mistake goes straight to Result
+7. Result shows score, correct count and run time; banner shows on the Play tab
+8. Post a score → Ranks opens on that game's board with your row marked "YOU"; airplane mode shows the offline message within ~8 s
+9. Profile shows your display name and bests; Settings → Reset high scores clears them
+10. Settings footer shows `1.0.0 (1)`; Privacy policy screen shows the current text
 
 ## 6. Release
 - [ ] Upload AAB to **Internal testing**, then closed testing, then production
-- [ ] Merge `develop` → `production`, tag `v1.0.0`
+- [ ] Tag `v1.0.0` on `production` and push the tag

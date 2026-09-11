@@ -3,27 +3,22 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-/// AdMob banner + interstitial, gated behind Google UMP consent.
+/// AdMob banner + rewarded "extra life", gated behind Google UMP consent.
 ///
 /// Unit IDs come from `--dart-define-from-file=config/admob.json`
 /// (template: config/admob.example.json). Debug and profile builds fall back
-/// to Google's test IDs; a release build without IDs shows no ads.
+/// to Google's test IDs; a release build without an ID shows no such ad.
 class Ads {
-  Ads({this.roundsPerInterstitial = 2});
+  Ads();
 
   static const _bannerId = String.fromEnvironment('ADMOB_BANNER_ID');
-  static const _interstitialId = String.fromEnvironment(
-    'ADMOB_INTERSTITIAL_ID',
-  );
+  static const _rewardedId = String.fromEnvironment('ADMOB_REWARDED_ID');
 
   // Official Google test unit IDs.
   static const androidTestBanner = 'ca-app-pub-3940256099942544/6300978111';
   static const iosTestBanner = 'ca-app-pub-3940256099942544/2934735716';
-  static const androidTestInterstitial =
-      'ca-app-pub-3940256099942544/1033173712';
-  static const iosTestInterstitial = 'ca-app-pub-3940256099942544/4411468910';
-
-  final int roundsPerInterstitial;
+  static const androidTestRewarded = 'ca-app-pub-3940256099942544/5224354917';
+  static const iosTestRewarded = 'ca-app-pub-3940256099942544/1712485313';
 
   /// True once consent allows ad requests and the SDK is initialized.
   final ValueNotifier<bool> ready = ValueNotifier(false);
@@ -31,16 +26,18 @@ class Ads {
   /// True when users must be offered a way to change consent (EEA/UK/CH).
   final ValueNotifier<bool> privacyOptionsRequired = ValueNotifier(false);
 
-  InterstitialAd? _interstitial;
-  int _roundsSinceInterstitial = 0;
+  /// True while a rewarded ad is loaded and can be offered as a revive.
+  final ValueNotifier<bool> rewardedReady = ValueNotifier(false);
+
+  RewardedAd? _rewarded;
+  bool _loadingRewarded = false;
 
   String get bannerUnitId =>
       _resolve(_bannerId, androidTestBanner, iosTestBanner);
-  String get interstitialUnitId =>
-      _resolve(_interstitialId, androidTestInterstitial, iosTestInterstitial);
+  String get rewardedUnitId =>
+      _resolve(_rewardedId, androidTestRewarded, iosTestRewarded);
 
-  bool get isConfigured =>
-      bannerUnitId.isNotEmpty && interstitialUnitId.isNotEmpty;
+  bool get isConfigured => bannerUnitId.isNotEmpty || rewardedUnitId.isNotEmpty;
 
   static String _resolve(String configured, String android, String ios) {
     if (configured.isNotEmpty) {
@@ -87,30 +84,38 @@ class Ads {
     }
   }
 
-  /// Call when a round ends. Shows a preloaded interstitial every
-  /// [roundsPerInterstitial] rounds; [then] always runs exactly once.
-  void afterRound(VoidCallback then) {
-    _roundsSinceInterstitial++;
-    final ad = _interstitial;
-    if (ad == null || _roundsSinceInterstitial < roundsPerInterstitial) {
-      then();
+  /// Loads a rewarded ad if none is ready (call when a run starts).
+  void preloadRewarded() {
+    if (ready.value && _rewarded == null) {
+      _loadRewarded();
+    }
+  }
+
+  /// Shows the rewarded ad. Exactly one callback runs: [onReward] if the
+  /// user watched it through, otherwise [onDone].
+  void showRewarded({
+    required VoidCallback onReward,
+    required VoidCallback onDone,
+  }) {
+    final ad = _rewarded;
+    if (ad == null) {
+      onDone();
       return;
     }
-    _interstitial = null;
-    _roundsSinceInterstitial = 0;
+    _rewarded = null;
+    rewardedReady.value = false;
+    var earned = false;
+    void close() {
+      ad.dispose();
+      earned ? onReward() : onDone();
+      _loadRewarded();
+    }
+
     ad.fullScreenContentCallback = FullScreenContentCallback(
-      onAdDismissedFullScreenContent: (ad) {
-        ad.dispose();
-        then();
-        _loadInterstitial();
-      },
-      onAdFailedToShowFullScreenContent: (ad, _) {
-        ad.dispose();
-        then();
-        _loadInterstitial();
-      },
+      onAdDismissedFullScreenContent: (_) => close(),
+      onAdFailedToShowFullScreenContent: (_, _) => close(),
     );
-    ad.show();
+    ad.show(onUserEarnedReward: (_, _) => earned = true);
   }
 
   Future<void> _gatherConsent() {
@@ -140,18 +145,28 @@ class Ads {
     }
     await MobileAds.instance.initialize();
     ready.value = true;
-    _loadInterstitial();
+    _loadRewarded();
   }
 
-  void _loadInterstitial() {
-    InterstitialAd.load(
-      adUnitId: interstitialUnitId,
+  void _loadRewarded() {
+    if (rewardedUnitId.isEmpty || _loadingRewarded) {
+      return;
+    }
+    _loadingRewarded = true;
+    RewardedAd.load(
+      adUnitId: rewardedUnitId,
       request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) => _interstitial = ad,
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _loadingRewarded = false;
+          _rewarded = ad;
+          rewardedReady.value = true;
+        },
         onAdFailedToLoad: (error) {
-          debugPrint('Ads: interstitial failed to load: ${error.message}');
-          _interstitial = null;
+          debugPrint('Ads: rewarded failed to load: ${error.message}');
+          _loadingRewarded = false;
+          _rewarded = null;
+          rewardedReady.value = false;
         },
       ),
     );

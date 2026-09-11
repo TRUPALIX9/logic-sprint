@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../app.dart';
 import '../core/config.dart';
+import '../core/format.dart';
 import '../core/theme.dart';
 import '../games/games.dart';
 import '../models/round_result.dart';
@@ -45,7 +46,7 @@ class ResultScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const DisplayText('Round complete', size: 26),
+                              const DisplayText('Game over', size: 26),
                               const SizedBox(height: 4),
                               MonoLabel(game.titleWith(result.difficulty)),
                             ],
@@ -63,13 +64,9 @@ class ResultScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: _Stat('Wrong', '${result.wrong}', LS.coral),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
                           child: _Stat(
-                            'Accuracy',
-                            '${result.accuracy}%',
+                            'Time',
+                            formatDuration(result.duration),
                             LS.text,
                           ),
                         ),
@@ -243,6 +240,7 @@ class _PostCardState extends State<_PostCard> {
       game: widget.result.game,
       difficulty: widget.result.difficulty,
       score: widget.result.score,
+      duration: widget.result.duration,
     );
     if (!mounted) {
       return;

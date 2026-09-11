@@ -30,7 +30,10 @@ class _AdBannerState extends State<AdBanner> {
 
   void _loadIfReady() {
     final ads = _ads;
-    if (ads == null || !ads.ready.value || _banner != null) {
+    if (ads == null ||
+        !ads.ready.value ||
+        ads.bannerUnitId.isEmpty ||
+        _banner != null) {
       return;
     }
     _banner = BannerAd(

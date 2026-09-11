@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import '../../core/config.dart';
 import '../../models/game.dart';
 import '../round_engine.dart';
 
@@ -30,11 +29,11 @@ class Asteroid {
   final double spin;
 }
 
-/// Rocket Launch: the rocket chases the player's finger along the bottom of
-/// the field, dodging falling asteroids. Each rock that falls past scores; a
-/// hit costs points. One mode for every [difficulty] (it is ignored): the
-/// round starts calm and ramps to a meteor storm by the end. The screen
-/// drives [tick] from a Ticker, so the simulation owns no timers.
+/// Rocket Launch: an endless run. The rocket chases the player's finger
+/// along the bottom of the field; each rock that falls past scores and the
+/// first hit sends the run down. It starts calm and ramps without end (to a
+/// humane cap). [difficulty] is ignored. The screen drives [tick] from a
+/// Ticker, so the simulation owns no timers.
 class RocketLaunchEngine extends RoundEngine {
   RocketLaunchEngine({
     required super.difficulty,
@@ -57,17 +56,16 @@ class RocketLaunchEngine extends RoundEngine {
   static const hitReach = 0.12;
   static const hitTop = 0.80;
   static const hitBottom = 0.90;
-  static const hitPenalty = 15;
-  static const hitFlash = Duration(milliseconds: 320);
+
+  /// Invulnerability after a revive.
+  static const reviveShield = Duration(milliseconds: 1500);
+
+  /// Calm at 0 s, the old "meteor storm" by [stormAt] s, then creeping up
+  /// to a cap at [capAt] s so it stays playable.
+  static const stormAt = 60.0;
+  static const capAt = 120.0;
 
   static const _fallSpeed = 0.32;
-
-  // Calm → storm, spanning the old easy → hard tuning (45 frames at 60 fps
-  // down to a shrunken 25; speed ×1.0 up to ×2.8).
-  static const _calmInterval = 0.75;
-  static const _stormInterval = 0.24;
-  static const _calmSpeed = 1.0;
-  static const _stormSpeed = 2.8;
 
   // A stalled frame advances at most this much, so rocks never teleport.
   static const _maxStep = Duration(milliseconds: 50);
@@ -77,54 +75,48 @@ class RocketLaunchEngine extends RoundEngine {
   /// Where the finger is; [tick] eases [rocketX] toward it.
   double targetX = 0.5;
   final List<Asteroid> asteroids = [];
-  Duration elapsed = Duration.zero;
   int spawned = 0;
 
-  /// [elapsed] at the last hit; drives the brief coral flash.
-  Duration? lastHit;
-  bool _running = false;
+  /// Simulated flight time: the sum of [tick] steps while playing. Drives
+  /// the ramp and the scenery (the base [elapsed] is the wall-clock run).
+  Duration flightTime = Duration.zero;
+  Duration _shieldUntil = Duration.zero;
   double _untilSpawn = 0;
 
   double get _seconds =>
-      elapsed.inMicroseconds / Duration.microsecondsPerSecond;
+      flightTime.inMicroseconds / Duration.microsecondsPerSecond;
 
-  /// 0 at the start of the round, 1 at the end.
-  double get ramp => min(1, _seconds / AppConfig.roundSeconds);
+  bool get invulnerable => flightTime < _shieldUntil;
 
-  /// Seconds between spawns right now.
-  double get spawnInterval =>
-      _calmInterval + (_stormInterval - _calmInterval) * ramp;
-
-  /// Fall-speed multiplier right now.
-  double get speedFactor => _calmSpeed + (_stormSpeed - _calmSpeed) * ramp;
-
-  /// Hit flash strength: 1 right after a hit, fading to 0.
-  double get flash {
-    final hit = lastHit;
-    if (hit == null) {
-      return 0;
+  static double _ramp(double seconds, double calm, double storm, double cap) {
+    if (seconds <= stormAt) {
+      return calm + (storm - calm) * seconds / stormAt;
     }
-    final t = (elapsed - hit).inMicroseconds / hitFlash.inMicroseconds;
-    return t >= 1 ? 0 : 1 - t;
+    final creep = min(1.0, (seconds - stormAt) / (capAt - stormAt));
+    return storm + (cap - storm) * creep;
   }
 
-  bool get flashing => flash > 0;
+  /// Seconds between spawns right now.
+  double get spawnInterval => _ramp(_seconds, 0.75, 0.24, 0.18);
+
+  /// Fall-speed multiplier right now.
+  double get speedFactor => _ramp(_seconds, 1.0, 2.8, 3.4);
 
   void steerTo(double x) {
-    if (isFinished) {
+    if (state == RunState.down || isFinished) {
       return;
     }
     targetX = x.clamp(minX, maxX);
   }
 
-  /// Advances the field by [dt]. A no-op before start and after finish.
+  /// Advances the field by [dt]. A no-op unless playing.
   void tick(Duration dt) {
-    if (!_running || isFinished || dt <= Duration.zero) {
+    if (!isPlaying || dt <= Duration.zero) {
       return;
     }
     final step = dt > _maxStep ? _maxStep : dt;
     final seconds = step.inMicroseconds / Duration.microsecondsPerSecond;
-    elapsed += step;
+    flightTime += step;
 
     // Ease toward the finger: fast when far, slowing as it arrives, never
     // faster than steerSpeed.
@@ -145,11 +137,12 @@ class RocketLaunchEngine extends RoundEngine {
         ..rotation += rock.spin * seconds;
       // Swept check: did the rock cross the rocket's band this step?
       final crossed = from <= hitBottom && rock.y >= hitTop;
-      if (crossed && (rock.x - rocketX).abs() < hitReach) {
-        asteroids.remove(rock);
-        lastHit = elapsed;
-        scoreWrong(penalty: hitPenalty);
-      } else if (rock.y >= 1) {
+      if (crossed && (rock.x - rocketX).abs() < hitReach && !invulnerable) {
+        // The rock stays on screen so the crash reads.
+        fail();
+        return;
+      }
+      if (rock.y >= 1) {
         asteroids.remove(rock);
         scoreCorrect();
       }
@@ -172,6 +165,11 @@ class RocketLaunchEngine extends RoundEngine {
     );
   }
 
+  /// Second life: an empty sky, a fresh spawn gap and a short shield.
   @override
-  void onStart() => _running = true;
+  void onRevive() {
+    asteroids.clear();
+    _untilSpawn = spawnInterval;
+    _shieldUntil = flightTime + reviveShield;
+  }
 }

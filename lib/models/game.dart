@@ -68,13 +68,13 @@ enum GameId {
 
   String get rules => switch (this) {
     rocketLaunch =>
-      'Asteroids rain down. Touch and drag anywhere on the field to steer around them.',
+      'Touch and drag anywhere to steer through the asteroid storm. It keeps getting faster — one hit ends the run.',
     memoryLane =>
-      'Tiles light up one at a time. Tap them back in the same order — every level adds one more tile to remember.',
+      'Tiles light up one at a time. Tap them back in the same order. Every level adds a tile — one wrong tap ends the run.',
     quickMath =>
-      'Solve each problem and tap the right answer. Keep a clean streak for bonus points.',
+      'Solve problem after problem as they get harder. One wrong answer ends the run, and your time is saved.',
     guessColor =>
-      'A color word appears in a different ink. Tap the ink color, not the word.',
+      'Tap the ink color, not the word. The buttons start shuffling and changing colors — one wrong tap ends the run.',
   };
 
   /// How a ramp game escalates; null for games with difficulty levels.

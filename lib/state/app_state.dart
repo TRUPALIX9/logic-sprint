@@ -22,6 +22,10 @@ class AppState extends ChangeNotifier implements RoundFeedback {
   int best(GameId game, Difficulty difficulty) =>
       storage.best(game, difficulty);
 
+  /// How long the best-scoring run took, if recorded.
+  Duration? bestTime(GameId game, Difficulty difficulty) =>
+      storage.bestTime(game, difficulty);
+
   (GameId, Difficulty)? get lastPlayed => storage.lastPlayed;
 
   Future<void> setSoundOn(bool value) async {
@@ -42,6 +46,7 @@ class AppState extends ChangeNotifier implements RoundFeedback {
       result.game,
       result.difficulty,
       result.score,
+      duration: result.duration,
     );
     await storage.setLastPlayed(result.game, result.difficulty);
     notifyListeners();

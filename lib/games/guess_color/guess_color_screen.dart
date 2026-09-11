@@ -10,7 +10,7 @@ import 'guess_color_engine.dart';
 class GuessColorScreen extends StatelessWidget {
   const GuessColorScreen({super.key, required this.difficulty});
 
-  /// Passed through to the round; the game itself has one ramping mode.
+  /// Passed through to the run; the game itself has one ramping mode.
   final Difficulty difficulty;
 
   @override
@@ -28,6 +28,8 @@ class GuessColorScreen extends StatelessWidget {
   }
 }
 
+/// Word card on top, answer grid below; both halves stretch to fill the
+/// screen.
 class _GuessColorBody extends StatelessWidget {
   const _GuessColorBody(this.engine);
 
@@ -70,7 +72,7 @@ class _GuessColorBody extends StatelessWidget {
           const SizedBox(height: 18),
           Expanded(
             flex: 3,
-            child: _AnswerGrid(engine: engine, colors: item.buttons),
+            child: _AnswerGrid(engine: engine, buttons: item.buttons),
           ),
         ],
       ),
@@ -80,16 +82,16 @@ class _GuessColorBody extends StatelessWidget {
 
 /// Two columns filling the lower area: 2 rows for 4 colors, 3 for 6.
 class _AnswerGrid extends StatelessWidget {
-  const _AnswerGrid({required this.engine, required this.colors});
+  const _AnswerGrid({required this.engine, required this.buttons});
 
   static const _gap = 12.0;
 
   final GuessColorEngine engine;
-  final List<InkColor> colors;
+  final List<ColorChoice> buttons;
 
   @override
   Widget build(BuildContext context) {
-    final rows = (colors.length / 2).ceil();
+    final rows = (buttons.length / 2).ceil();
     return Column(
       children: [
         for (var row = 0; row < rows; row++) ...[
@@ -99,13 +101,16 @@ class _AnswerGrid extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: _AnswerButton(engine: engine, color: colors[row * 2]),
+                  child: _AnswerButton(
+                    engine: engine,
+                    choice: buttons[row * 2],
+                  ),
                 ),
                 const SizedBox(width: _gap),
                 Expanded(
                   child: _AnswerButton(
                     engine: engine,
-                    color: colors[row * 2 + 1],
+                    choice: buttons[row * 2 + 1],
                   ),
                 ),
               ],
@@ -118,45 +123,50 @@ class _AnswerGrid extends StatelessWidget {
 }
 
 class _AnswerButton extends StatelessWidget {
-  const _AnswerButton({required this.engine, required this.color});
+  const _AnswerButton({required this.engine, required this.choice});
 
   final GuessColorEngine engine;
-  final InkColor color;
+  final ColorChoice choice;
 
   @override
   Widget build(BuildContext context) {
     final picked = engine.picked;
-    final isAnswer = color == engine.item.ink;
+    final isAnswer = choice.name == engine.item.ink;
     // After a tap: the pick turns teal or coral; a wrong pick also reveals
     // the right answer in teal.
     final Color? state = picked == null
         ? null
         : isAnswer
         ? LS.teal
-        : picked == color
+        : picked == choice.name
         ? LS.coral
         : null;
     return ChamferBox(
-      color:
-          state?.withValues(alpha: 0.14) ?? color.color.withValues(alpha: 0.08),
-      borderColor: state ?? color.color.withValues(alpha: 0.4),
-      onTap: engine.locked ? null : () => engine.pick(color),
+      color: state?.withValues(alpha: 0.14) ?? choice.tint.fill,
+      borderColor: state ?? choice.tint.border,
+      onTap: engine.locked ? null : () => engine.pick(choice.name),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          DecoratedBox(
-            decoration: ShapeDecoration(
-              shape: chamfer(Cut.sm),
-              color: color.color,
+          if (choice.swatch) ...[
+            DecoratedBox(
+              decoration: ShapeDecoration(
+                shape: chamfer(Cut.sm),
+                color: choice.name.color,
+              ),
+              child: const SizedBox(width: 28, height: 28),
             ),
-            child: const SizedBox(width: 28, height: 28),
-          ),
-          const SizedBox(width: 12),
+            const SizedBox(width: 12),
+          ],
           Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: DisplayText(color.label, size: 20, color: color.color),
+              child: DisplayText(
+                choice.name.label,
+                size: 20,
+                color: choice.label.color,
+              ),
             ),
           ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/format.dart';
 import '../core/theme.dart';
 import '../models/game.dart';
 import '../services/leaderboard.dart';
@@ -135,6 +136,15 @@ class _BestCard extends StatelessWidget {
                                 : LS.text,
                           ),
                         ),
+                        if (app.bestTime(game, difficulty) case final time?)
+                          if (bests[i] > 0) ...[
+                            const SizedBox(height: 2),
+                            MonoLabel(
+                              formatDuration(time),
+                              size: 10,
+                              color: LS.dim,
+                            ),
+                          ],
                       ],
                     ),
                   ),

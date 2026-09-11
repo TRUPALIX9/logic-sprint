@@ -229,7 +229,7 @@ void main() {
           difficulty: Difficulty.medium,
           score: 480,
           correct: 44,
-          wrong: 3,
+          duration: Duration(minutes: 1, seconds: 24),
           previousBest: 420,
         ),
       ),

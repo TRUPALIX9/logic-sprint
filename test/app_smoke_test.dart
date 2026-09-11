@@ -87,9 +87,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('= ?'), findsOneWidget);
 
-    await tester.pump(const Duration(seconds: 31));
+    // Runs are endless: tap the bottom-left answer until one is wrong. No
+    // rewarded ad is loaded in tests, so the run ends straight away.
+    for (var i = 0; i < 40 && find.text('GAME OVER').evaluate().isEmpty; i++) {
+      await tester.tapAt(const Offset(100, 740));
+      await tester.pump(const Duration(milliseconds: 400));
+    }
     await tester.pumpAndSettle();
-    expect(find.text('ROUND COMPLETE'), findsOneWidget);
+    expect(find.text('GAME OVER'), findsOneWidget);
     expect(find.text('POST TO GLOBAL TOP 10'), findsOneWidget);
 
     await tester.tap(find.text('HOME'));

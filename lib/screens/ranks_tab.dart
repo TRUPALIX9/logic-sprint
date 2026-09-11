@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../app.dart';
+import '../core/format.dart';
 import '../core/theme.dart';
 import '../models/game.dart';
 import '../models/leaderboard_entry.dart';
@@ -312,6 +313,10 @@ class _RankRow extends StatelessWidget {
               ],
             ),
           ),
+          if (entry.duration case final time?) ...[
+            MonoLabel(formatDuration(time), size: 10, color: LS.dim),
+            const SizedBox(width: 12),
+          ],
           Text(
             '${entry.score}',
             style: LSText.mono(

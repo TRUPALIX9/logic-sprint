@@ -121,6 +121,7 @@ void main() {
       game: _math,
       difficulty: Difficulty.medium,
       score: score,
+      duration: const Duration(seconds: 42),
     );
 
     test('sends the row, remembers the name, and counts the post', () async {
@@ -131,6 +132,7 @@ void main() {
         'score': 420,
         'game_type': 'quickMath',
         'difficulty': 'medium',
+        'duration_ms': 42000,
         'app_version': '1.0.0',
       });
       expect(leaderboard.savedName, 'NEON_FOX');

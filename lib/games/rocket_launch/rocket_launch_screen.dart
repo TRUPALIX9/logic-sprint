@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 import '../../core/theme.dart';
 import '../../models/game.dart';
 import '../../ui/kit.dart';
+import '../round_engine.dart';
 import '../round_screen.dart';
 import 'rocket_launch_engine.dart';
 
@@ -44,12 +45,17 @@ class _RocketLaunchBody extends StatefulWidget {
 class _RocketLaunchBodyState extends State<_RocketLaunchBody>
     with SingleTickerProviderStateMixin {
   static const _rocketSize = Size(56, 92);
+  static const _flashTime = Duration(milliseconds: 220);
 
   late final Ticker _ticker;
   Duration _last = Duration.zero;
 
-  /// Wall-clock time from the ticker; animates the exhaust flame.
+  /// Wall-clock time from the ticker; animates the flame and the hit flash
+  /// (the engine is frozen while the run is down).
   Duration _now = Duration.zero;
+
+  /// Ticker time when the run went down.
+  Duration? _hitAt;
   bool _touched = false;
 
   @override
@@ -64,9 +70,31 @@ class _RocketLaunchBodyState extends State<_RocketLaunchBody>
       _ticker.stop();
       return;
     }
-    _now = now;
-    engine.tick(now - _last);
+    final dt = now - _last;
     _last = now;
+    _now = now;
+    if (engine.isPlaying) {
+      _hitAt = null;
+      engine.tick(dt);
+    } else if (engine.state == RunState.down) {
+      _hitAt ??= now;
+      if (now - _hitAt! <= _flashTime) {
+        setState(() {});
+      }
+    }
+  }
+
+  /// Hit flash strength: 1 as the run goes down, fading to 0.
+  double get _flash {
+    if (widget.engine.state != RunState.down) {
+      return 0;
+    }
+    final hit = _hitAt;
+    if (hit == null) {
+      return 1;
+    }
+    final t = (_now - hit).inMicroseconds / _flashTime.inMicroseconds;
+    return t >= 1 ? 0 : 1 - t;
   }
 
   void _steer(Offset local, double width) {
@@ -88,11 +116,14 @@ class _RocketLaunchBodyState extends State<_RocketLaunchBody>
     return LayoutBuilder(
       builder: (context, box) {
         final w = box.maxWidth, h = box.maxHeight;
-        final flash = engine.flash;
+        final flash = _flash;
         // Small horizontal shake that dies out with the flash.
-        final shake = sin(engine.elapsed.inMilliseconds / 16) * 5 * flash;
+        final shake = sin(_now.inMilliseconds / 16) * 5 * flash;
         // Lean into the turn while chasing the finger.
         final lean = ((engine.targetX - engine.rocketX) * 2).clamp(-0.3, 0.3);
+        // Blink while the revive shield is up.
+        final blink = (engine.flightTime.inMilliseconds ~/ 120).isEven;
+        final rocketOpacity = engine.invulnerable ? (blink ? 0.3 : 0.85) : 1.0;
         return Semantics(
           label: 'Touch and drag to steer',
           child: Listener(
@@ -114,7 +145,7 @@ class _RocketLaunchBodyState extends State<_RocketLaunchBody>
                           ),
                           Positioned.fill(
                             child: CustomPaint(
-                              painter: _StarPainter(engine.elapsed),
+                              painter: _StarPainter(engine.flightTime),
                             ),
                           ),
                           Positioned.fill(
@@ -127,11 +158,14 @@ class _RocketLaunchBodyState extends State<_RocketLaunchBody>
                             top:
                                 RocketLaunchEngine.rocketY * h -
                                 _rocketSize.height / 2,
-                            child: Transform.rotate(
-                              angle: lean,
-                              child: CustomPaint(
-                                size: _rocketSize,
-                                painter: _RocketPainter(_now),
+                            child: Opacity(
+                              opacity: rocketOpacity,
+                              child: Transform.rotate(
+                                angle: lean,
+                                child: CustomPaint(
+                                  size: _rocketSize,
+                                  painter: _RocketPainter(_now),
+                                ),
                               ),
                             ),
                           ),
@@ -143,7 +177,7 @@ class _RocketLaunchBodyState extends State<_RocketLaunchBody>
                     Positioned.fill(
                       child: IgnorePointer(
                         child: ColoredBox(
-                          color: LS.coral.withValues(alpha: 0.22 * flash),
+                          color: LS.coral.withValues(alpha: 0.24 * flash),
                         ),
                       ),
                     ),
@@ -266,13 +300,13 @@ final List<(double, List<_Star>)> _starLayers = () {
 
 /// Parallax stars drifting down; nearer layers move faster.
 class _StarPainter extends CustomPainter {
-  _StarPainter(this.elapsed);
+  _StarPainter(this.time);
 
-  final Duration elapsed;
+  final Duration time;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final seconds = elapsed.inMicroseconds / Duration.microsecondsPerSecond;
+    final seconds = time.inMicroseconds / Duration.microsecondsPerSecond;
     final paint = Paint();
     for (final (speed, stars) in _starLayers) {
       final drift = seconds * speed;
@@ -289,16 +323,26 @@ class _StarPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_StarPainter oldDelegate) =>
-      oldDelegate.elapsed != elapsed;
+  bool shouldRepaint(_StarPainter oldDelegate) => oldDelegate.time != time;
 }
 
-/// Irregular, shaded rocks. Each outline and its craters come from the
+/// Teal shade: [t] 0 is LS.teal, 1 is black, negative mixes toward LS.text.
+Color _teal(double t) =>
+    t < 0 ? Color.lerp(LS.teal, LS.text, -t)! : Color.lerp(LS.teal, LS.bg, t)!;
+
+/// Irregular, shaded teal rocks. Each outline and its craters come from the
 /// asteroid's seed; light always falls from the top-left, whatever the spin.
 class _AsteroidPainter extends CustomPainter {
   _AsteroidPainter(this.asteroids);
 
   final List<Asteroid> asteroids;
+
+  static final _lit = _teal(0.45);
+  static final _body = _teal(0.72);
+  static final _shadow = _teal(0.9);
+  static final _rim = _teal(-0.3);
+  static final _pit = _teal(0.93);
+  static final _lip = _teal(0.5);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -334,11 +378,11 @@ class _AsteroidPainter extends CustomPainter {
       ..drawPath(
         outline,
         Paint()
-          ..shader = const RadialGradient(
-            center: Alignment(-0.45, -0.45),
+          ..shader = RadialGradient(
+            center: const Alignment(-0.45, -0.45),
             radius: 0.9,
-            colors: [LS.line, LS.surface2, LS.well],
-            stops: [0, 0.5, 1],
+            colors: [_lit, _body, _shadow],
+            stops: const [0, 0.5, 1],
           ).createShader(bounds),
       )
       ..drawPath(
@@ -349,17 +393,14 @@ class _AsteroidPainter extends CustomPainter {
           ..shader = LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              LS.muted.withValues(alpha: 0.6),
-              LS.muted.withValues(alpha: 0),
-            ],
+            colors: [_rim.withValues(alpha: 0.7), _rim.withValues(alpha: 0)],
             stops: const [0.1, 0.65],
           ).createShader(bounds),
       );
 
-    final pit = Paint()..color = LS.well.withValues(alpha: 0.85);
+    final pit = Paint()..color = _pit.withValues(alpha: 0.85);
     final lip = Paint()
-      ..color = LS.line
+      ..color = _lip
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     final craters = 2 + shape.nextInt(3);

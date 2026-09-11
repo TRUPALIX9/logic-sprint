@@ -15,18 +15,38 @@ class Storage {
   static String _bestKey(GameId game, Difficulty difficulty) =>
       'highScore_${game.name}_${difficulty.name}';
 
+  static String _timeKey(GameId game, Difficulty difficulty) =>
+      'bestTime_${game.name}_${difficulty.name}';
+
   int best(GameId game, Difficulty difficulty) =>
       _prefs.getInt(_bestKey(game, difficulty)) ?? 0;
 
-  /// Stores [score] if it beats the saved best; returns the best after.
+  /// How long the best-scoring run took, if recorded.
+  Duration? bestTime(GameId game, Difficulty difficulty) {
+    final millis = _prefs.getInt(_timeKey(game, difficulty));
+    return millis == null ? null : Duration(milliseconds: millis);
+  }
+
+  /// Stores [score] and its [duration] if the score beats the saved best, or
+  /// ties it in less time. Returns the best after.
   Future<int> saveBestIfHigher(
     GameId game,
     Difficulty difficulty,
-    int score,
-  ) async {
+    int score, {
+    Duration? duration,
+  }) async {
     final current = best(game, difficulty);
-    if (score > current) {
+    final currentTime = bestTime(game, difficulty);
+    final faster =
+        duration != null && (currentTime == null || duration < currentTime);
+    if (score > current || (score == current && score > 0 && faster)) {
       await _prefs.setInt(_bestKey(game, difficulty), score);
+      if (duration != null) {
+        await _prefs.setInt(
+          _timeKey(game, difficulty),
+          duration.inMilliseconds,
+        );
+      }
       return score;
     }
     return current;
@@ -36,6 +56,7 @@ class Storage {
     for (final game in GameId.values) {
       for (final difficulty in Difficulty.values) {
         await _prefs.remove(_bestKey(game, difficulty));
+        await _prefs.remove(_timeKey(game, difficulty));
       }
     }
   }

@@ -24,9 +24,10 @@ typedef FetchTop =
     );
 typedef InsertScore = Future<void> Function(Map<String, dynamic> row);
 
-/// One global Top 10 per game (and per difficulty where the game has them).
-/// Each board is cached for 10 minutes; manual refresh has a 60 s cooldown;
-/// posting is limited to 5 a day. Failures degrade to cached or empty data.
+/// One global Top 10 per game (and per difficulty where the game has them),
+/// ranked by score, then by the shorter run. Each board is cached for 10
+/// minutes; manual refresh has a 60 s cooldown; posting is limited to 5 a
+/// day. Failures degrade to cached or empty data.
 class Leaderboard {
   Leaderboard(
     this._storage, {
@@ -45,6 +46,10 @@ class Leaderboard {
   final DateTime Function() _now;
 
   static bool supabaseReady = false;
+
+  /// The Supabase client has no timeout of its own; without one a dead
+  /// network leaves the Ranks spinner up forever.
+  static const _requestTimeout = Duration(seconds: 8);
 
   static Future<void> initSupabase() async {
     try {
@@ -67,10 +72,13 @@ class Leaderboard {
     }
     final rows = await Supabase.instance.client
         .from(AppConfig.leaderboardTable)
-        .select('id, player_name, score, game_type, difficulty, created_at')
+        .select(
+          'id, player_name, score, game_type, difficulty, duration_ms, created_at',
+        )
         .eq('game_type', game.name)
         .eq('difficulty', difficulty.name)
         .order('score', ascending: false)
+        .order('duration_ms', ascending: true, nullsFirst: false)
         .limit(AppConfig.leaderboardLimit)
         .timeout(_requestTimeout);
     return List<Map<String, dynamic>>.from(rows);
@@ -85,10 +93,6 @@ class Leaderboard {
         .insert(row)
         .timeout(_requestTimeout);
   }
-
-  /// The Supabase client has no timeout of its own; without one a dead
-  /// network leaves the Ranks spinner up forever.
-  static const _requestTimeout = Duration(seconds: 8);
 
   static String _boardKey(GameId game, Difficulty difficulty) =>
       '${game.name}_${difficulty.name}';
@@ -203,6 +207,7 @@ class Leaderboard {
     required GameId game,
     required Difficulty difficulty,
     required int score,
+    required Duration duration,
   }) async {
     final error = PlayerName.validate(name);
     if (error != null) {
@@ -220,6 +225,7 @@ class Leaderboard {
         'score': score,
         'game_type': game.name,
         'difficulty': difficulty.name,
+        'duration_ms': duration.inMilliseconds,
         'app_version': appVersion,
       });
     } on Object {

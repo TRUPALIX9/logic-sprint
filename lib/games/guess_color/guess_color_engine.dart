@@ -18,28 +18,57 @@ enum InkColor {
   const InkColor(this.label, this.color);
   final String label;
   final Color color;
+
+  /// Button fill and border when tinted in this color. Every [color] keeps
+  /// ≥ 4.5:1 contrast on every [fill] (checked in tests).
+  Color get fill => color.withValues(alpha: 0.08);
+  Color get border => color.withValues(alpha: 0.4);
 }
 
-/// How tricky the current word is. The round ramps by word number:
-/// words 1–8 [warmUp], 9–18 [full], 19+ [shuffled].
+/// How tricky the current word is. The run ramps by word number, and each
+/// phase keeps the rules of the ones before it:
+/// - 1–8 [warmUp]: 4 colors, fixed order, about 1 in 4 words match their ink.
+/// - 9–18 [full]: 6 colors; the word never matches its ink.
+/// - 19–30 [shuffled]: button order reshuffles every word.
+/// - 31–45 [mislabeled]: each name is drawn in a different color, no swatch.
+/// - 46+ [tinted]: each button is also tinted in a third, unrelated color.
 enum GuessPhase {
-  /// 4 colors; about 1 in 4 words match their ink.
   warmUp,
-
-  /// 6 colors; the word never matches its ink.
   full,
+  shuffled,
+  mislabeled,
+  tinted;
 
-  /// 6 colors, never matching, and the buttons reshuffle every word.
-  shuffled;
-
-  static GuessPhase of(int number) => number <= 8
-      ? warmUp
-      : number <= 18
-      ? full
-      : shuffled;
+  static GuessPhase of(int number) => switch (number) {
+    <= 8 => warmUp,
+    <= 18 => full,
+    <= 30 => shuffled,
+    <= 45 => mislabeled,
+    _ => tinted,
+  };
 
   List<InkColor> get palette =>
       this == warmUp ? InkColor.values.sublist(0, 4) : InkColor.values;
+
+  bool get allowsCongruent => this == warmUp;
+  bool get shuffles => index >= shuffled.index;
+  bool get mislabels => index >= mislabeled.index;
+  bool get tints => this == tinted;
+}
+
+/// One answer button. It is identified by [name] (its text); [label] is the
+/// color that text is drawn in and [tint] colors its fill and border.
+class ColorChoice {
+  const ColorChoice(this.name, {InkColor? label, InkColor? tint})
+    : label = label ?? name,
+      tint = tint ?? name;
+
+  final InkColor name;
+  final InkColor label;
+  final InkColor tint;
+
+  /// The honest swatch only shows while names are drawn in their own color.
+  bool get swatch => label == name;
 }
 
 class StroopWord {
@@ -52,14 +81,14 @@ class StroopWord {
   final InkColor ink;
 
   /// Answer buttons in display order.
-  final List<InkColor> buttons;
+  final List<ColorChoice> buttons;
 
   bool get congruent => word == ink;
 }
 
-/// Guess Color (Stroop): tap the ink color, not the word it spells. One
-/// mode that gets trickier as the round goes on (see [GuessPhase]);
-/// [difficulty] is ignored.
+/// Guess Color (Stroop): tap the button named after the ink color, not the
+/// word it spells. Endless; gets trickier by word number (see [GuessPhase]);
+/// one wrong pick ends the run. [difficulty] is ignored.
 class GuessColorEngine extends RoundEngine {
   GuessColorEngine({
     required super.difficulty,
@@ -79,7 +108,7 @@ class GuessColorEngine extends RoundEngine {
   InkColor? picked;
   Timer? _next;
 
-  bool get locked => picked != null || isFinished;
+  bool get locked => picked != null || !isPlaying;
   GuessPhase get phase => GuessPhase.of(number);
 
   /// The word shown as word [number] (1-based).
@@ -87,13 +116,52 @@ class GuessColorEngine extends RoundEngine {
     final phase = GuessPhase.of(number);
     final palette = phase.palette;
     final word = palette[random.nextInt(palette.length)];
-    final congruent = phase == GuessPhase.warmUp && random.nextInt(4) == 0;
+    final congruent = phase.allowsCongruent && random.nextInt(4) == 0;
     final others = [...palette]..remove(word);
     final ink = congruent ? word : others[random.nextInt(others.length)];
-    final buttons = phase == GuessPhase.shuffled
-        ? ([...palette]..shuffle(random))
-        : palette;
+
+    final names = phase.shuffles ? ([...palette]..shuffle(random)) : palette;
+    if (!phase.mislabels) {
+      return StroopWord(word, ink, [
+        for (final name in names) ColorChoice(name),
+      ]);
+    }
+    final labels = _derange(names, random);
+    final buttons = <ColorChoice>[];
+    for (var i = 0; i < names.length; i++) {
+      final name = names[i], label = labels[i];
+      InkColor? tint;
+      if (phase.tints) {
+        final free = [
+          for (final c in palette)
+            if (c != name && c != label) c,
+        ];
+        tint = free[random.nextInt(free.length)];
+      }
+      buttons.add(ColorChoice(name, label: label, tint: tint));
+    }
     return StroopWord(word, ink, buttons);
+  }
+
+  /// A shuffle of [names] where no color stays in its own slot.
+  static List<InkColor> _derange(List<InkColor> names, Random random) {
+    while (true) {
+      final colors = [...names]..shuffle(random);
+      var clash = false;
+      for (var i = 0; i < names.length; i++) {
+        clash = clash || colors[i] == names[i];
+      }
+      if (!clash) {
+        return colors;
+      }
+    }
+  }
+
+  void _nextWord() {
+    picked = null;
+    number++;
+    item = generate(number, random);
+    notify();
   }
 
   void pick(InkColor color) {
@@ -103,19 +171,22 @@ class GuessColorEngine extends RoundEngine {
     picked = color;
     if (color == item.ink) {
       scoreCorrect();
+      _next = Timer(_feedbackPause, () {
+        if (isPlaying) {
+          _nextWord();
+        }
+      });
     } else {
-      scoreWrong();
+      // Keeps [picked] so the wrong pick and the right answer stay visible.
+      fail();
     }
-    _next = Timer(_feedbackPause, () {
-      if (isFinished) {
-        return;
-      }
-      picked = null;
-      number++;
-      item = generate(number, random);
-      notify();
-    });
   }
+
+  @override
+  void onDown() => _next?.cancel();
+
+  @override
+  void onRevive() => _nextWord();
 
   @override
   void onFinish() => _next?.cancel();
