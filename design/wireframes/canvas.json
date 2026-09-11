@@ -101,8 +101,17 @@
       "page": "page-1"
     },
     {
-      "file": "Result.dc.html",
+      "file": "ReviveOffer.dc.html",
       "x": 3760,
+      "y": 1040,
+      "w": 390,
+      "h": 844,
+      "title": "08a Game over · revive",
+      "page": "page-1"
+    },
+    {
+      "file": "Result.dc.html",
+      "x": 4230,
       "y": 1040,
       "w": 390,
       "h": 844,
@@ -189,7 +198,23 @@
       "y": 930,
       "w": 420,
       "page": "page-1",
-      "text": "CORE LOOP\nSplash → Play → Game sheet → round → Result. Memory Lane and Quick Math pick Easy / Medium / Hard on the sheet; Rocket Launch and Guess Color have no difficulty and ramp up during the round. The in-game bar shows only the game, difficulty (or skill) and score."
+      "text": "CORE LOOP\nSplash → Play → Game sheet → run → Result. Endless runs: the first mistake ends a run; one rewarded-ad revive per run; run time recorded. Memory Lane and Quick Math pick Easy / Medium / Hard on the sheet; Rocket Launch and Guess Color ramp up during the run. The in-game bar shows only the game, difficulty (or skill) and score."
+    },
+    {
+      "id": "rocket-run",
+      "x": 1880,
+      "y": 1914,
+      "w": 390,
+      "page": "page-1",
+      "text": "ROCKET LAUNCH\nOne hit ends the run (or shows the revive offer). Score only, no timer."
+    },
+    {
+      "id": "guess-phases",
+      "x": 3290,
+      "y": 1914,
+      "w": 390,
+      "page": "page-1",
+      "text": "GUESS COLOR PHASES (by word number)\n1–8 four colors · 9–18 six colors · 19–30 shuffled · 31–45 mismatched names · 46+ tinted buttons.\n\nShown: a mismatched-names word — each name is drawn in another color, with no swatch."
     },
     {
       "id": "tabs",
@@ -205,7 +230,7 @@
       "y": 2928,
       "w": 390,
       "page": "page-1",
-      "text": "RANKS\nOne Global Top 10 at a time: pick a game, then a difficulty. The Easy / Medium / Hard row only appears for Memory Lane and Quick Math; Rocket Launch and Guess Color have a single board. There is no \"All\" view. Opens on the game you last played (after posting, on that game's board)."
+      "text": "RANKS\nOne Global Top 10 at a time: pick a game, then a difficulty. The Easy / Medium / Hard row only appears for Memory Lane and Quick Math; Rocket Launch and Guess Color have a single board. There is no \"All\" view. Each row shows the run time; ties rank the faster run higher. Opens on the game you last played (after posting, on that game's board)."
     },
     {
       "id": "identity-brief",
