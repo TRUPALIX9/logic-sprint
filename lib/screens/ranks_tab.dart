@@ -10,9 +10,11 @@ import '../services/leaderboard.dart';
 import '../state/app_state.dart';
 import '../ui/chamfer.dart';
 import '../ui/kit.dart';
+import 'name_sheet.dart';
 
 /// One global Top 10 at a time: pick a game (and a difficulty for games that
-/// have them). Opens on the game you last played.
+/// have them). Opens on the game you last played. Your own position is
+/// pinned below the list when you're outside the Top 10.
 class RanksTab extends StatefulWidget {
   const RanksTab({super.key});
 
@@ -49,7 +51,7 @@ class _RanksTabState extends State<RanksTab> {
   }
 
   // Each time the tab opens, jump to the last played board and load it
-  // (cheap: served from the 10-minute cache).
+  // (cheap: served from the day-long cache).
   void _onTabChange() {
     if (_tabs?.value != NavTabs.ranks) {
       return;
@@ -90,6 +92,12 @@ class _RanksTabState extends State<RanksTab> {
     });
   }
 
+  Future<void> _chooseName() async {
+    if (await showNameSheet(context) && mounted) {
+      await _refresh();
+    }
+  }
+
   @override
   void dispose() {
     _tabs?.removeListener(_onTabChange);
@@ -102,21 +110,21 @@ class _RanksTabState extends State<RanksTab> {
       return load!.message!;
     }
     final at = load?.updatedAt;
-    if (at == null) {
-      return _game.titleWith(_boardDifficulty);
-    }
-    final minutes = DateTime.now().difference(at).inMinutes;
-    return switch (minutes) {
-      < 1 => 'Updated just now',
-      < 60 => 'Updated $minutes min ago',
-      _ => 'Updated ${minutes ~/ 60} h ago',
-    };
+    return at == null
+        ? _game.titleWith(_boardDifficulty)
+        : 'Updated ${formatAgo(at)}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final savedName = context.read<Leaderboard>().savedName;
+    final leaderboard = context.watch<Leaderboard>();
+    final app = context.watch<AppState>();
+    final me = leaderboard.playerId;
+    final name = leaderboard.savedName;
     final entries = _load?.entries ?? const <LeaderboardEntry>[];
+    final myRank = _load?.myRank;
+    final timed = _game.tracksTime;
+    final inList = me != null && entries.any((e) => e.playerId == me);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -180,17 +188,31 @@ class _RanksTabState extends State<RanksTab> {
               : entries.isEmpty
               ? _Empty(game: _game)
               : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                   itemCount: entries.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 6),
                   itemBuilder: (context, i) => _RankRow(
                     rank: i + 1,
-                    entry: entries[i],
-                    isYou:
-                        savedName != null && entries[i].playerName == savedName,
+                    name: entries[i].playerName,
+                    score: entries[i].score,
+                    time: timed ? entries[i].duration : null,
+                    isYou: me != null && entries[i].playerId == me,
                   ),
                 ),
         ),
+        if (name == null)
+          _JoinBar(onTap: _chooseName)
+        else if (myRank != null && !inList)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: _RankRow(
+              rank: myRank,
+              name: name,
+              score: app.best(_game, _boardDifficulty),
+              time: timed ? app.bestTime(_game, _boardDifficulty) : null,
+              isYou: true,
+            ),
+          ),
       ],
     );
   }
@@ -248,17 +270,24 @@ class _Segments<T> extends StatelessWidget {
 class _RankRow extends StatelessWidget {
   const _RankRow({
     required this.rank,
-    required this.entry,
+    required this.name,
+    required this.score,
+    required this.time,
     required this.isYou,
   });
 
   final int rank;
-  final LeaderboardEntry entry;
+  final String name;
+  final int score;
+
+  /// Only for games that track time (Memory Lane, Quick Math).
+  final Duration? time;
   final bool isYou;
 
   @override
   Widget build(BuildContext context) {
     final highlight = rank == 1 ? LS.blue : (isYou ? LS.teal : null);
+    final time = this.time;
     return ChamferBox(
       cut: Cut.sm,
       height: 56,
@@ -268,14 +297,18 @@ class _RankRow extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 36,
-            child: Text(
-              '$rank'.padLeft(2, '0'),
-              style: LSText.mono(
-                16,
-                weight: FontWeight.w700,
-                spacing: 0,
-                color: rank == 1 ? LS.blue : LS.muted,
+            width: 44,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                rank > 10 ? '#$rank' : '$rank'.padLeft(2, '0'),
+                style: LSText.mono(
+                  16,
+                  weight: FontWeight.w700,
+                  spacing: 0,
+                  color: rank == 1 ? LS.blue : (isYou ? LS.teal : LS.muted),
+                ),
               ),
             ),
           ),
@@ -284,7 +317,7 @@ class _RankRow extends StatelessWidget {
               children: [
                 Flexible(
                   child: Text(
-                    entry.playerName,
+                    name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: LSText.body(
@@ -313,12 +346,12 @@ class _RankRow extends StatelessWidget {
               ],
             ),
           ),
-          if (entry.duration case final time?) ...[
+          if (time != null) ...[
             MonoLabel(formatDuration(time), size: 10, color: LS.dim),
             const SizedBox(width: 12),
           ],
           Text(
-            '${entry.score}',
+            '$score',
             style: LSText.mono(
               18,
               weight: FontWeight.w700,
@@ -327,6 +360,43 @@ class _RankRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Pinned under the board until the player has a display name.
+class _JoinBar extends StatelessWidget {
+  const _JoinBar({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      child: ChamferBox(
+        cut: Cut.sm,
+        color: LS.teal.withValues(alpha: 0.06),
+        borderColor: LS.teal.withValues(alpha: 0.55),
+        padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.person_add_alt_1_rounded,
+              color: LS.teal,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Choose a name to appear here',
+                style: LSText.body(14, color: LS.muted, height: 1.2),
+              ),
+            ),
+            CardAction(label: 'Set name', onTap: onTap),
+          ],
+        ),
       ),
     );
   }
@@ -348,7 +418,7 @@ class _Empty extends StatelessWidget {
             Icon(Icons.emoji_events_outlined, size: 40, color: game.accent),
             const SizedBox(height: 12),
             Text(
-              'No scores yet.\nPlay ${game.title} and post yours.',
+              'No scores yet.\nPlay ${game.title} to set the first one.',
               textAlign: TextAlign.center,
               style: LSText.body(15, color: LS.muted),
             ),

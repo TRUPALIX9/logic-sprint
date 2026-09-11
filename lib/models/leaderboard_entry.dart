@@ -1,29 +1,30 @@
 import 'game.dart';
 
-/// One row of the global Top 10 (`leaderboard_scores` in Supabase).
+/// One row of a global Top 10 (the `leaderboard_top` view in Supabase): a
+/// player's best on one game and difficulty.
 class LeaderboardEntry {
   const LeaderboardEntry({
-    required this.id,
+    required this.playerId,
     required this.playerName,
     required this.score,
     required this.game,
     required this.difficulty,
-    this.createdAt,
     this.duration,
+    this.bestAt,
   });
 
-  final String id;
+  final String playerId;
   final String playerName;
   final int score;
   final GameId game;
   final Difficulty difficulty;
-  final DateTime? createdAt;
 
-  /// How long the run took (older rows may not have it).
+  /// How long the best run took (older rows may not have it).
   final Duration? duration;
+  final DateTime? bestAt;
 
-  /// Parses a Supabase row; returns null for games or difficulties this
-  /// build doesn't know.
+  /// Parses a view row; returns null for games or difficulties this build
+  /// doesn't know.
   static LeaderboardEntry? fromRow(Map<String, dynamic> row) {
     final game = GameId.tryParse('${row['game_type']}');
     final difficulty = Difficulty.values
@@ -33,26 +34,26 @@ class LeaderboardEntry {
       return null;
     }
     return LeaderboardEntry(
-      id: '${row['id'] ?? ''}',
+      playerId: '${row['player_id'] ?? ''}',
       playerName: '${row['player_name'] ?? 'Player'}',
       score: (row['score'] as num?)?.toInt() ?? 0,
       game: game,
       difficulty: difficulty,
-      createdAt: DateTime.tryParse('${row['created_at'] ?? ''}'),
       duration: row['duration_ms'] is num
           ? Duration(milliseconds: (row['duration_ms'] as num).toInt())
           : null,
+      bestAt: DateTime.tryParse('${row['best_at'] ?? ''}'),
     );
   }
 
-  /// Same shape as the Supabase row, so the cache round-trips via [fromRow].
+  /// Same shape as the view row, so the cache round-trips via [fromRow].
   Map<String, dynamic> toRow() => {
-    'id': id,
+    'player_id': playerId,
     'player_name': playerName,
     'score': score,
     'game_type': game.name,
     'difficulty': difficulty.name,
-    'created_at': createdAt?.toIso8601String(),
     'duration_ms': duration?.inMilliseconds,
+    'best_at': bestAt?.toIso8601String(),
   };
 }

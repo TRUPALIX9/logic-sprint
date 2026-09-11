@@ -7,6 +7,7 @@ import '../core/theme.dart';
 import '../models/game.dart';
 import '../screens/result_screen.dart';
 import '../services/ads.dart';
+import '../services/leaderboard.dart';
 import '../state/app_state.dart';
 import '../ui/chamfer.dart';
 import '../ui/game_bar.dart';
@@ -86,9 +87,13 @@ class _RoundScreenState<T extends RoundEngine> extends State<RoundScreen<T>> {
       return;
     }
     _handled = true;
+    // History + server sync run in the background; Result shows the outcome.
+    final synced = context.read<Leaderboard>().recordRun(result);
     await context.read<AppState>().recordRound(result);
     if (mounted) {
-      Navigator.of(context).pushReplacement(resultRoute(result));
+      Navigator.of(
+        context,
+      ).pushReplacement(resultRoute(result, synced: synced));
     }
   }
 

@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:logic_sprint/app.dart';
 import 'package:logic_sprint/models/game.dart';
 import 'package:logic_sprint/models/round_result.dart';
+import 'package:logic_sprint/models/run_record.dart';
 import 'package:logic_sprint/screens/result_screen.dart';
 import 'package:logic_sprint/screens/shell.dart';
 import 'package:logic_sprint/services/ads.dart';
@@ -22,12 +23,14 @@ import 'package:logic_sprint/state/app_state.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/fake_leaderboard_api.dart';
+
 final _skip = !Platform.environment.containsKey('SCREENSHOTS');
 const _out = 'assets/brand/store/screenshots';
 const _pixelRatio = 2.625;
 final _boundary = GlobalKey();
 
-/// A returning player: a few bests, Quick Math last played, a display name.
+/// A returning player: bests, play counts, Quick Math last played, a name.
 const _prefs = <String, Object>{
   'highScore_rocketLaunch_medium': 120,
   'highScore_memoryLane_easy': 180,
@@ -35,32 +38,74 @@ const _prefs = <String, Object>{
   'highScore_quickMath_easy': 260,
   'highScore_quickMath_medium': 420,
   'highScore_guessColor_medium': 140,
+  'bestTime_memoryLane_easy': 58000,
+  'bestTime_memoryLane_medium': 61000,
+  'bestTime_quickMath_easy': 65000,
+  'bestTime_quickMath_medium': 84000,
+  'plays_rocketLaunch_medium': 41,
+  'plays_memoryLane_easy': 6,
+  'plays_memoryLane_medium': 9,
+  'plays_quickMath_easy': 12,
+  'plays_quickMath_medium': 37,
+  'plays_quickMath_hard': 4,
+  'plays_guessColor_medium': 15,
   'lastGame': 'quickMath',
   'lastDifficulty': 'medium',
   'playerName': 'NEON_FOX',
 };
 
-/// Sample leaderboard rows (Quick Math · Medium) for the Ranks shot.
+/// Sample Top 10 (Quick Math · Medium) for the Ranks shot. NEON_FOX is the
+/// player ("me" in FakeLeaderboardApi).
 final _ranks = [
-  for (final (i, (name, score)) in const [
-    ('AXON', 610),
-    ('SYNAPSE_9', 560),
-    ('KIRA-X', 520),
-    ('BITWISE', 490),
-    ('NEON_FOX', 420),
-    ('LUMEN', 390),
-    ('DENDRITE', 360),
-    ('VOLT_RAY', 330),
+  for (final (i, (name, score, seconds)) in const [
+    ('AXON', 610, 131),
+    ('SYNAPSE_9', 560, 118),
+    ('KIRA-X', 520, 122),
+    ('BITWISE', 490, 97),
+    ('NEON_FOX', 420, 84),
+    ('LUMEN', 390, 88),
+    ('DENDRITE', 360, 79),
+    ('VOLT_RAY', 330, 90),
+    ('PIXEL_OWL', 310, 71),
+    ('QUARK', 290, 76),
   ].indexed)
     {
-      'id': '$i',
+      'player_id': name == 'NEON_FOX' ? 'me' : 'p$i',
       'player_name': name,
       'score': score,
       'game_type': 'quickMath',
       'difficulty': 'medium',
-      'created_at': '2026-09-11T10:00:00.000Z',
+      'duration_ms': seconds * 1000,
+      'best_at': '2026-09-11T10:00:00.000Z',
     },
 ];
+
+/// Recent runs for Profile's History, oldest first.
+List<RunRecord> _history() {
+  final now = DateTime.now();
+  RunRecord run(
+    GameId game,
+    Difficulty d,
+    int score,
+    int seconds,
+    int hoursAgo, {
+    bool best = false,
+  }) => RunRecord(
+    game: game,
+    difficulty: d,
+    score: score,
+    duration: Duration(seconds: seconds),
+    playedAt: now.subtract(Duration(hours: hoursAgo)),
+    isBest: best,
+  );
+  return [
+    run(GameId.memoryLane, Difficulty.easy, 180, 58, 72, best: true),
+    run(GameId.guessColor, Difficulty.medium, 140, 95, 50, best: true),
+    run(GameId.quickMath, Difficulty.medium, 380, 72, 26),
+    run(GameId.rocketLaunch, Difficulty.medium, 120, 64, 5, best: true),
+    run(GameId.quickMath, Difficulty.medium, 420, 84, 2, best: true),
+  ];
+}
 
 Future<void> _loadFonts() async {
   const families = {
@@ -100,6 +145,9 @@ Future<void> _pumpApp(WidgetTester tester) async {
 
   SharedPreferences.setMockInitialValues(_prefs);
   final storage = Storage(await SharedPreferences.getInstance());
+  for (final run in _history()) {
+    await storage.addHistory(run);
+  }
   await tester.pumpWidget(
     RepaintBoundary(
       key: _boundary,
@@ -107,9 +155,7 @@ Future<void> _pumpApp(WidgetTester tester) async {
         appState: AppState(storage),
         leaderboard: Leaderboard(
           storage,
-          appVersion: '1.0.0',
-          fetchTop: (_, _) async => _ranks,
-          insert: (_) async {},
+          api: FakeLeaderboardApi(rows: _ranks, rank: 5),
         ),
         ads: Ads(),
         version: '1.0.0 (1)',
@@ -227,10 +273,10 @@ void main() {
         const RoundResult(
           game: GameId.quickMath,
           difficulty: Difficulty.medium,
-          score: 480,
-          correct: 44,
+          score: 420,
+          correct: 38,
           duration: Duration(minutes: 1, seconds: 24),
-          previousBest: 420,
+          previousBest: 360,
         ),
       ),
     );

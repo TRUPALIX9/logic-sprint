@@ -34,6 +34,10 @@ enum GameId {
   /// one mode that ramps up during the round.
   bool get hasDifficulty => this == memoryLane || this == quickMath;
 
+  /// Memory Lane and Quick Math care how long a run took: its time is shown
+  /// and a faster run wins a tie. The other two are about how far you get.
+  bool get tracksTime => this == memoryLane || this == quickMath;
+
   String get title => switch (this) {
     rocketLaunch => 'Rocket Launch',
     memoryLane => 'Memory Lane',
@@ -74,7 +78,7 @@ enum GameId {
     quickMath =>
       'Solve problem after problem as they get harder. One wrong answer ends the run, and your time is saved.',
     guessColor =>
-      'Tap the ink color, not the word. The buttons start shuffling and changing colors — one wrong tap ends the run.',
+      'COLOR: tap the color it is painted in. TEXT: tap the color it spells out. Buttons shuffle, labels lie and the clock tightens — one wrong tap ends the run.',
   };
 
   /// How a ramp game escalates; null for games with difficulty levels.

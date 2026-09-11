@@ -20,7 +20,8 @@
 
 ### Supabase leaderboard
 - [x] Project reachable (`axucnwnzuhdsiggqyjqf`)
-- [ ] [supabase/schema.sql](../supabase/schema.sql) pasted into the SQL editor and run (table, RLS, per-board index, run time column; allows all four games) — the table doesn't exist yet
+- [x] Anonymous sign-ins enabled (Authentication → Providers)
+- [x] [supabase/schema.sql](../supabase/schema.sql) run (profiles, game_bests, RLS, `claim_name` / `record_run` / `my_rank`, views `leaderboard_top`, `player_stats`, `game_stats`) — verified: views readable, direct writes and anonymous RPC calls refused
 - [ ] Database password rotated (it was shared in chat)
 
 ### Privacy policy
@@ -54,7 +55,7 @@ Pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`, which builds the sa
 - [ ] Copy from [assets/brand/docs/store_listing.md](../assets/brand/docs/store_listing.md)
 - [ ] Icon: `assets/brand/store/google_play/play_store_icon_512.png`
 - [ ] Feature graphic: `assets/brand/store/google_play/feature_graphic_1024x500.png`
-- [ ] 4–8 phone screenshots: Play tab, a game sheet, each of the four games, Result, Ranks
+- [ ] 4–8 phone screenshots from `assets/brand/store/screenshots/`: Play tab, a game sheet, each of the four games, Result, Ranks, Profile
 
 ## 5. QA smoke test (release build on a real device)
 
@@ -62,11 +63,11 @@ Pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`, which builds the sa
 2. Rocket Launch: rocket follows your finger; green asteroids speed up the longer you last; one hit ends the run
 3. Memory Lane on each difficulty: "Repeat the pattern X/Y" counts taps; levels go on until a wrong tap
 4. Quick Math on each difficulty: correct turns teal; a wrong answer turns coral, reveals the answer and ends the run; problems get harder every 10
-5. Guess Color: 4 colors, then 6, then shuffled buttons, then mismatched names and tints; a wrong tap ends the run
+5. Guess Color: the COLOR | TEXT switch lights the active rule and pulses when it flips; buttons shuffle, then their labels stop matching their colors; the countdown bar shrinks; a wrong tap or timeout ends the run; no time is shown anywhere
 6. On the first mistake, "Watch ad · +1 life" appears once per run; watching it continues the run, "End run" goes to Result; a second mistake goes straight to Result
-7. Result shows score, correct count and run time; banner shows on the Play tab
-8. Post a score → Ranks opens on that game's board with your row marked "YOU"; airplane mode shows the offline message within ~8 s
-9. Profile shows your display name and bests; Settings → Reset high scores clears them
+7. Result shows score and correct count, plus run time for Memory Lane / Quick Math (Best for the other two); banner shows on the Play tab
+8. First Result without a name shows "Join the Global Top 10" → Set name → a taken name is refused, a free one is saved; the next run shows "Global rank #N" and Ranks marks your row "YOU" (or pins it below the Top 10); airplane mode shows "Saved on this phone · Offline — will sync later", and the run syncs on the next launch
+9. Profile shows your name (Edit works), runs played, bests with play counts, and History; Settings → Reset high scores clears the bests
 10. Settings footer shows `1.0.0 (1)`; Privacy policy screen shows the current text
 
 ## 6. Release

@@ -13,14 +13,14 @@
 
 ## Games
 
-Every game is an **endless run**: it keeps getting harder until your first mistake. Once per run you can watch a rewarded ad for **one more life**. +10 per correct action, plus a hidden +20 bonus every 5-in-a-row. Each run's time is recorded; on the leaderboard a faster run wins a tie.
+Every game is an **endless run**: it keeps getting harder until your first mistake. Once per run you can watch a rewarded ad for **one more life**. +10 per correct action, plus a hidden +20 bonus every 5-in-a-row. Memory Lane and Quick Math also record how long each run took, and on their leaderboards a faster run wins a tie; Rocket Launch and Guess Color are about how far you get, so a tie goes to whoever reached the score first.
 
 | Game | Skill | How it plays | Difficulty |
 |------|-------|--------------|------------|
 | **Rocket Launch** | Reflex | Touch and drag anywhere to steer through a green asteroid storm; one hit ends the run | Speeds up the longer you survive |
 | **Memory Lane** | Memory | Tiles flash in sequence; tap them back in order, one more tile each level; one wrong tap ends the run | Easy 3×3 · Medium 4×4 · Hard 5×5 |
 | **Quick Math** | Arithmetic | Tap the right answer of four; numbers and operations grow every 10 problems; one wrong answer ends the run | Easy + − · Medium + − × · Hard + − × ÷ |
-| **Guess Color** | Focus | Tap the ink color, not the word (Stroop); buttons start shuffling, then their names and colors stop matching | Gets trickier as you go |
+| **Guess Color** | Focus | A COLOR \| TEXT switch sets the rule: COLOR = tap the color the word is painted in, TEXT = tap the color the word names. The rule flips, buttons shuffle, their labels stop matching their colors, and the countdown shrinks from 3 s to 1 s | Gets trickier as you go |
 
 ---
 
@@ -42,7 +42,7 @@ test/                        # engine, leaderboard, model and app smoke tests
 assets/fonts/                # Rajdhani, IBM Plex Sans, JetBrains Mono (OFL, licenses included)
 assets/brand/                # launcher icon, store icon + feature graphic, policy, listing copy
 design/wireframes/           # design canvas source (.dc.html)
-supabase/schema.sql          # leaderboard table, RLS, index
+supabase/schema.sql          # profiles, per-game bests, RLS, functions, views
 config/admob.example.json    # AdMob config template (real config is gitignored)
 ```
 
@@ -85,12 +85,13 @@ Gradle refuses release builds without `ADMOB_APP_ID`, and bundles without a rele
 
 ## Leaderboard
 
-- One Top 10 per game (and per difficulty for Memory Lane and Quick Math), queried server-side; ties go to the faster run
-- Post from the Result screen only; 5 posts per device per day
-- Each board cached 10 minutes; manual refresh has a 60 s cooldown; requests time out after 8 s
-- Fully playable offline
+- An invisible anonymous Supabase account per install; the display name is chosen once (Result, Ranks or Profile) and is unique
+- Every finished run is sent automatically (queued while offline): the server keeps each player's best and play count per game and difficulty
+- One Top 10 per game (and per difficulty for Memory Lane and Quick Math) plus your own rank pinned below it; ties go to the faster run in Memory Lane and Quick Math, and to the earlier best elsewhere
+- Each board cached for a day and refetched after a new personal best; manual refresh has a 60 s cooldown; requests time out after 8 s
+- Run History stays on the device (Profile); fully playable offline
 
-Setup: run [supabase/schema.sql](supabase/schema.sql) in the Supabase SQL editor. The publishable key in `lib/core/config.dart` is safe to ship; RLS limits it to read and insert.
+Setup: enable **Anonymous sign-ins** (Authentication → Providers), then run [supabase/schema.sql](supabase/schema.sql) in the SQL editor. The publishable key in `lib/core/config.dart` is safe to ship: tables are read-only under RLS, and writes go through `claim_name` / `record_run`, which only touch the caller's own rows. The `player_stats` and `game_stats` views feed the product page.
 
 ---
 

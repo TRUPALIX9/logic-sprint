@@ -240,6 +240,35 @@ class GameTile extends StatelessWidget {
   }
 }
 
+/// Compact teal action inside a card ("Set name", "Edit", "Ranks").
+class CardAction extends StatelessWidget {
+  const CardAction({super.key, required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChamferBox(
+      cut: Cut.sm,
+      height: 44,
+      borderColor: null,
+      color: LS.surface2,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      onTap: onTap,
+      child: Center(
+        widthFactor: 1,
+        child: MonoLabel(
+          label,
+          size: 12,
+          weight: FontWeight.w700,
+          color: LS.teal,
+        ),
+      ),
+    );
+  }
+}
+
 /// 44×44 icon button.
 class LSIconButton extends StatelessWidget {
   const LSIconButton({

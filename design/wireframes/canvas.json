@@ -78,57 +78,21 @@
       "page": "page-3"
     },
     {
-      "file": "RuleAInk.dc.html",
+      "file": "RuleColor.dc.html",
       "x": 0,
       "y": 1164,
       "w": 390,
       "h": 844,
-      "title": "A · Color",
+      "title": "Rule · COLOR",
       "page": "page-3"
     },
     {
-      "file": "RuleAWord.dc.html",
+      "file": "RuleText.dc.html",
       "x": 470,
       "y": 1164,
       "w": 390,
       "h": 844,
-      "title": "A · Text",
-      "page": "page-3"
-    },
-    {
-      "file": "RuleBInk.dc.html",
-      "x": 940,
-      "y": 1164,
-      "w": 390,
-      "h": 844,
-      "title": "B · Color",
-      "page": "page-3"
-    },
-    {
-      "file": "RuleBWord.dc.html",
-      "x": 1410,
-      "y": 1164,
-      "w": 390,
-      "h": 844,
-      "title": "B · Text",
-      "page": "page-3"
-    },
-    {
-      "file": "RuleCInk.dc.html",
-      "x": 1880,
-      "y": 1164,
-      "w": 390,
-      "h": 844,
-      "title": "C · Color",
-      "page": "page-3"
-    },
-    {
-      "file": "RuleCWord.dc.html",
-      "x": 2350,
-      "y": 1164,
-      "w": 390,
-      "h": 844,
-      "title": "C · Text",
+      "title": "Rule · TEXT",
       "page": "page-3"
     },
     {
@@ -399,7 +363,7 @@
       "y": 874,
       "w": 390,
       "page": "page-3",
-      "text": "CLASSIC · words 1–5\nTAP THE COLOR: tap the color the word is painted in. Four solid colors with matching labels, fixed order."
+      "text": "CLASSIC · words 1–5\nThe switch shows COLOR: tap the color the word is painted in. Four solid colors with matching labels, fixed order."
     },
     {
       "id": "gc-2",
@@ -423,7 +387,7 @@
       "y": 874,
       "w": 390,
       "page": "page-3",
-      "text": "RULE SWAP · words 21–30\nSome words flip the rule to TAP THE TEXT (tap what the word says): blue banner, Aa icon and a flip highlight. RED painted green → the RED-filled button is correct (teal ring = wireframe marker only)."
+      "text": "RULE SWAP · words 21–30\nSome words flip the switch to TEXT (tap what the word says); the switch slides, pulses and fires a haptic, and the button corners switch to Aa. RED painted green → the RED-filled button is correct (teal ring = wireframe marker only)."
     },
     {
       "id": "gc-5",
@@ -447,31 +411,15 @@
       "y": 1034,
       "w": 900,
       "page": "page-3",
-      "text": "RULE OPTIONS — pick A, B or C. Each shown with the COLOR rule and the TEXT rule; the word is RED painted green (COLOR → tap green, TEXT → tap red).\n\nAll six echo the rule on every answer button (corner icon: drop = COLOR, Aa = TEXT). Teal ring = correct answer, wireframe marker only."
+      "text": "Rule: COLOR | TEXT switch (chosen). It sits at the top of the word card on every Guess Color board; the active side is lit and the switch pulses when the rule flips. Sample word: RED painted green (COLOR → tap green, TEXT → tap red). Teal ring = correct answer, wireframe marker only.\n\nRun time only for Memory Lane and Quick Math."
     },
     {
-      "id": "rule-a",
+      "id": "rule-c",
       "x": 0,
       "y": 2038,
       "w": 860,
       "page": "page-3",
-      "text": "A · RULE ON THE CARD\nRule and word are one object. On a rule change the whole card flips (0.3 s) to its new color."
-    },
-    {
-      "id": "rule-b",
-      "x": 940,
-      "y": 2038,
-      "w": 860,
-      "page": "page-3",
-      "text": "B · RULE AS THE QUESTION\nYou read the rule and the word in one pass — nothing to look away to."
-    },
-    {
-      "id": "rule-c",
-      "x": 1880,
-      "y": 2038,
-      "w": 860,
-      "page": "page-3",
-      "text": "C · RULE SWITCH\nBoth rules are always visible; a change is a visible slide + haptic, hard to miss."
+      "text": "RULE · COLOR | TEXT SWITCH (chosen)\nBoth rules are always visible at the top of the word card, with the active side lit. A change is a visible slide + pulse + haptic, hard to miss. Every answer button echoes the rule in its corner (drop = COLOR, Aa = TEXT)."
     }
   ],
   "launch": {

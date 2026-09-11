@@ -26,6 +26,15 @@ class AppState extends ChangeNotifier implements RoundFeedback {
   Duration? bestTime(GameId game, Difficulty difficulty) =>
       storage.bestTime(game, difficulty);
 
+  int plays(GameId game, Difficulty difficulty) =>
+      storage.plays(game, difficulty);
+
+  /// Runs finished on this device, all games.
+  int get totalPlays => [
+    for (final game in GameId.values)
+      for (final difficulty in Difficulty.values) plays(game, difficulty),
+  ].fold(0, (sum, n) => sum + n);
+
   (GameId, Difficulty)? get lastPlayed => storage.lastPlayed;
 
   Future<void> setSoundOn(bool value) async {
@@ -40,13 +49,14 @@ class AppState extends ChangeNotifier implements RoundFeedback {
     notifyListeners();
   }
 
-  /// Saves the best score and "last played" for a finished round.
+  /// Saves the best score, play count and "last played" for a finished round.
   Future<void> recordRound(RoundResult result) async {
+    await storage.addPlay(result.game, result.difficulty);
     await storage.saveBestIfHigher(
       result.game,
       result.difficulty,
       result.score,
-      duration: result.duration,
+      duration: result.game.tracksTime ? result.duration : null,
     );
     await storage.setLastPlayed(result.game, result.difficulty);
     notifyListeners();

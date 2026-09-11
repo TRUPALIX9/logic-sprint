@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logic_sprint/app.dart';
@@ -9,6 +10,8 @@ import 'package:logic_sprint/services/leaderboard.dart';
 import 'package:logic_sprint/services/storage.dart';
 import 'package:logic_sprint/state/app_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/fake_leaderboard_api.dart';
 
 Future<void> _pumpApp(WidgetTester tester) async {
   tester.view
@@ -21,12 +24,7 @@ Future<void> _pumpApp(WidgetTester tester) async {
   await tester.pumpWidget(
     LogicSprintApp(
       appState: AppState(storage),
-      leaderboard: Leaderboard(
-        storage,
-        appVersion: 'test',
-        fetchTop: (_, _) async => [],
-        insert: (_) async {},
-      ),
+      leaderboard: Leaderboard(storage, api: FakeLeaderboardApi()),
       ads: Ads(),
       version: '1.0.0 (1)',
       home: const Shell(),
@@ -95,11 +93,34 @@ void main() {
     }
     await tester.pumpAndSettle();
     expect(find.text('GAME OVER'), findsOneWidget);
-    expect(find.text('POST TO GLOBAL TOP 10'), findsOneWidget);
+    // The run is saved automatically; with no name yet, Result invites one.
+    expect(find.text('JOIN THE GLOBAL TOP 10'), findsOneWidget);
 
     await tester.tap(find.text('HOME'));
     await tester.pumpAndSettle();
     expect(find.text('JUMP BACK IN'), findsOneWidget);
+
+    // The run is in Profile's History.
+    await tester.tap(find.text('PROFILE'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 RUN PLAYED'), findsOneWidget);
+    expect(find.textContaining('Finished runs'), findsNothing);
+  });
+
+  testWidgets('choosing a name from Profile saves it', (tester) async {
+    await _pumpApp(tester);
+    await tester.tap(find.text('PROFILE'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('SET NAME'));
+    await tester.pumpAndSettle();
+    expect(find.text('CHOOSE YOUR NAME'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'NEON_FOX');
+    await tester.pump();
+    await tester.tap(find.text('SAVE NAME'));
+    await tester.pumpAndSettle();
+    expect(find.text('NEON_FOX'), findsOneWidget);
+    expect(find.text('EDIT'), findsOneWidget);
   });
 
   testWidgets('bottom nav switches between Play, Ranks and Stats', (

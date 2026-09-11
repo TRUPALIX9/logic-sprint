@@ -1,11 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../app.dart';
-import '../core/config.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../games/games.dart';
@@ -13,14 +11,20 @@ import '../models/round_result.dart';
 import '../services/leaderboard.dart';
 import '../ui/chamfer.dart';
 import '../ui/kit.dart';
+import 'name_sheet.dart';
 
-Route<void> resultRoute(RoundResult result) =>
-    MaterialPageRoute<void>(builder: (_) => ResultScreen(result: result));
+/// [synced] completes with whether the run reached the server; null means
+/// it already has.
+Route<void> resultRoute(RoundResult result, {Future<bool>? synced}) =>
+    MaterialPageRoute<void>(
+      builder: (_) => ResultScreen(result: result, synced: synced),
+    );
 
 class ResultScreen extends StatelessWidget {
-  const ResultScreen({super.key, required this.result});
+  const ResultScreen({super.key, required this.result, this.synced});
 
   final RoundResult result;
+  final Future<bool>? synced;
 
   @override
   Widget build(BuildContext context) {
@@ -64,16 +68,22 @@ class ResultScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: _Stat(
-                            'Time',
-                            formatDuration(result.duration),
-                            LS.text,
-                          ),
+                          child: game.tracksTime
+                              ? _Stat(
+                                  'Time',
+                                  formatDuration(result.duration),
+                                  LS.text,
+                                )
+                              : _Stat(
+                                  'Best',
+                                  '${math.max(result.score, result.previousBest)}',
+                                  LS.text,
+                                ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _PostCard(result: result),
+                    _SyncCard(result: result, synced: synced),
                     const SizedBox(height: 16),
                     Row(
                       children: [
@@ -199,59 +209,48 @@ class _Stat extends StatelessWidget {
   }
 }
 
-/// Name field + Post to the global Top 10.
-class _PostCard extends StatefulWidget {
-  const _PostCard({required this.result});
+enum _Sync { offline, noName, ranked, unranked }
+
+/// Where the run went. Every run is saved automatically: this shows the
+/// global rank, the offline state, or an invite to choose a name.
+class _SyncCard extends StatefulWidget {
+  const _SyncCard({required this.result, required this.synced});
 
   final RoundResult result;
+  final Future<bool>? synced;
 
   @override
-  State<_PostCard> createState() => _PostCardState();
+  State<_SyncCard> createState() => _SyncCardState();
 }
 
-class _PostCardState extends State<_PostCard> {
-  late final TextEditingController _name;
-  bool _posting = false;
-  bool _posted = false;
-  String? _error;
+class _SyncCardState extends State<_SyncCard> {
+  late Future<(_Sync, int?)> _status;
 
   @override
   void initState() {
     super.initState();
-    _name = TextEditingController(
-      text: context.read<Leaderboard>().savedName ?? '',
-    );
+    _status = _check();
   }
 
-  @override
-  void dispose() {
-    _name.dispose();
-    super.dispose();
-  }
-
-  Future<void> _post() async {
+  Future<(_Sync, int?)> _check() async {
     final leaderboard = context.read<Leaderboard>();
-    setState(() {
-      _posting = true;
-      _error = null;
-    });
-    final error = await leaderboard.submit(
-      name: _name.text,
-      game: widget.result.game,
-      difficulty: widget.result.difficulty,
-      score: widget.result.score,
-      duration: widget.result.duration,
-    );
-    if (!mounted) {
-      return;
+    final result = widget.result;
+    if (!await (widget.synced ?? Future.value(true))) {
+      return (_Sync.offline, null);
     }
-    setState(() {
-      _posting = false;
-      _posted = error == null;
-      _error = error;
-    });
-    if (error == null) {
-      FocusScope.of(context).unfocus();
+    if (leaderboard.savedName == null) {
+      return (_Sync.noName, null);
+    }
+    final rank = (await leaderboard.load(
+      result.game,
+      result.difficulty,
+    )).myRank;
+    return rank == null ? (_Sync.unranked, null) : (_Sync.ranked, rank);
+  }
+
+  Future<void> _chooseName() async {
+    if (await showNameSheet(context) && mounted) {
+      setState(() => _status = _check());
     }
   }
 
@@ -263,119 +262,76 @@ class _PostCardState extends State<_PostCard> {
 
   @override
   Widget build(BuildContext context) {
-    final postsLeft = context.read<Leaderboard>().postsLeftToday;
-    final canPost = !_posting && widget.result.score > 0 && postsLeft > 0;
-    final helper =
-        _error ??
-        (widget.result.score == 0
-            ? 'Score above 0 to post'
-            : '$postsLeft of ${AppConfig.maxDailySubmissions} posts left today');
-
-    return ChamferBox(
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const MonoLabel('Post to Global Top 10'),
-          const SizedBox(height: 10),
-          if (_posted)
-            Row(
-              children: [
-                const Icon(Icons.check_rounded, color: LS.teal),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Posted as ${_name.text.trim()}',
-                    style: LSText.body(15),
-                  ),
-                ),
-                TextButton(
-                  onPressed: _seeRanks,
-                  child: DisplayText('See ranks', size: 16, color: LS.teal),
-                ),
-              ],
-            )
-          else ...[
-            Row(
-              children: [
-                Expanded(
-                  child: ChamferBox(
-                    cut: Cut.sm,
-                    height: 48,
-                    color: LS.surface2,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.person_outline_rounded,
-                          size: 18,
-                          color: LS.dim,
+    final result = widget.result;
+    return FutureBuilder(
+      future: _status,
+      builder: (context, snapshot) {
+        final status = snapshot.data;
+        final (icon, title, detail, action) = switch (status?.$1) {
+          null => (null, 'Saving run', 'Syncing your best', null),
+          _Sync.offline => (
+            Icons.cloud_off_rounded,
+            'Saved on this phone',
+            'Offline — will sync later',
+            null,
+          ),
+          _Sync.noName => (
+            Icons.person_add_alt_1_rounded,
+            'Join the Global Top 10',
+            'Choose a name once',
+            CardAction(label: 'Set name', onTap: _chooseName),
+          ),
+          _Sync.ranked => (
+            Icons.check_rounded,
+            result.isNewBest ? 'New best · saved' : 'Run saved',
+            'Global rank #${status!.$2} · '
+                '${result.game.titleWith(result.difficulty)}',
+            CardAction(label: 'Ranks', onTap: _seeRanks),
+          ),
+          _Sync.unranked => (
+            Icons.check_rounded,
+            'Run saved',
+            result.score == 0
+                ? 'Score above 0 to get a rank'
+                : 'Rank updates soon',
+            null,
+          ),
+        };
+        return ChamferBox(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              SizedBox.square(
+                dimension: 24,
+                child: icon == null
+                    ? const Padding(
+                        padding: EdgeInsets.all(3),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: LS.teal,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextField(
-                            controller: _name,
-                            enabled: !_posting,
-                            style: LSText.mono(
-                              15,
-                              color: LS.text,
-                              spacing: 0.04,
-                            ),
-                            inputFormatters: [
-                              LengthLimitingTextInputFormatter(
-                                AppConfig.maxPlayerNameLength,
-                              ),
-                            ],
-                            textInputAction: TextInputAction.send,
-                            onSubmitted: canPost ? (_) => _post() : null,
-                            decoration: InputDecoration.collapsed(
-                              hintText: 'Display name',
-                              hintStyle: LSText.mono(
-                                15,
-                                color: LS.dim,
-                                spacing: 0.04,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                      )
+                    : Icon(
+                        icon,
+                        color: status?.$1 == _Sync.offline ? LS.muted : LS.teal,
+                      ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DisplayText(title, size: 18, maxLines: 1),
+                    const SizedBox(height: 4),
+                    MonoLabel(detail, size: 10, color: LS.dim),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Opacity(
-                  opacity: canPost ? 1 : 0.4,
-                  child: ChamferBox(
-                    cut: Cut.sm,
-                    width: 92,
-                    height: 48,
-                    borderColor: null,
-                    color: LS.teal,
-                    onTap: canPost ? _post : null,
-                    child: Center(
-                      child: _posting
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: LS.bg,
-                              ),
-                            )
-                          : const DisplayText('Post', size: 18, color: LS.bg),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            MonoLabel(
-              helper,
-              size: 10,
-              color: _error != null ? LS.coral : LS.dim,
-            ),
-          ],
-        ],
-      ),
+              ),
+              if (action != null) ...[const SizedBox(width: 8), action],
+            ],
+          ),
+        );
+      },
     );
   }
 }

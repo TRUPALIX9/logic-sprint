@@ -1,113 +1,122 @@
 import 'dart:convert';
 
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 
 import '../core/config.dart';
 import '../models/game.dart';
 import '../models/leaderboard_entry.dart';
+import '../models/round_result.dart';
+import '../models/run_record.dart';
+import 'leaderboard_api.dart';
 import 'storage.dart';
 
 class LeaderboardLoad {
-  const LeaderboardLoad(this.entries, {this.updatedAt, this.message});
+  const LeaderboardLoad(
+    this.entries, {
+    this.updatedAt,
+    this.myRank,
+    this.message,
+  });
 
   final List<LeaderboardEntry> entries;
   final DateTime? updatedAt;
+
+  /// The player's position on this board (null if they haven't scored).
+  final int? myRank;
 
   /// Shown under the header: offline notice or refresh cooldown.
   final String? message;
 }
 
-typedef FetchTop =
-    Future<List<Map<String, dynamic>>> Function(
-      GameId game,
-      Difficulty difficulty,
-    );
-typedef InsertScore = Future<void> Function(Map<String, dynamic> row);
-
-/// One global Top 10 per game (and per difficulty where the game has them),
-/// ranked by score, then by the shorter run. Each board is cached for 10
-/// minutes; manual refresh has a 60 s cooldown; posting is limited to 5 a
-/// day. Failures degrade to cached or empty data.
-class Leaderboard {
+/// Player profile + global Top 10.
+///
+/// Every finished run goes to the local History and to the server (queued
+/// while offline): the server keeps one best and a play count per game and
+/// difficulty. The display name is chosen once. Each board is cached for a
+/// day and refetched after a new personal best; manual refresh has a 60 s
+/// cooldown. Failures degrade to cached or empty data.
+class Leaderboard extends ChangeNotifier {
   Leaderboard(
     this._storage, {
-    required this.appVersion,
-    FetchTop? fetchTop,
-    InsertScore? insert,
+    required LeaderboardApi api,
     DateTime Function()? now,
-  }) : _fetchTop = fetchTop ?? _supabaseFetch,
-       _insert = insert ?? _supabaseInsert,
+  }) : _api = api,
        _now = now ?? DateTime.now;
 
   final Storage _storage;
-  final String appVersion;
-  final FetchTop _fetchTop;
-  final InsertScore _insert;
+  final LeaderboardApi _api;
   final DateTime Function() _now;
 
-  static bool supabaseReady = false;
+  String? get savedName => _storage.playerName;
 
-  /// The Supabase client has no timeout of its own; without one a dead
-  /// network leaves the Ranks spinner up forever.
-  static const _requestTimeout = Duration(seconds: 8);
+  /// Server id of this player, for marking "YOU" on the boards.
+  String? get playerId => _api.playerId;
 
-  static Future<void> initSupabase() async {
-    try {
-      await Supabase.initialize(
-        url: AppConfig.supabaseUrl,
-        publishableKey: AppConfig.supabasePublishableKey,
-      );
-      supabaseReady = true;
-    } on Object {
-      supabaseReady = false;
-    }
-  }
-
-  static Future<List<Map<String, dynamic>>> _supabaseFetch(
-    GameId game,
-    Difficulty difficulty,
-  ) async {
-    if (!supabaseReady) {
-      throw StateError('Supabase unavailable');
-    }
-    final rows = await Supabase.instance.client
-        .from(AppConfig.leaderboardTable)
-        .select(
-          'id, player_name, score, game_type, difficulty, duration_ms, created_at',
-        )
-        .eq('game_type', game.name)
-        .eq('difficulty', difficulty.name)
-        .order('score', ascending: false)
-        .order('duration_ms', ascending: true, nullsFirst: false)
-        .limit(AppConfig.leaderboardLimit)
-        .timeout(_requestTimeout);
-    return List<Map<String, dynamic>>.from(rows);
-  }
-
-  static Future<void> _supabaseInsert(Map<String, dynamic> row) async {
-    if (!supabaseReady) {
-      throw StateError('Supabase unavailable');
-    }
-    await Supabase.instance.client
-        .from(AppConfig.leaderboardTable)
-        .insert(row)
-        .timeout(_requestTimeout);
-  }
+  /// Local run history, newest first.
+  List<RunRecord> get history => _storage.history;
 
   static String _boardKey(GameId game, Difficulty difficulty) =>
       '${game.name}_${difficulty.name}';
 
-  String get _today {
-    final d = _now();
-    return '${d.year}-${d.month}-${d.day}';
+  /// Chooses (or changes) the display name. Returns null on success, or a
+  /// message to show.
+  Future<String?> claimName(String name) async {
+    final error = PlayerName.validate(name);
+    if (error != null) {
+      return error;
+    }
+    try {
+      await _api.claimName(name.trim());
+    } on NameTakenException {
+      return 'That name is taken — try another.';
+    } on Object {
+      return 'Couldn’t reach the server. Check your connection and try again.';
+    }
+    await _storage.setPlayerName(name.trim());
+    // Boards cached before the name was set don't show it yet.
+    await _storage.setLeaderboardCache('{}');
+    notifyListeners();
+    return null;
   }
 
-  int get postsLeftToday =>
-      AppConfig.maxDailySubmissions - _storage.submissionsOn(_today);
+  /// Saves a finished run to History and sends it to the server (or queues
+  /// it until the next successful sync). Completes with true once synced.
+  Future<bool> recordRun(RoundResult result) async {
+    final run = RunRecord.fromResult(result, _now());
+    await _storage.addHistory(run);
+    await _storage.setPendingRuns([..._storage.pendingRuns, run]);
+    notifyListeners();
+    if (result.isNewBest) {
+      await _store(_boardKey(result.game, result.difficulty), null);
+    }
+    return syncPending();
+  }
 
-  String? get savedName => _storage.playerName;
+  // Syncs run one after another, so no queued run is ever sent twice.
+  Future<bool> _sync = Future.value(true);
 
-  /// All cached boards: key → {"at": epoch ms, "rows": [...]}.
+  /// Sends queued runs in order; stops at the first failure and keeps the
+  /// rest for next time. Returns true when the queue is empty.
+  Future<bool> syncPending() => _sync = _sync.then((_) => _drain());
+
+  Future<bool> _drain() async {
+    final pending = _storage.pendingRuns;
+    var sent = 0;
+    try {
+      for (final run in pending) {
+        await _api.recordRun(run.game, run.difficulty, run.score, run.duration);
+        sent++;
+      }
+    } on Object {
+      // Offline: retried on the next run or app start.
+    }
+    if (sent > 0) {
+      await _storage.setPendingRuns(pending.sublist(sent));
+    }
+    return sent == pending.length;
+  }
+
+  /// All cached boards: key → {"at": epoch ms, "rank": int?, "rows": [...]}.
   Map<String, dynamic> _boards() {
     final raw = _storage.leaderboardCache;
     if (raw == null) {
@@ -120,33 +129,38 @@ class Leaderboard {
     }
   }
 
-  (List<LeaderboardEntry>, DateTime)? _cached(String key) {
+  LeaderboardLoad? _cached(String key) {
     try {
       final board = _boards()[key] as Map?;
       if (board == null) {
         return null;
       }
-      final entries = (board['rows'] as List)
-          .map(
-            (row) =>
-                LeaderboardEntry.fromRow(Map<String, dynamic>.from(row as Map)),
-          )
-          .nonNulls
-          .toList();
-      return (entries, DateTime.fromMillisecondsSinceEpoch(board['at'] as int));
+      return LeaderboardLoad(
+        (board['rows'] as List)
+            .map(
+              (row) => LeaderboardEntry.fromRow(
+                Map<String, dynamic>.from(row as Map),
+              ),
+            )
+            .nonNulls
+            .toList(),
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(board['at'] as int),
+        myRank: (board['rank'] as num?)?.toInt(),
+      );
     } on Object {
       return null;
     }
   }
 
-  Future<void> _store(String key, List<LeaderboardEntry>? entries) async {
+  Future<void> _store(String key, LeaderboardLoad? load) async {
     final boards = _boards();
-    if (entries == null) {
+    if (load == null) {
       boards.remove(key);
     } else {
       boards[key] = {
-        'at': _now().millisecondsSinceEpoch,
-        'rows': entries.map((e) => e.toRow()).toList(),
+        'at': load.updatedAt!.millisecondsSinceEpoch,
+        'rank': load.myRank,
+        'rows': load.entries.map((e) => e.toRow()).toList(),
       };
     }
     await _storage.setLeaderboardCache(jsonEncode(boards));
@@ -161,10 +175,10 @@ class Leaderboard {
     final cached = _cached(key);
     final fresh =
         cached != null &&
-        _now().difference(cached.$2) < AppConfig.leaderboardCacheTtl;
+        _now().difference(cached.updatedAt!) < AppConfig.leaderboardCacheTtl;
 
     if (!refresh && fresh) {
-      return LeaderboardLoad(cached.$1, updatedAt: cached.$2);
+      return cached;
     }
 
     if (refresh) {
@@ -174,8 +188,9 @@ class Leaderboard {
           : AppConfig.leaderboardRefreshCooldown - _now().difference(last);
       if (wait > Duration.zero) {
         return LeaderboardLoad(
-          cached?.$1 ?? const [],
-          updatedAt: cached?.$2,
+          cached?.entries ?? const [],
+          updatedAt: cached?.updatedAt,
+          myRank: cached?.myRank,
           message: 'Refresh available in ${wait.inSeconds + 1}s',
         );
       }
@@ -183,58 +198,29 @@ class Leaderboard {
     }
 
     try {
-      final entries = (await _fetchTop(game, difficulty))
+      // Queued runs first, so the board and rank include them.
+      await syncPending();
+      final entries = (await _api.top(game, difficulty))
           .map(LeaderboardEntry.fromRow)
           .nonNulls
           .where((e) => e.game == game && e.difficulty == difficulty)
           .toList();
-      await _store(key, entries);
-      return LeaderboardLoad(entries, updatedAt: _now());
+      final load = LeaderboardLoad(
+        entries,
+        updatedAt: _now(),
+        myRank: await _api.myRank(game, difficulty),
+      );
+      await _store(key, load);
+      return load;
     } on Object {
       return LeaderboardLoad(
-        cached?.$1 ?? const [],
-        updatedAt: cached?.$2,
+        cached?.entries ?? const [],
+        updatedAt: cached?.updatedAt,
+        myRank: cached?.myRank,
         message: cached == null
             ? 'Leaderboard is offline right now.'
             : 'Offline — showing saved scores.',
       );
     }
-  }
-
-  /// Posts a score. Returns null on success, or a message to show.
-  Future<String?> submit({
-    required String name,
-    required GameId game,
-    required Difficulty difficulty,
-    required int score,
-    required Duration duration,
-  }) async {
-    final error = PlayerName.validate(name);
-    if (error != null) {
-      return error;
-    }
-    if (score <= 0) {
-      return 'Score something first!';
-    }
-    if (postsLeftToday <= 0) {
-      return 'Daily post limit reached. Try again tomorrow.';
-    }
-    try {
-      await _insert({
-        'player_name': name.trim(),
-        'score': score,
-        'game_type': game.name,
-        'difficulty': difficulty.name,
-        'duration_ms': duration.inMilliseconds,
-        'app_version': appVersion,
-      });
-    } on Object {
-      return 'Couldn’t reach the leaderboard. Your best is saved on this device.';
-    }
-    await _storage.recordSubmission(_today);
-    await _storage.setPlayerName(name.trim());
-    // Drop this board's cache so the new score shows on the next load.
-    await _store(_boardKey(game, difficulty), null);
-    return null;
   }
 }

@@ -13,12 +13,12 @@ Games:
 - **Rocket Launch**: Steer your rocket through an asteroid storm with a touch of your finger. It speeds up the longer you survive.
 - **Memory Lane**: Watch tiles light up on a 3x3, 4x4 or 5x5 grid and tap them back in the same order. Every level adds another tile.
 - **Quick Math**: Solve addition, subtraction, multiplication and division problems that get harder as you go. Your time is saved too.
-- **Guess Color**: A color word appears in a different ink — tap the ink color, not the word. The buttons start shuffling and changing colors.
+- **Guess Color**: A color word appears painted in another color. The COLOR | TEXT switch tells you what to tap: the paint color or the color the word names. The rule flips, the buttons shuffle and their labels stop matching — and the clock gets shorter.
 
 Features:
 - One extra life per run
 - Easy, Medium and Hard for Memory Lane and Quick Math
-- Personal bests and run times saved on your device
+- Personal bests saved on your device (plus your fastest runs in Memory Lane and Quick Math)
 - Optional global Top 10 for every game
 - Plays offline
 - No login required

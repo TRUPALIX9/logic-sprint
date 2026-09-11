@@ -47,7 +47,7 @@ class LogicSprintApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider.value(value: appState),
         ChangeNotifierProvider(create: (_) => NavTabs()),
-        Provider.value(value: leaderboard),
+        ChangeNotifierProvider.value(value: leaderboard),
         Provider.value(value: ads),
         Provider.value(value: AppInfo(version)),
       ],
