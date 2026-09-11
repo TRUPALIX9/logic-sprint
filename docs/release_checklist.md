@@ -42,10 +42,11 @@ Pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`, which builds the sa
 | Form | Answer |
 |------|--------|
 | Ads | Yes, contains ads |
+| Advertising ID | Yes (the Mobile Ads SDK adds `AD_ID`). Purposes: Advertising or marketing, Analytics, Fraud prevention, security and compliance |
 | Target audience | 13+ (keeps the app out of the Families program, whose ad rules differ) |
 | Content rating | IARC questionnaire — no violence; user content limited to display names |
 | Data safety — collected | Device or other IDs (advertising ID, via AdMob); App activity: app interactions (ads); Name: user-chosen display name (optional, leaderboard) |
-| Data safety — purpose | Advertising or marketing, fraud prevention (AdMob); App functionality (leaderboard) |
+| Data safety — purpose | Device or other IDs: Advertising or marketing, Analytics, Fraud prevention (AdMob). Name and game stats: App functionality (leaderboard) |
 | Data safety — encrypted in transit | Yes |
 | Data safety — deletion | Users can request leaderboard deletion by email |
 | Privacy policy URL | Hosted policy from step 1 |
