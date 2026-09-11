@@ -1,0 +1,223 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Screens"
+    },
+    {
+      "id": "page-2",
+      "name": "Identity options"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "AppFlow.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "App flow",
+      "page": "page-1"
+    },
+    {
+      "file": "ThemeSystem.dc.html",
+      "x": 1520,
+      "y": 0,
+      "w": 960,
+      "h": 900,
+      "title": "Circuit Noir",
+      "page": "page-1"
+    },
+    {
+      "file": "Splash.dc.html",
+      "x": 0,
+      "y": 1040,
+      "w": 390,
+      "h": 844,
+      "title": "01 Splash",
+      "page": "page-1"
+    },
+    {
+      "file": "Main.dc.html",
+      "x": 470,
+      "y": 1040,
+      "w": 390,
+      "h": 844,
+      "title": "02 Home",
+      "page": "page-1"
+    },
+    {
+      "file": "GameSheet.dc.html",
+      "x": 940,
+      "y": 1040,
+      "w": 390,
+      "h": 844,
+      "title": "03 Game sheet",
+      "page": "page-1"
+    },
+    {
+      "file": "GameSheetRamp.dc.html",
+      "x": 1410,
+      "y": 1040,
+      "w": 390,
+      "h": 844,
+      "title": "03b Game sheet · ramp",
+      "page": "page-1"
+    },
+    {
+      "file": "RocketLaunch.dc.html",
+      "x": 1880,
+      "y": 1040,
+      "w": 390,
+      "h": 844,
+      "title": "04 Rocket Launch",
+      "page": "page-1"
+    },
+    {
+      "file": "MemoryLane.dc.html",
+      "x": 2350,
+      "y": 1040,
+      "w": 390,
+      "h": 844,
+      "title": "05 Memory Lane",
+      "page": "page-1"
+    },
+    {
+      "file": "QuickMath.dc.html",
+      "x": 2820,
+      "y": 1040,
+      "w": 390,
+      "h": 844,
+      "title": "06 Quick Math",
+      "page": "page-1"
+    },
+    {
+      "file": "GuessColor.dc.html",
+      "x": 3290,
+      "y": 1040,
+      "w": 390,
+      "h": 844,
+      "title": "07 Guess Color",
+      "page": "page-1"
+    },
+    {
+      "file": "Result.dc.html",
+      "x": 3760,
+      "y": 1040,
+      "w": 390,
+      "h": 844,
+      "title": "08 Result",
+      "page": "page-1"
+    },
+    {
+      "file": "Ranks.dc.html",
+      "x": 470,
+      "y": 2044,
+      "w": 390,
+      "h": 844,
+      "title": "09 Ranks",
+      "page": "page-1"
+    },
+    {
+      "file": "Profile.dc.html",
+      "x": 940,
+      "y": 2044,
+      "w": 390,
+      "h": 844,
+      "title": "10 Profile",
+      "page": "page-1"
+    },
+    {
+      "file": "Settings.dc.html",
+      "x": 1410,
+      "y": 2044,
+      "w": 390,
+      "h": 844,
+      "title": "11 Settings",
+      "page": "page-1"
+    },
+    {
+      "file": "Privacy.dc.html",
+      "x": 1880,
+      "y": 2044,
+      "w": 390,
+      "h": 844,
+      "title": "12 Privacy policy",
+      "page": "page-1"
+    },
+    {
+      "file": "IdentityA.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 760,
+      "h": 920,
+      "title": "Option A · LogicSprint",
+      "page": "page-2"
+    },
+    {
+      "file": "IdentityB.dc.html",
+      "x": 860,
+      "y": 0,
+      "w": 760,
+      "h": 920,
+      "title": "Option B · NeuroDash",
+      "page": "page-2"
+    },
+    {
+      "file": "IdentityC.dc.html",
+      "x": 1720,
+      "y": 0,
+      "w": 760,
+      "h": 920,
+      "title": "Option C · Synapse",
+      "page": "page-2"
+    },
+    {
+      "file": "IdentityD.dc.html",
+      "x": 2580,
+      "y": 0,
+      "w": 760,
+      "h": 920,
+      "title": "Option D · MindGrid",
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "core-loop",
+      "x": 0,
+      "y": 930,
+      "w": 420,
+      "page": "page-1",
+      "text": "CORE LOOP\nSplash → Play → Game sheet → round → Result. Memory Lane and Quick Math pick Easy / Medium / Hard on the sheet; Rocket Launch and Guess Color have no difficulty and ramp up during the round. The in-game bar shows only the game, difficulty (or skill) and score."
+    },
+    {
+      "id": "tabs",
+      "x": 0,
+      "y": 2044,
+      "w": 400,
+      "page": "page-1",
+      "text": "TABS & SETTINGS\nRanks · Play · Profile in the bottom nav, with Play in the middle; Settings from the gear on Play.\n\nLeaderboard names and scores are sample data."
+    },
+    {
+      "id": "ranks-boards",
+      "x": 470,
+      "y": 2928,
+      "w": 390,
+      "page": "page-1",
+      "text": "RANKS\nOne Global Top 10 at a time: pick a game, then a difficulty. The Easy / Medium / Hard row only appears for Memory Lane and Quick Math; Rocket Launch and Guess Color have a single board. There is no \"All\" view. Opens on the game you last played (after posting, on that game's board)."
+    },
+    {
+      "id": "identity-brief",
+      "x": 0,
+      "y": -170,
+      "w": 560,
+      "page": "page-2",
+      "text": "IDENTITY OPTIONS\nChosen: LogicSprint with the double chevron (Option A). It is the name and mark used on every screen and in the app.\n\nOptions B–D are kept here for reference only."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

@@ -1,40 +1,41 @@
-import 'package:flutter/widgets.dart';
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'app.dart';
-import 'services/ad_service.dart';
-import 'services/app_state.dart';
-import 'services/supabase_service.dart';
-import 'services/leaderboard_cache_service.dart';
-import 'services/leaderboard_service.dart';
-import 'services/local_storage_service.dart';
-import 'services/sound_service.dart';
+import 'services/ads.dart';
+import 'services/leaderboard.dart';
+import 'services/storage.dart';
+import 'state/app_state.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await AppSupabaseService.initialize();
-
-  final storage = await LocalStorageService.create();
-  final soundService = SoundService();
-  final leaderboardService = LeaderboardService(
-    storage: storage,
-    cache: LeaderboardCacheService(storage),
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.black,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
   );
-  final adService = AdService(storage: storage);
-  await adService.initialize();
 
-  final appState = await AppState.create(
-    storage: storage,
-    soundService: soundService,
-  );
+  final storage = await Storage.open();
+  final info = await PackageInfo.fromPlatform();
+  await Leaderboard.initSupabase();
+  final ads = Ads();
 
   runApp(
     LogicSprintApp(
-      appState: appState,
-      storage: storage,
-      soundService: soundService,
-      leaderboardService: leaderboardService,
-      adService: adService,
+      appState: AppState(storage),
+      leaderboard: Leaderboard(storage, appVersion: info.version),
+      ads: ads,
+      version: '${info.version} (${info.buildNumber})',
     ),
   );
+
+  // After runApp so the consent form (if any) never blocks the first frame.
+  unawaited(ads.initialize());
 }

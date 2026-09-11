@@ -1,40 +1,18 @@
 name: logic_sprint
-description: "LogicSprint: Brain Games, an offline Flutter brain-training app."
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+description: "LogicSprint: fast 30-second brain games."
+publish_to: 'none'
 
-# The following defines the version and build number for your application.
-# A version number is three numbers separated by dots, like 1.2.43
-# followed by an optional build number separated by a +.
-# Both the version and the builder number may be overridden in flutter
-# build by specifying --build-name and --build-number, respectively.
-# In Android, build-name is used as versionName while build-number used as versionCode.
-# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
-# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
-# Read more about iOS versioning at
-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-# In Windows, build-name is used as the major, minor, and patch parts
-# of the product and file versions while build-number is used as the build suffix.
-version: 0.0.1+1
+# versionName+versionCode on Android, CFBundleShortVersionString+CFBundleVersion on iOS.
+version: 1.0.0+1
 
 environment:
   sdk: '>=3.11.0 <4.0.0'
 
-# Dependencies specify other packages that your package needs in order to work.
-# To automatically upgrade your package dependencies to the latest versions
-# consider running `flutter pub upgrade --major-versions`. Alternatively,
-# dependencies can be manually updated by changing the version numbers below to
-# the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.8
   provider: ^6.1.5+1
   shared_preferences: ^2.5.5
-  audioplayers: ^6.6.0
-  flutter_animate: ^4.5.2
   supabase_flutter: ^2.8.0
   package_info_plus: ^9.0.0
   google_mobile_ads: ^5.1.0
@@ -42,29 +20,41 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  fake_async: ^1.3.1
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
 
+# `dart run flutter_launcher_icons` after changing the icon PNGs.
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: assets/brand/icons/app_icon_1024.png
-  adaptive_icon_foreground: assets/brand/icons/android/adaptive_icon_foreground.png
-  adaptive_icon_background: assets/brand/icons/android/adaptive_icon_background.png
+  image_path: assets/brand/icons/logicsprint_icon_1024.png
+  adaptive_icon_foreground: assets/brand/icons/android/logicsprint_foreground.png
+  adaptive_icon_background: "#000000"
   remove_alpha_ios: true
 
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
-
-# The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
   assets:
-    - assets/brand/icons/
-    - assets/brand/icons/android/
-    - assets/brand/icons/ios/
-    - assets/brand/logos/png/
-    - assets/brand/logicsprint/
-    - assets/brand/tokens/
-    - assets/brand/docs/
-    - assets/brand/store/google_play/
+    - assets/brand/docs/privacy_policy.md
+  fonts:
+    - family: Rajdhani
+      fonts:
+        - asset: assets/fonts/Rajdhani-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Rajdhani-Bold.ttf
+          weight: 700
+    - family: IBMPlexSans
+      fonts:
+        - asset: assets/fonts/IBMPlexSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSans-SemiBold.ttf
+          weight: 600
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/JetBrainsMono-Bold.ttf
+          weight: 700

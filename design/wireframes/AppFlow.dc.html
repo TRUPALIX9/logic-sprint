@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #000000; color: #EAF2F7; font-family: 'IBM Plex Sans', 'Helvetica Neue', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #34C29A; } a:hover { color: #7FE3C4; }
+    .h { font-family: 'Rajdhani', 'Arial Narrow', sans-serif; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
+    .m { font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace; }
+    .cut { clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+    .cut-sm { clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px); }
+    .cut-lg { clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px); }
+  </style>
+  
+</helmet>
+<div style="width:1440px;height:900px;position:relative;background:#000000;overflow:hidden">
+  <div style="position:absolute;left:40px;top:36px;display:flex;flex-direction:column;gap:6px"><span class="h" style="font-size:36px;line-height:1">App flow</span><span class="m" style="font-size:11px;color:#8C9DAD;letter-spacing:0.12em;">4 GAMES · 3 TABS · RANKS · PLAY · PROFILE</span></div>
+  <svg width="1440" height="900" viewBox="0 0 1440 900" fill="none" style="position:absolute;left:0;top:0">
+    <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8C9DAD"/></marker></defs>
+    <g stroke="#8C9DAD" stroke-width="1.5" marker-end="url(#ah)">
+      <path d="M210 218H268"/><path d="M460 218H518"/><path d="M710 218H768"/><path d="M970 218H1028"/><path d="M1200 218H1258"/>
+      <path d="M1300 180V140H870V168"/>
+      <path d="M1370 180V110H365V178"/>
+      <path d="M1335 256V458H712"/>
+      <path d="M300 256V458H232"/>
+      <path d="M430 256V458H518"/>
+      <path d="M365 256V658"/>
+      <path d="M460 698H518"/>
+      <path d="M365 736V800H870V738"/>
+    </g>
+  </svg>
+  <div style="position:absolute;left:40px;top:180px;width:170px;height:76px;box-sizing:border-box;padding:12px 14px;background:#0A1016;border:1.5px solid #34C29A;display:flex;flex-direction:column;gap:5px"><span class="h" style="font-size:19px;line-height:1">Splash</span><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;">LOAD · AD CONSENT</span></div>
+  <div style="position:absolute;left:270px;top:180px;width:190px;height:76px;box-sizing:border-box;padding:12px 14px;background:#0A1016;border:1.5px solid #34C29A;display:flex;flex-direction:column;gap:5px"><span class="h" style="font-size:19px;line-height:1">Play</span><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;">TAB · JUMP BACK IN</span></div>
+  <div style="position:absolute;left:520px;top:180px;width:190px;height:76px;box-sizing:border-box;padding:12px 14px;background:#0A1016;border:1.5px solid #34C29A;display:flex;flex-direction:column;gap:5px"><span class="h" style="font-size:19px;line-height:1">Game sheet</span><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;">RULES · DIFFICULTY</span></div>
+  <div style="position:absolute;left:770px;top:170px;width:200px;height:170px;box-sizing:border-box;padding:12px 14px;background:#0A1016;border:1.5px solid #34C29A;display:flex;flex-direction:column;gap:5px"><span class="h" style="font-size:19px;line-height:1">Game round</span><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;">SCORE IN GAME BAR</span><div style="margin-top:6px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;background:#3B7BF0"></div><span style="font-size:13px">Rocket Launch</span></div><div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;background:#2BB3D6"></div><span style="font-size:13px">Memory Lane</span></div><div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;background:#34C29A"></div><span style="font-size:13px">Quick Math</span></div><div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;background:#8C8CFF"></div><span style="font-size:13px">Guess Color</span></div></div></div>
+  <div style="position:absolute;left:1030px;top:180px;width:170px;height:76px;box-sizing:border-box;padding:12px 14px;background:#0A1016;border:1.5px dashed #667A8C;display:flex;flex-direction:column;gap:5px"><span class="h" style="font-size:19px;line-height:1">Interstitial</span><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;">EVERY 2ND ROUND</span></div>
+  <div style="position:absolute;left:1260px;top:180px;width:150px;height:76px;box-sizing:border-box;padding:12px 14px;background:#0A1016;border:1.5px solid #34C29A;display:flex;flex-direction:column;gap:5px"><span class="h" style="font-size:19px;line-height:1">Result</span><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;">SCORE · POST</span></div>
+  <div style="position:absolute;left:40px;top:420px;width:190px;height:76px;box-sizing:border-box;padding:12px 14px;background:#0A1016;border:1.5px solid #3B7BF0;display:flex;flex-direction:column;gap:5px"><span class="h" style="font-size:19px;line-height:1">Profile</span><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;">TAB · NAME · BESTS</span></div>
+  <div style="position:absolute;left:520px;top:420px;width:190px;height:76px;box-sizing:border-box;padding:12px 14px;background:#0A1016;border:1.5px solid #3B7BF0;display:flex;flex-direction:column;gap:5px"><span class="h" style="font-size:19px;line-height:1">Ranks</span><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;">TAB · GLOBAL TOP 10</span></div>
+  <div style="position:absolute;left:270px;top:660px;width:190px;height:76px;box-sizing:border-box;padding:12px 14px;background:#0A1016;border:1.5px solid #2BB3D6;display:flex;flex-direction:column;gap:5px"><span class="h" style="font-size:19px;line-height:1">Settings</span><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;">GEAR ON PLAY</span></div>
+  <div style="position:absolute;left:520px;top:660px;width:190px;height:76px;box-sizing:border-box;padding:12px 14px;background:#0A1016;border:1.5px solid #2BB3D6;display:flex;flex-direction:column;gap:5px"><span class="h" style="font-size:19px;line-height:1">Privacy policy</span></div>
+  <div style="position:absolute;left:770px;top:660px;width:200px;height:76px;box-sizing:border-box;padding:12px 14px;background:#0A1016;border:1.5px dashed #667A8C;display:flex;flex-direction:column;gap:5px"><span class="h" style="font-size:19px;line-height:1">Privacy choices</span><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;">GOOGLE FORM · EEA/UK/CH</span></div>
+  <div style="position:absolute;left:1040px;top:132px"><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;background:#000000;padding:2px 4px">PLAY AGAIN</span></div><div style="position:absolute;left:600px;top:102px"><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;background:#000000;padding:2px 4px">HOME</span></div><div style="position:absolute;left:820px;top:450px"><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;background:#000000;padding:2px 4px">POST → RANKS OPENS ON THAT GAME’S BOARD</span></div><div style="position:absolute;left:438px;top:330px"><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;background:#000000;padding:2px 4px">TABS</span></div><div style="position:absolute;left:373px;top:590px"><span class="m" style="font-size:10px;color:#8C9DAD;letter-spacing:0.12em;background:#000000;padding:2px 4px">GEAR</span></div>
+  <div class="cut-lg" style="background:#1E2A36;padding:1px;position:absolute;left:1000px;top:490px;width:410px"><div class="cut-lg" style="background:#0A1016;padding:18px;display:flex;flex-direction:column;gap:8px"><span class="m" style="font-size:11px;color:#FF5A6E;letter-spacing:0.12em;">REMOVED IN THE REVAMP</span>
+    <div style="display:flex;gap:10px;font-size:13px;line-height:1.35"><span style="color:#FF5A6E">—</span><span>Game Select + Difficulty screens → one game sheet</span></div><div style="display:flex;gap:10px;font-size:13px;line-height:1.35"><span style="color:#FF5A6E">—</span><span>In-game score, time and streak cards</span></div><div style="display:flex;gap:10px;font-size:13px;line-height:1.35"><span style="color:#FF5A6E">—</span><span>Round timer</span></div><div style="display:flex;gap:10px;font-size:13px;line-height:1.35"><span style="color:#FF5A6E">—</span><span>Swipe strip and arrow buttons on Rocket Launch</span></div><div style="display:flex;gap:10px;font-size:13px;line-height:1.35"><span style="color:#FF5A6E">—</span><span>Difficulty on Rocket Launch and Guess Color (they ramp up instead)</span></div><div style="display:flex;gap:10px;font-size:13px;line-height:1.35"><span style="color:#FF5A6E">—</span><span>The “All” leaderboard view</span></div><div style="display:flex;gap:10px;font-size:13px;line-height:1.35"><span style="color:#FF5A6E">—</span><span>High Scores screen → Profile tab</span></div><div style="display:flex;gap:10px;font-size:13px;line-height:1.35"><span style="color:#FF5A6E">—</span><span>About screen → version in Settings</span></div><div style="display:flex;gap:10px;font-size:13px;line-height:1.35"><span style="color:#FF5A6E">—</span><span>Light theme + theme picker (dark only)</span></div><div style="display:flex;gap:10px;font-size:13px;line-height:1.35"><span style="color:#FF5A6E">—</span><span>Simulated ads + Ads Mode setting</span></div><div style="display:flex;gap:10px;font-size:13px;line-height:1.35"><span style="color:#FF5A6E">—</span><span>Daily Revive stub (never had UI)</span></div></div></div>
+</div>
+</x-dc>
+</body>
+</html>

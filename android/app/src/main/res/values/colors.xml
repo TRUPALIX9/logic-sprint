@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- brand_tokens.json → midnight_purple -->
-    <color name="splash_background">#12002F</color>
+    <!-- AMOLED black, matches the app background -->
+    <color name="splash_background">#000000</color>
+	<color name="ic_launcher_background">#000000</color>
 </resources>

@@ -4,10 +4,10 @@
         android:label="LogicSprint"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        <!-- Google Mobile Ads Test App ID -->
+        <!-- AdMob App ID: ADMOB_APP_ID in config/admob.json (see build.gradle.kts) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="${admobAppId}"/>
 
         <activity
             android:name=".MainActivity"

@@ -65,3 +65,11 @@ ios/Runner/GoogleService-Info.plist
 
 # Local environment variables
 .env
+# AdMob production IDs (template: config/admob.example.json)
+config/admob.json
+
+# Local AI-assistant scratch and editor workspace files
+.artifacts/
+*.code-workspace
+# Extra Rocket Launch takes from the screenshot generator
+assets/brand/store/screenshots/*_take*.png

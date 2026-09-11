@@ -1,75 +1,33 @@
 # Git Workflow — LogicSprint
 
-## Branches
+## One branch
 
-| Branch | Role |
-|--------|------|
-| `production` | **Production** — store-ready releases only |
-| `develop` | **Integration** — day-to-day work merges here |
-| `feature/*` | Short-lived branches off `develop` |
-
-## Day-to-day development
+`production` is the main branch. Commit and push to it directly; CI (`.github/workflows/flutter_ci.yml`) runs `flutter analyze` and `flutter test` on every push.
 
 ```bash
-git checkout develop
-git pull origin develop
-git checkout -b feature/my-change
-# ... edit, test ...
+git checkout production
+git pull
+# ... edit ...
+make check
 git add -A && git commit -m "Describe the change"
-git push -u origin feature/my-change
+git push
 ```
 
-Open a **Pull Request → `develop`**. CI runs `flutter analyze` and `flutter test`.
+## Store releases
 
-## Releasing to production
-
-When `develop` is tested and ready for a store build:
+Bump `version:` in `pubspec.yaml` (e.g. `1.0.1+2` — the number after `+` must increase for every Play upload), commit, then tag:
 
 ```bash
-git checkout develop
-git pull origin develop
-gh pr create --base production --head develop --title "Release v1.x.x"
+git tag -a v1.0.1 -m "LogicSprint v1.0.1"
+git push origin v1.0.1
 ```
 
-After review, merge the PR into `production`, then tag:
+A `vX.Y.Z` tag runs `.github/workflows/release.yml`, which builds the signed APK and App Bundle and attaches them to a GitHub Release. It needs these repository secrets:
 
-```bash
-git checkout production
-git pull origin production
-git tag -a v1.0.0 -m "LogicSprint v1.0.0"
-git push origin v1.0.0
-```
+| Secret | Contents |
+|--------|----------|
+| `ANDROID_KEYSTORE_BASE64` | `base64 -i android/upload-keystore.jks` |
+| `ANDROID_KEY_PROPERTIES` | contents of `android/key.properties` |
+| `ADMOB_CONFIG_JSON` | contents of `config/admob.json` |
 
-Build from `production`:
-
-```bash
-flutter build appbundle --release
-flutter build ipa --release
-```
-
-## Hotfixes on production
-
-```bash
-git checkout production
-git pull origin production
-git checkout -b hotfix/critical-fix
-# fix, test, commit
-git push -u origin hotfix/critical-fix
-```
-
-PR: `hotfix/*` → `production`, then merge `production` back into `develop`.
-
-## Rules
-
-- Do not commit directly to `production` except via release/hotfix PRs.
-- Keep `develop` up to date after every production release (merge `production` → `develop`).
-- Run `flutter analyze` and `flutter test` before opening a PR.
-
-## CI (GitHub Actions)
-
-| Workflow | When | Purpose |
-|----------|------|---------|
-| [flutter_ci.yml](../.github/workflows/flutter_ci.yml) | Push/PR to `production` or `develop` | `flutter analyze` + `flutter test` |
-| [pr_branch_policy.yml](../.github/workflows/pr_branch_policy.yml) | Pull requests | Enforces `feature/*` → `develop`, release/hotfix → `production` |
-
-After your repo settings are approved, you can require these checks on `production` / `develop` under **Settings → Branches → Branch protection** (status contexts: `analyze-and-test`, `check-base-branch`).
+Preview tags (e.g. `v1.0.0-preview.1`) don't trigger the workflow; build those locally with `make build-apk`.

@@ -1,85 +1,71 @@
-# LogicSprint Release Checklist (v0.0.1)
+# LogicSprint Release Checklist (v1.0.0, Google Play)
 
-## Critical blockers (before store upload)
+## 1. One-time setup (you)
 
-### Android release signing
+### Google Play Console
+- [ ] Developer account created (one-time $25 fee; new personal accounts must run a **closed test with 12+ testers for 14 days** before production access)
+- [ ] App created: **LogicSprint: Brain Games**, package `com.trupal.logicsprint`, free, contains ads
+- [ ] Play App Signing enabled (default) — you upload with the upload key below
 
-- [ ] Create `android/upload-keystore.jks` and `android/key.properties` — see [android_release_signing.md](android_release_signing.md)
-- [ ] Confirm `flutter build appbundle --release` uses the **release** signing config (not debug)
-- [ ] Never commit `key.properties` or `*.jks`
+### Upload keystore
+- [ ] `android/upload-keystore.jks` + `android/key.properties` created — [android_release_signing.md](android_release_signing.md)
+- [ ] Keystore and passwords backed up in a password manager
 
-### Firebase (optional Global Top 100)
+### AdMob
+- [ ] AdMob app linked to the Play listing; one **banner** and one **interstitial** unit created
+- [ ] `config/admob.json` filled from [config/admob.example.json](../config/admob.example.json) (gitignored)
+- [ ] AdMob → Privacy & messaging → **GDPR** message published (drives the in-app consent form)
+- [ ] `app-ads.txt` hosted on the developer website listed in Play Console
 
-Required only if the leaderboard should work in production:
+### Supabase leaderboard
+- [ ] Project reachable — the URL in `lib/core/config.dart` currently does not resolve; fix it in the Supabase dashboard or update the URL and publishable key
+- [ ] [supabase/schema.sql](../supabase/schema.sql) run in the SQL editor (table, RLS, per-board index; allows all four games)
 
-- [ ] Add `android/app/google-services.json` (from Firebase Console or `./scripts/refresh_firebase_client_config.sh`)
-- [ ] Add `ios/Runner/GoogleService-Info.plist` for iOS builds
-- [ ] Replace `REPLACE_*` placeholders in `lib/firebase_options.dart` via refresh script (do **not** commit real API keys to a public repo)
-- [ ] Deploy [firestore.rules](../firestore.rules) — see [firebase_setup.md](firebase_setup.md)
+### Privacy policy
+- [x] Support email (trupal.work@gmail.com) in [assets/brand/docs/privacy_policy.md](../assets/brand/docs/privacy_policy.md)
+- [ ] Policy hosted at a public URL (e.g. GitHub Pages) and entered in Play Console
 
-Without the above, the app still runs offline; leaderboard submit/fetch shows unavailable.
-
----
-
-## Pre-release verification
-
-- [x] `make check` (or `flutter analyze` + `flutter test`) — no errors
-- [x] `make hooks-install` on dev machines (pre-push runs same checks as CI)
-- [x] App name: **LogicSprint** (display: **LogicSprint: Brain Games**)
-- [x] Version in `pubspec.yaml` matches `0.0.1+1` (via `package_info_plus`)
-- [x] **INTERNET** permission present in `AndroidManifest.xml` (required for optional Firestore leaderboard + Google Mobile Ads)
-- [x] Dynamic Ads: Simulated overlay, Real AdMob, and Disabled modes switch successfully in Settings
-- [x] Privacy policy screen present
-- [x] High scores and settings persist locally
-- [x] Light and dark mode work without text contrast issues
-- [x] Exactly two v1 games playable end-to-end (Rocket Launch, Memory Lane)
-- [x] Android splash uses brand Midnight Purple (`#12002F`) + launcher icon
-- [x] Custom 3D tactile buttons (`GameTactileButton`) press down dynamically with haptic vibration responses
-
-## Build commands
+## 2. Build
 
 ```bash
-# After android/key.properties exists:
-flutter build appbundle --release
-flutter build ipa --release
+make check
+make build-aab   # → build/app/outputs/bundle/release/app-release.aab
 ```
 
-## Google Play Store
+CI (`.github/workflows/release.yml`) builds the same on pushes to `production` and needs repo secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEY_PROPERTIES` and `ADMOB_CONFIG_JSON`.
 
-**Short description (80 chars max):**
-Fast brain games: asteroid survival and memory grids — offline or Top 100.
+## 3. Play Console forms
 
-**Full description:**
-LogicSprint: Brain Games is a free app with quick 30-second mini-games that train speed, logic, and focus. Play Rocket Launch or Memory Lane at Easy, Medium, or Hard difficulty. Track local high scores, toggle sound and theme, customize ad simulation mode, and optionally compete on the Global Top 100 leaderboard.
+| Form | Answer |
+|------|--------|
+| Ads | Yes, contains ads |
+| Target audience | 13+ (keeps the app out of the Families program, whose ad rules differ) |
+| Content rating | IARC questionnaire — no violence; user content limited to display names |
+| Data safety — collected | Device or other IDs (advertising ID, via AdMob); App activity: app interactions (ads); Name: user-chosen display name (optional, leaderboard) |
+| Data safety — purpose | Advertising or marketing, fraud prevention (AdMob); App functionality (leaderboard) |
+| Data safety — encrypted in transit | Yes |
+| Data safety — deletion | Users can request leaderboard deletion by email |
+| Privacy policy URL | Hosted policy from step 1 |
 
-**Category:** Puzzle / Educational  
-**Keywords:** brain games, space coordination, memory grid, logic, offline, puzzle, quick thinking
-**Data safety:** Local scores on device; optional leaderboard writes (display name, score, game, difficulty) if user submits  
-**Content rating:** Everyone / 3+
+## 4. Store listing
 
-**Screenshots:** Home, game select, each game, result, leaderboard, high scores, settings (phone + optional tablet)
+- [ ] Copy from [assets/brand/docs/store_listing.md](../assets/brand/docs/store_listing.md)
+- [ ] Icon: `assets/brand/store/google_play/play_store_icon_512.png`
+- [ ] Feature graphic: `assets/brand/store/google_play/feature_graphic_1024x500.png`
+- [ ] 4–8 phone screenshots: Play tab, a game sheet, each of the four games, Result, Ranks
 
-## Apple App Store
+## 5. QA smoke test (release build on a real device)
 
-**Subtitle:** Fast logic & memory challenges
-**Category:** Games → Puzzle or Education  
-**Privacy nutrition:** Data not collected (except optional leaderboard submission)  
-**Age rating:** 4+
+1. Cold launch → splash → Play tab; consent form appears once (EEA VPN or AdMob test device)
+2. Rocket Launch: rocket follows your finger; the storm speeds up; round ends on Result
+3. Memory Lane on each difficulty: "Repeat the pattern X/Y" counts taps; level grows
+4. Quick Math on each difficulty: correct answer turns teal, wrong turns coral and reveals the answer
+5. Guess Color: 4 colors at first, 6 later, buttons reshuffle near the end
+6. Interstitial after every 2nd round returns to Result; banner shows on the Play tab
+7. Post a score → Ranks opens on that game's board with your row marked "YOU"; airplane mode shows the offline message within ~8 s
+8. Profile shows your display name and bests; Settings → Reset high scores clears them
+9. Settings footer shows `1.0.0 (1)`; Privacy policy screen shows the current text
 
-## Store listing assets
-
-- [ ] App icon from brand kit (1024×1024)
-- [ ] 6–8 screenshots
-- [ ] Privacy policy URL or in-app policy reference
-- [ ] Support contact email (optional)
-
-## QA smoke test
-
-1. Cold launch → branded splash → home
-2. Play each game on each difficulty
-3. Verify 30s timer, scoring, streak bonus
-4. Result screen stats match gameplay
-5. High score updates and persists after restart
-6. Leaderboard: loads or shows graceful offline message
-7. Settings: sound, vibration, ads mode, reset scores
-8. About shows version `0.0.1+1` from `pubspec.yaml`; Privacy Policy screen
+## 6. Release
+- [ ] Upload AAB to **Internal testing**, then closed testing, then production
+- [ ] Merge `develop` → `production`, tag `v1.0.0`

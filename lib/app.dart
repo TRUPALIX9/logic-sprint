@@ -1,142 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'core/constants/app_routes.dart';
-import 'core/constants/app_strings.dart';
-import 'core/theme/app_theme.dart';
-import 'models/game_model.dart';
-import 'models/score_model.dart';
-import 'screens/about/about_screen.dart';
-import 'screens/about/privacy_policy_screen.dart';
-import 'screens/difficulty/difficulty_screen.dart';
-import 'screens/game_select/game_select_screen.dart';
-import 'screens/games/rocket_launch/rocket_launch_screen.dart';
-import 'screens/games/memory_lane/memory_lane_screen.dart';
-import 'screens/high_scores/high_scores_screen.dart';
-import 'screens/leaderboard/leaderboard_screen.dart';
-import 'screens/home/home_screen.dart';
-import 'screens/result/result_screen.dart';
-import 'screens/settings/settings_screen.dart';
-import 'screens/splash/splash_screen.dart';
-import 'services/ad_service.dart';
-import 'services/app_state.dart';
-import 'services/leaderboard_service.dart';
-import 'services/local_storage_service.dart';
-import 'services/sound_service.dart';
+import 'core/theme.dart';
+import 'screens/splash_screen.dart';
+import 'services/ads.dart';
+import 'services/leaderboard.dart';
+import 'state/app_state.dart';
+
+/// Build info shown in Settings.
+class AppInfo {
+  const AppInfo(this.version);
+  final String version;
+}
+
+/// Selected bottom-nav tab, so screens above the shell (Result) can switch it.
+class NavTabs extends ValueNotifier<int> {
+  NavTabs() : super(play);
+
+  // Bottom-nav order, left to right.
+  static const ranks = 0;
+  static const play = 1;
+  static const profile = 2;
+}
 
 class LogicSprintApp extends StatelessWidget {
   const LogicSprintApp({
     super.key,
     required this.appState,
-    required this.storage,
-    required this.soundService,
-    required this.leaderboardService,
-    required this.adService,
+    required this.leaderboard,
+    required this.ads,
+    required this.version,
+    this.home,
   });
 
   final AppState appState;
-  final LocalStorageService storage;
-  final SoundService soundService;
-  final LeaderboardService leaderboardService;
-  final AdService adService;
+  final Leaderboard leaderboard;
+  final Ads ads;
+  final String version;
+
+  /// Overrides the splash screen (tests).
+  final Widget? home;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<AppState>.value(value: appState),
-        Provider<LocalStorageService>.value(value: storage),
-        Provider<SoundService>.value(value: soundService),
-        Provider<LeaderboardService>.value(value: leaderboardService),
-        Provider<AdService>.value(value: adService),
+        ChangeNotifierProvider.value(value: appState),
+        ChangeNotifierProvider(create: (_) => NavTabs()),
+        Provider.value(value: leaderboard),
+        Provider.value(value: ads),
+        Provider.value(value: AppInfo(version)),
       ],
-      child: Consumer<AppState>(
-        builder: (context, state, _) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: AppStrings.appTitle,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: state.themeMode,
-            initialRoute: AppRoutes.splash,
-            onGenerateRoute: _onGenerateRoute,
-          );
-        },
+      child: MaterialApp(
+        title: 'LogicSprint',
+        debugShowCheckedModeBanner: false,
+        theme: buildTheme(),
+        home: home ?? const SplashScreen(),
       ),
     );
-  }
-
-  Route<dynamic> _onGenerateRoute(RouteSettings settings) {
-    switch (settings.name) {
-      case AppRoutes.splash:
-        return MaterialPageRoute<void>(
-          builder: (_) => const SplashScreen(),
-          settings: settings,
-        );
-      case AppRoutes.home:
-        return MaterialPageRoute<void>(
-          builder: (_) => const HomeScreen(),
-          settings: settings,
-        );
-      case AppRoutes.gameSelect:
-        return MaterialPageRoute<void>(
-          builder: (_) => const GameSelectScreen(),
-          settings: settings,
-        );
-      case AppRoutes.difficulty:
-        final gameType = settings.arguments as GameType;
-        return MaterialPageRoute<void>(
-          builder: (_) => DifficultyScreen(gameType: gameType),
-          settings: settings,
-        );
-      case AppRoutes.rocketLaunch:
-        final difficulty = settings.arguments as DifficultyLevel;
-        return MaterialPageRoute<void>(
-          builder: (_) => RocketLaunchScreen(difficulty: difficulty),
-          settings: settings,
-        );
-      case AppRoutes.memoryLane:
-        final difficulty = settings.arguments as DifficultyLevel;
-        return MaterialPageRoute<void>(
-          builder: (_) => MemoryLaneScreen(difficulty: difficulty),
-          settings: settings,
-        );
-      case AppRoutes.result:
-        final result = settings.arguments as ScoreModel;
-        return MaterialPageRoute<void>(
-          builder: (_) => ResultScreen(result: result),
-          settings: settings,
-        );
-      case AppRoutes.highScores:
-        return MaterialPageRoute<void>(
-          builder: (_) => const HighScoresScreen(),
-          settings: settings,
-        );
-      case AppRoutes.leaderboard:
-        return MaterialPageRoute<void>(
-          builder: (_) => const LeaderboardScreen(),
-          settings: settings,
-        );
-      case AppRoutes.settings:
-        return MaterialPageRoute<void>(
-          builder: (_) => const SettingsScreen(),
-          settings: settings,
-        );
-      case AppRoutes.about:
-        return MaterialPageRoute<void>(
-          builder: (_) => const AboutScreen(),
-          settings: settings,
-        );
-      case AppRoutes.privacyPolicy:
-        return MaterialPageRoute<void>(
-          builder: (_) => const PrivacyPolicyScreen(),
-          settings: settings,
-        );
-      default:
-        return MaterialPageRoute<void>(
-          builder: (_) => const HomeScreen(),
-          settings: settings,
-        );
-    }
   }
 }

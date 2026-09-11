@@ -1,11 +1,11 @@
 name: Production Release
 
 on:
+  # Store builds only: push a vX.Y.Z tag (e.g. v1.0.0). Preview tags such as
+  # v1.0.0-preview.1 don't match and are built locally.
   push:
-    branches:
-      - production
-  release:
-    types: [published]
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
 
 permissions:
@@ -40,24 +40,29 @@ jobs:
       - name: Run Tests
         run: flutter test
 
-      - name: Decode Android Keystore
+      - name: Prepare signing keys and AdMob config
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+          ADMOB_CONFIG_JSON: ${{ secrets.ADMOB_CONFIG_JSON }}
         run: |
-          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$ANDROID_KEY_PROPERTIES" ]; then
-            echo "Signing keys found. Preparing release signing configurations..."
-            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
-            echo "$ANDROID_KEY_PROPERTIES" > android/key.properties
-          else
-            echo "No release signing keys configured in secrets. Falling back to debug signing configuration."
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEY_PROPERTIES" ]; then
+            echo "::error::Set ANDROID_KEYSTORE_BASE64 and ANDROID_KEY_PROPERTIES secrets (see docs/android_release_signing.md)."
+            exit 1
           fi
+          if [ -z "$ADMOB_CONFIG_JSON" ]; then
+            echo "::error::Set the ADMOB_CONFIG_JSON secret (contents of config/admob.json)."
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
+          echo "$ANDROID_KEY_PROPERTIES" > android/key.properties
+          echo "$ADMOB_CONFIG_JSON" > config/admob.json
 
       - name: Build Android APK
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define-from-file=config/admob.json
 
       - name: Build Android App Bundle (AAB)
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --dart-define-from-file=config/admob.json
 
       - name: Extract Version
         id: get_version
@@ -70,8 +75,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.release.tag_name || format('v{0}', steps.get_version.outputs.tag_version) }}
-          name: ${{ github.event.release.name || format('Release v{0}', steps.get_version.outputs.version) }}
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.get_version.outputs.tag_version) }}
+          name: ${{ format('LogicSprint {0}', steps.get_version.outputs.version) }}
           draft: false
           prerelease: false
           files: |

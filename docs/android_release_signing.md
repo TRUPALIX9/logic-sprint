@@ -19,12 +19,12 @@ cp key.properties.example key.properties
 # Edit key.properties with your passwords and paths
 ```
 
-`android/app/build.gradle.kts` uses `android/key.properties` when present. Without it, release builds still sign with **debug** keys (local testing only).
+`android/app/build.gradle.kts` uses `android/key.properties` when present. Without it, `bundleRelease` fails; release APKs still sign with **debug** keys (local testing only).
 
 ## 3. Build for Play Store
 
 ```bash
-flutter build appbundle --release
+make build-aab   # needs config/admob.json too — see config/admob.example.json
 ```
 
 ## Git safety
@@ -33,3 +33,4 @@ These files are **gitignored** and must never be committed:
 
 - `android/key.properties`
 - `android/*.jks`, `android/*.keystore`
+- `config/admob.json`
