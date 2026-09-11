@@ -114,7 +114,7 @@ SCREENSHOTS=1 ICONS_FONT="$(dirname "$(readlink -f "$(which flutter)")")/cache/a
   flutter test test/store_screenshots_test.dart
 ```
 
-Output: `assets/brand/store/screenshots/*.png`.
+Output: `assets/brand/store/screenshots/*.png`. For Google Play (9:16, 1080×1920) run the same command with `SCREENSHOTS=play`; output goes to `assets/brand/store/google_play/screenshots/`.
 
 ## License
 

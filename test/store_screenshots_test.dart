@@ -26,7 +26,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'support/fake_leaderboard_api.dart';
 
 final _skip = !Platform.environment.containsKey('SCREENSHOTS');
-const _out = 'assets/brand/store/screenshots';
+
+// SCREENSHOTS=play renders 1080×1920 (9:16, what Google Play accepts) into
+// google_play/screenshots; anything else renders 1080×2400 (portfolio).
+final _forPlay = Platform.environment['SCREENSHOTS'] == 'play';
+final _out = _forPlay
+    ? 'assets/brand/store/google_play/screenshots'
+    : 'assets/brand/store/screenshots';
+final _size = _forPlay ? const Size(1080, 1920) : const Size(1080, 2400);
 const _pixelRatio = 2.625;
 final _boundary = GlobalKey();
 
@@ -137,7 +144,7 @@ Future<void> _loadFonts() async {
 
 Future<void> _pumpApp(WidgetTester tester) async {
   tester.view
-    ..physicalSize = const Size(1080, 2400)
+    ..physicalSize = _size
     ..devicePixelRatio = _pixelRatio
     ..padding = const FakeViewPadding(top: 63, bottom: 42)
     ..viewPadding = const FakeViewPadding(top: 63, bottom: 42);
