@@ -7,6 +7,10 @@
     {
       "id": "page-2",
       "name": "Identity options"
+    },
+    {
+      "id": "page-3",
+      "name": "Guess Color stages"
     }
   ],
   "artboards": [
@@ -15,9 +19,63 @@
       "x": 0,
       "y": 0,
       "w": 1440,
-      "h": 900,
+      "h": 1100,
       "title": "App flow",
       "page": "page-1"
+    },
+    {
+      "file": "GC1.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "GC1 · Classic · words 1–5",
+      "page": "page-3"
+    },
+    {
+      "file": "GC2.dc.html",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "GC2 · Scrambled · words 6–12",
+      "page": "page-3"
+    },
+    {
+      "file": "GC3.dc.html",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "GC3 · Countdown · words 13–20",
+      "page": "page-3"
+    },
+    {
+      "file": "GC4.dc.html",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "GC4 · Rule swap · words 21–30",
+      "page": "page-3"
+    },
+    {
+      "file": "GC5.dc.html",
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "GC5 · Mismatched labels · words 31–40",
+      "page": "page-3"
+    },
+    {
+      "file": "GC6.dc.html",
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "GC6 · Neutral + distractions · words 41+",
+      "page": "page-3"
     },
     {
       "file": "ThemeSystem.dc.html",
@@ -31,7 +89,7 @@
     {
       "file": "Splash.dc.html",
       "x": 0,
-      "y": 1040,
+      "y": 1240,
       "w": 390,
       "h": 844,
       "title": "01 Splash",
@@ -40,7 +98,7 @@
     {
       "file": "Main.dc.html",
       "x": 470,
-      "y": 1040,
+      "y": 1240,
       "w": 390,
       "h": 844,
       "title": "02 Home",
@@ -49,7 +107,7 @@
     {
       "file": "GameSheet.dc.html",
       "x": 940,
-      "y": 1040,
+      "y": 1240,
       "w": 390,
       "h": 844,
       "title": "03 Game sheet",
@@ -58,7 +116,7 @@
     {
       "file": "GameSheetRamp.dc.html",
       "x": 1410,
-      "y": 1040,
+      "y": 1240,
       "w": 390,
       "h": 844,
       "title": "03b Game sheet · ramp",
@@ -67,7 +125,7 @@
     {
       "file": "RocketLaunch.dc.html",
       "x": 1880,
-      "y": 1040,
+      "y": 1240,
       "w": 390,
       "h": 844,
       "title": "04 Rocket Launch",
@@ -76,7 +134,7 @@
     {
       "file": "MemoryLane.dc.html",
       "x": 2350,
-      "y": 1040,
+      "y": 1240,
       "w": 390,
       "h": 844,
       "title": "05 Memory Lane",
@@ -85,7 +143,7 @@
     {
       "file": "QuickMath.dc.html",
       "x": 2820,
-      "y": 1040,
+      "y": 1240,
       "w": 390,
       "h": 844,
       "title": "06 Quick Math",
@@ -94,7 +152,7 @@
     {
       "file": "GuessColor.dc.html",
       "x": 3290,
-      "y": 1040,
+      "y": 1240,
       "w": 390,
       "h": 844,
       "title": "07 Guess Color",
@@ -103,7 +161,7 @@
     {
       "file": "ReviveOffer.dc.html",
       "x": 3760,
-      "y": 1040,
+      "y": 1240,
       "w": 390,
       "h": 844,
       "title": "08a Game over · revive",
@@ -112,16 +170,25 @@
     {
       "file": "Result.dc.html",
       "x": 4230,
-      "y": 1040,
+      "y": 1240,
       "w": 390,
       "h": 844,
       "title": "08 Result",
       "page": "page-1"
     },
     {
+      "file": "NameSheet.dc.html",
+      "x": 4700,
+      "y": 1240,
+      "w": 390,
+      "h": 844,
+      "title": "08b Choose your name",
+      "page": "page-1"
+    },
+    {
       "file": "Ranks.dc.html",
       "x": 470,
-      "y": 2044,
+      "y": 2244,
       "w": 390,
       "h": 844,
       "title": "09 Ranks",
@@ -130,7 +197,7 @@
     {
       "file": "Profile.dc.html",
       "x": 940,
-      "y": 2044,
+      "y": 2244,
       "w": 390,
       "h": 844,
       "title": "10 Profile",
@@ -139,7 +206,7 @@
     {
       "file": "Settings.dc.html",
       "x": 1410,
-      "y": 2044,
+      "y": 2244,
       "w": 390,
       "h": 844,
       "title": "11 Settings",
@@ -148,7 +215,7 @@
     {
       "file": "Privacy.dc.html",
       "x": 1880,
-      "y": 2044,
+      "y": 2244,
       "w": 390,
       "h": 844,
       "title": "12 Privacy policy",
@@ -195,15 +262,15 @@
     {
       "id": "core-loop",
       "x": 0,
-      "y": 930,
+      "y": 1130,
       "w": 420,
       "page": "page-1",
-      "text": "CORE LOOP\nSplash → Play → Game sheet → run → Result. Endless runs: the first mistake ends a run; one rewarded-ad revive per run; run time recorded. Memory Lane and Quick Math pick Easy / Medium / Hard on the sheet; Rocket Launch and Guess Color ramp up during the run. The in-game bar shows only the game, difficulty (or skill) and score."
+      "text": "CORE LOOP\nSplash → Play → Game sheet → run → Result. Endless runs: the first mistake ends a run; one rewarded-ad revive per run; run time recorded. Each run is saved to local history, then one call records the play and any new best (name chosen once, no Post button). Memory Lane and Quick Math pick Easy / Medium / Hard on the sheet; Rocket Launch and Guess Color ramp up during the run. The in-game bar shows only the game, difficulty (or skill) and score."
     },
     {
       "id": "rocket-run",
       "x": 1880,
-      "y": 1914,
+      "y": 2114,
       "w": 390,
       "page": "page-1",
       "text": "ROCKET LAUNCH\nOne hit ends the run (or shows the revive offer). Score only, no timer."
@@ -211,7 +278,7 @@
     {
       "id": "guess-phases",
       "x": 3290,
-      "y": 1914,
+      "y": 2114,
       "w": 390,
       "page": "page-1",
       "text": "GUESS COLOR PHASES (by word number)\n1–8 four colors · 9–18 six colors · 19–30 shuffled · 31–45 mismatched names · 46+ tinted buttons.\n\nShown: a mismatched-names word — each name is drawn in another color, with no swatch."
@@ -219,7 +286,7 @@
     {
       "id": "tabs",
       "x": 0,
-      "y": 2044,
+      "y": 2244,
       "w": 400,
       "page": "page-1",
       "text": "TABS & SETTINGS\nRanks · Play · Profile in the bottom nav, with Play in the middle; Settings from the gear on Play.\n\nLeaderboard names and scores are sample data."
@@ -227,10 +294,10 @@
     {
       "id": "ranks-boards",
       "x": 470,
-      "y": 2928,
+      "y": 3128,
       "w": 390,
       "page": "page-1",
-      "text": "RANKS\nOne Global Top 10 at a time: pick a game, then a difficulty. The Easy / Medium / Hard row only appears for Memory Lane and Quick Math; Rocket Launch and Guess Color have a single board. There is no \"All\" view. Each row shows the run time; ties rank the faster run higher. Opens on the game you last played (after posting, on that game's board)."
+      "text": "RANKS\nOne Global Top 10 at a time: pick a game, then a difficulty. The Easy / Medium / Hard row only appears for Memory Lane and Quick Math; Rocket Launch and Guess Color have a single board. There is no \"All\" view. Each row shows the run time; ties rank the faster run higher. Refreshes once a day and right after your new best (subtitle UPDATED TODAY). When you are outside the Top 10, your own rank is pinned above the nav (YOU · #57 · 420 · 1:31). Opens on the game you last played."
     },
     {
       "id": "identity-brief",
@@ -239,10 +306,82 @@
       "w": 560,
       "page": "page-2",
       "text": "IDENTITY OPTIONS\nChosen: LogicSprint with the double chevron (Option A). It is the name and mark used on every screen and in the app.\n\nOptions B–D are kept here for reference only."
+    },
+    {
+      "id": "name-once",
+      "x": 4700,
+      "y": 2114,
+      "w": 390,
+      "page": "page-1",
+      "text": "NAME ONCE (proposed)\nThe first synced run opens this sheet over the Result; the name is saved and reused for every later run. Edit it from Profile. Result shows a sync card instead of the old Post card; offline runs sync later."
+    },
+    {
+      "id": "profile-history",
+      "x": 940,
+      "y": 3128,
+      "w": 390,
+      "page": "page-1",
+      "text": "PROFILE (proposed)\nPer difficulty: best, its run time and how often it was played. HISTORY lists recent runs (BEST tag on records) and is stored on this device only; it scrolls."
+    },
+    {
+      "id": "gc-brief",
+      "x": 0,
+      "y": -150,
+      "w": 620,
+      "page": "page-3",
+      "text": "GUESS COLOR STAGES (proposed, not built yet)\nOne artboard per stage, left to right; each stage keeps the rules of the ones before it. Buttons are solid fills (coral, blue, teal, gold) in a 2×2 grid, each at least 88 px tall. One mistake ends the run."
+    },
+    {
+      "id": "gc-1",
+      "x": 0,
+      "y": 874,
+      "w": 390,
+      "page": "page-3",
+      "text": "CLASSIC · words 1–5\nTap the button that matches the INK color. Four solid colors with matching labels, fixed order."
+    },
+    {
+      "id": "gc-2",
+      "x": 470,
+      "y": 874,
+      "w": 390,
+      "page": "page-3",
+      "text": "SCRAMBLED · words 6–12\nSame look; positions reshuffle every word."
+    },
+    {
+      "id": "gc-3",
+      "x": 940,
+      "y": 874,
+      "w": 390,
+      "page": "page-3",
+      "text": "COUNTDOWN · words 13–20\n3.0 s per word, shrinking to 1.0 s; running out = mistake."
+    },
+    {
+      "id": "gc-4",
+      "x": 1410,
+      "y": 874,
+      "w": 390,
+      "page": "page-3",
+      "text": "RULE SWAP · words 21–30\nSome words flip the rule to TAP THE WORD: blue banner, Aa icon and a flip highlight. RED in green ink → the RED-filled button is correct (teal ring = wireframe marker only)."
+    },
+    {
+      "id": "gc-5",
+      "x": 1880,
+      "y": 874,
+      "w": 390,
+      "page": "page-3",
+      "text": "MISMATCHED LABELS · words 31–40\nThe fill is the answer — labels are traps. Labels are near-white on a dark chip so they read on every fill. Here: GREEN in coral ink → the red-filled button (labeled BLUE)."
+    },
+    {
+      "id": "gc-6",
+      "x": 2350,
+      "y": 874,
+      "w": 390,
+      "page": "page-3",
+      "text": "NEUTRAL + DISTRACTIONS · words 41+\nINK rule only. Neutral words (TABLE) and shapes (e.g. a blue circle, shown bottom-left of the card) appear only on INK turns; slight rotation and a faint pulsing glow ring. Motion respects Reduce Motion; nothing flashes faster than 3×/s."
     }
   ],
   "launch": {
     "view": "canvas",
-    "page": "page-1"
+    "page": "page-3"
   }
 }
