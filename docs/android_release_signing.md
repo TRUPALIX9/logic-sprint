@@ -41,6 +41,14 @@ App signing certificates for `com.trupal.logicsprint`, downloaded from Play Cons
 
 `deployment_cert.der` SHA-1: `E4:B3:BB:62:D4:66:09:87:AA:DE:60:DC:CC:FD:2C:CF:10:F4:66:D8`. All three are valid until 2056-09-11. An earlier certificate dated 2026-05-21 (SHA-256 `8C:1D:…:DC:54`) is replaced by these.
 
+Upload key certificate (`android/upload-keystore.jks`, alias `upload`, created 2026-09-11). This is yours, not Google's. Play Console → App integrity → Upload key certificate should show the same SHA-256 once the first bundle is uploaded:
+
+| | |
+|---|---|
+| Owner | CN=Trupal Patel, O=LogicSprint |
+| Valid | 2026-09-11 → 2054-01-27 |
+| SHA-256 | `66:7F:D0:48:FD:F5:B1:28:93:8C:30:8C:5E:B0:6A:C5:0D:36:97:03:94:EE:61:53:D6:C6:C8:6B:F5:F9:C4:04` |
+
 LogicSprint doesn't need these fingerprints today: Supabase anonymous auth and AdMob don't check the signing key. You'll need them only if you add something that is tied to a signing key: Google Sign-In, a restricted Google API key, or Android App Links (`assetlinks.json`). Register the SHA-256 above there, plus the upload key's SHA-256 if you also test locally signed builds.
 
 ## Git safety
