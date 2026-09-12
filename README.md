@@ -1,5 +1,7 @@
 # LogicSprint: Brain Games
 
+![LogicSprint feature graphic](assets/brand/store/google_play/feature_graphic_1024x500.png)
+
 **LogicSprint** is a free Flutter brain-training app for Android: four quick games, personal bests on the device, and an optional global Top 10 per game. No login. Ad-supported via Google AdMob.
 
 | | |
@@ -8,6 +10,30 @@
 | **Platform** | Android (Google Play); iOS later |
 | **Stack** | Flutter 3.x, Dart 3.11+ |
 | **Storage** | `shared_preferences` on the device; Supabase for the leaderboard |
+
+---
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/01_home.png" width="240" alt="Home"><br><sub>Home (Play tab)</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/02_game_sheet.png" width="240" alt="Game sheet"><br><sub>Game sheet</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/03_rocket_launch.png" width="240" alt="Rocket Launch"><br><sub>Rocket Launch</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/04_memory_lane.png" width="240" alt="Memory Lane"><br><sub>Memory Lane</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/05_quick_math.png" width="240" alt="Quick Math"><br><sub>Quick Math</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/06_guess_color.png" width="240" alt="Guess Color"><br><sub>Guess Color</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/07_result.png" width="240" alt="Result"><br><sub>Result</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/08_ranks.png" width="240" alt="Ranks"><br><sub>Ranks</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/09_profile.png" width="240" alt="Profile"><br><sub>Profile</sub></td>
+  </tr>
+</table>
+
+These are the Google Play screenshots (9:16), rendered from the real screens. See [Store screenshots](#store-screenshots) to regenerate them.
 
 ---
 
@@ -40,8 +66,8 @@ lib/
   screens/                   # splash, shell tabs, game sheet, result, settings, privacy
 test/                        # engine, leaderboard, model and app smoke tests
 assets/fonts/                # Rajdhani, IBM Plex Sans, JetBrains Mono (OFL, licenses included)
-assets/brand/                # launcher icon, store icon + feature graphic, policy, listing copy
-design/wireframes/           # design canvas source (.dc.html)
+assets/brand/                # icons, Play Store art + screenshots, privacy policy, listing copy
+design/wireframes/           # design canvas: screens, Guess Color stages, identity options (.dc.html)
 supabase/schema.sql          # profiles, per-game bests, RLS, functions, views
 config/admob.example.json    # AdMob config template (real config is gitignored)
 ```
@@ -64,7 +90,7 @@ Debug builds use Google's AdMob test IDs automatically.
 make check       # flutter analyze + flutter test (same as CI)
 ```
 
-After changing icon PNGs: `dart run flutter_launcher_icons`.
+After changing icon PNGs: `make icons`.
 
 ---
 
@@ -105,16 +131,58 @@ AdMob banner on the Play tab, and a rewarded ad ("Game Life") offered once per r
 
 `production` is the main branch: commit and push there directly (CI runs analyze + test on every push). Push a `vX.Y.Z` tag to build the signed store release. See [docs/git_workflow.md](docs/git_workflow.md).
 
+## Brand & design
+
+The look is called **Circuit Noir**: a pure-black AMOLED background, faint circuit traces, chamfered (cut-corner) panels, and one accent color per game. The palette and fonts live in [lib/core/theme.dart](lib/core/theme.dart).
+
+| Role | Color | Used for |
+|------|-------|----------|
+| Teal | `#34C29A` | Primary accent, "Sprint" in the wordmark, Quick Math |
+| Blue | `#3B7BF0` | Rocket Launch, the logo chevron |
+| Aqua | `#2BB3D6` | Memory Lane |
+| Violet | `#8C8CFF` | Guess Color |
+| Coral | `#FF5A6E` | Errors, wrong answers, the revive heart, the red Guess Color button |
+| Gold | `#F5C542` | The yellow Guess Color button |
+
+Fonts: **Rajdhani** for headings, **IBM Plex Sans** for body text and **JetBrains Mono** for labels and numbers.
+
+<p>
+  <img src="assets/brand/icons/logicsprint_icon_1024.png" width="96" alt="LogicSprint app icon">
+  &nbsp;
+  <img src="assets/brand/store/google_play/play_store_icon_512.png" width="96" alt="Play Store icon">
+</p>
+
+| Asset | Path |
+|-------|------|
+| App icon (1024) + Android adaptive foreground | `assets/brand/icons/` |
+| Play Store icon (512×512) | `assets/brand/store/google_play/play_store_icon_512.png` |
+| Feature graphic (1024×500) | `assets/brand/store/google_play/feature_graphic_1024x500.png` |
+| Google Play screenshots (9:16, 1080×1920) | `assets/brand/store/google_play/screenshots/` |
+| Tall screenshots (1080×2400) | `assets/brand/store/screenshots/` |
+| Listing copy, ready to paste into Play Console | [assets/brand/docs/store_listing.md](assets/brand/docs/store_listing.md) |
+| Privacy policy | [assets/brand/docs/privacy_policy.md](assets/brand/docs/privacy_policy.md) |
+
+The design canvas is in `design/wireframes/`: `canvas.json` lays out the `.dc.html` artboards across three pages.
+
+- **Screens**: the app flow, the Circuit Noir theme sheet, and every screen from 01 Splash to 12 Privacy policy, including the revive offer and the name sheet
+- **Guess Color stages**: GC1–GC6 (Classic → Scrambled → Countdown → Rule swap → Mismatched labels → Neutral + distractions), plus the COLOR and TEXT rule states
+- **Identity options**: the naming explorations A–D (LogicSprint, NeuroDash, Synapse, MindGrid). Option A won.
+
 ## Store screenshots
 
-Rendered from the real screens (1080×2400, bundled fonts), no emulator needed:
+Rendered from the real screens with the bundled fonts, so no emulator is needed:
 
 ```bash
-SCREENSHOTS=1 ICONS_FONT="$(dirname "$(readlink -f "$(which flutter)")")/cache/artifacts/material_fonts/MaterialIcons-Regular.otf" \
+SCREENSHOTS=play ICONS_FONT="$(dirname "$(readlink -f "$(which flutter)")")/cache/artifacts/material_fonts/MaterialIcons-Regular.otf" \
   flutter test test/store_screenshots_test.dart
 ```
 
-Output: `assets/brand/store/screenshots/*.png`. For Google Play (9:16, 1080×1920) run the same command with `SCREENSHOTS=play`; output goes to `assets/brand/store/google_play/screenshots/`.
+| `SCREENSHOTS=` | Size | Output |
+|----------------|------|--------|
+| `play` | 1080×1920 (9:16, Google Play) | `assets/brand/store/google_play/screenshots/` |
+| `1` | 1080×2400 | `assets/brand/store/screenshots/` |
+
+Extra takes named `*_take*.png` are gitignored.
 
 ## License
 
