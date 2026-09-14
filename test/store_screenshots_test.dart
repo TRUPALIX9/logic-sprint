@@ -59,6 +59,7 @@ const _prefs = <String, Object>{
   'lastGame': 'quickMath',
   'lastDifficulty': 'medium',
   'playerName': 'NEON_FOX',
+  'hearts': 2,
 };
 
 /// Sample Top 10 (Quick Math · Medium) for the Ranks shot. NEON_FOX is the
