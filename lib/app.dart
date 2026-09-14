@@ -5,6 +5,7 @@ import 'core/theme.dart';
 import 'screens/splash_screen.dart';
 import 'services/ads.dart';
 import 'services/leaderboard.dart';
+import 'services/network.dart';
 import 'state/app_state.dart';
 
 /// Build info shown in Settings.
@@ -30,6 +31,7 @@ class LogicSprintApp extends StatelessWidget {
     required this.leaderboard,
     required this.ads,
     required this.version,
+    this.network,
     this.home,
   });
 
@@ -37,6 +39,9 @@ class LogicSprintApp extends StatelessWidget {
   final Leaderboard leaderboard;
   final Ads ads;
   final String version;
+
+  /// Connection state; tests may omit it (treated as always online).
+  final Network? network;
 
   /// Overrides the splash screen (tests).
   final Widget? home;
@@ -49,6 +54,7 @@ class LogicSprintApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NavTabs()),
         ChangeNotifierProvider.value(value: leaderboard),
         Provider.value(value: ads),
+        Provider.value(value: network ?? Network.fixed(true)),
         Provider.value(value: AppInfo(version)),
       ],
       child: MaterialApp(

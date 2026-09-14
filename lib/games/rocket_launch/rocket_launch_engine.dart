@@ -102,14 +102,17 @@ class RocketLaunchEngine extends RoundEngine {
   /// Fall-speed multiplier right now.
   double get speedFactor => _ramp(_seconds, 1.0, 2.8, 3.4);
 
+  /// Ignored while paused, down or over (allowed before the start).
   void steerTo(double x) {
-    if (state == RunState.down || isFinished) {
+    if (state != RunState.ready && !isPlaying) {
       return;
     }
     targetX = x.clamp(minX, maxX);
   }
 
-  /// Advances the field by [dt]. A no-op unless playing.
+  /// Advances the field by [dt]. A no-op unless playing, so a paused run
+  /// stands still with no pause hooks needed; each step is capped at
+  /// [_maxStep], so the first frame after a resume can't jump.
   void tick(Duration dt) {
     if (!isPlaying || dt <= Duration.zero) {
       return;
@@ -165,7 +168,8 @@ class RocketLaunchEngine extends RoundEngine {
     );
   }
 
-  /// Second life: an empty sky, a fresh spawn gap and a short shield.
+  /// Another life (any number of times): an empty sky, a fresh spawn gap and
+  /// a short shield.
   @override
   void onRevive() {
     asteroids.clear();

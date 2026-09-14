@@ -107,7 +107,7 @@ void main() {
       });
     });
 
-    test('a wrong answer ends the run unless revived, once', () {
+    test('a wrong answer puts the run down; a revive continues it', () {
       fakeAsync((async) {
         final engine = QuickMathEngine(
           difficulty: Difficulty.easy,
@@ -129,7 +129,8 @@ void main() {
 
         async.elapse(const Duration(seconds: 1));
         engine.answer(_wrong(engine.problem));
-        expect(engine.canRevive, isFalse);
+        expect(engine.revives, 1);
+        expect(engine.canRevive, isTrue, reason: 'up to 3 revives per run');
 
         engine.finish();
         expect(engine.isFinished, isTrue);

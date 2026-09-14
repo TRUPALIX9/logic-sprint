@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import '../../models/game.dart';
@@ -50,7 +49,7 @@ class QuickMathEngine extends RoundEngine {
 
   /// The option just tapped; non-null while its feedback shows.
   int? picked;
-  Timer? _next;
+  PausableTimer? _next;
 
   int get level => (number - 1) ~/ problemsPerLevel;
 
@@ -143,7 +142,7 @@ class QuickMathEngine extends RoundEngine {
     picked = value;
     if (value == problem.answer) {
       scoreCorrect();
-      _next = Timer(_feedbackPause, () {
+      _next = PausableTimer(_feedbackPause, () {
         if (isPlaying) {
           _nextProblem();
         }
@@ -154,9 +153,17 @@ class QuickMathEngine extends RoundEngine {
     }
   }
 
+  /// The feedback delay before the next problem keeps its remaining time.
+  @override
+  void onPause() => _next?.pause();
+
+  @override
+  void onResume() => _next?.resume();
+
   @override
   void onDown() => _next?.cancel();
 
+  /// A fresh problem (the wrong pick is cleared); works on every revive.
   @override
   void onRevive() => _nextProblem();
 

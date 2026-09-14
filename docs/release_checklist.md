@@ -16,7 +16,16 @@
 - [x] `config/admob.json` filled locally (gitignored); template in [config/admob.example.json](../config/admob.example.json)
 - [ ] Link the AdMob app to the Play listing once the app exists in Play Console
 - [ ] AdMob → Privacy & messaging → **GDPR** message published (drives the in-app consent form)
-- [ ] `app-ads.txt` hosted on the developer website listed in Play Console
+- [ ] Optional: a second rewarded unit "Leaderboard Refresh" → `ADMOB_REFRESH_REWARDED_ID` in `config/admob.json` (otherwise the Game Life unit is reused)
+- [ ] `assets/brand/store/app-ads.txt` hosted at https://logicsprint.trupalpatel.com/app-ads.txt (and https://trupalpatel.com/app-ads.txt), and that site set as the Website in Play Console
+
+### AppLovin (later: bidding through AdMob mediation; not in 1.0)
+- [ ] Code: upgrade `google_mobile_ads` to ^9.1.0 (the banner uses `AdSize.getLargeAnchoredAdaptiveBannerAdSize`), add `gma_mediation_applovin`, and update the privacy policy and Data safety to name AppLovin
+- [ ] AppLovin account created; copy **SDK Key** and **Report Key** (Account → Keys)
+- [ ] AdMob → Mediation → mediation group for **Rewarded** (Android) → add ad source **AppLovin (bidding)** with the keys
+- [ ] AdMob → Privacy & messaging → GDPR → ad partners: add **AppLovin Corp.** (also for US state regulations)
+- [ ] app-ads.txt: add the lines from AppLovin → Account → App-ads.txt Info
+- [ ] Test with AppLovin test mode and AdMob Ad Inspector (single ad source), then turn test mode off
 
 ### Supabase leaderboard
 - [x] Project reachable (`axucnwnzuhdsiggqyjqf`)

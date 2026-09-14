@@ -37,6 +37,74 @@ class AppState extends ChangeNotifier implements RoundFeedback {
 
   (GameId, Difficulty)? get lastPlayed => storage.lastPlayed;
 
+  // Hearts: no free hearts. Every finished run unlocks one rewarded ad worth
+  // a heart (up to [maxHearts]); the Donate page gives more. Spent to revive
+  // a run in any game.
+  static const maxHearts = 5;
+
+  int get hearts => storage.hearts;
+  bool get heartsFull => hearts >= maxHearts;
+
+  /// A finished run has unlocked a heart ad that hasn't been watched yet.
+  bool get heartAdUnlocked => storage.heartAdUnlocked;
+
+  /// The heart ad can be offered right now (unlocked and room for a heart).
+  bool get canEarnHeart => heartAdUnlocked && !heartsFull;
+
+  /// Spends one heart. False when there are none.
+  Future<bool> useHeart() async {
+    if (hearts <= 0) {
+      return false;
+    }
+    await storage.setHearts(hearts - 1);
+    notifyListeners();
+    return true;
+  }
+
+  /// Reward for the heart ad; uses up the run's unlock.
+  Future<void> earnHeart() async {
+    if (!canEarnHeart) {
+      return;
+    }
+    await storage.setHearts(hearts + 1);
+    await storage.setHeartAdUnlocked(false);
+    notifyListeners();
+  }
+
+  // Donate page: every watched ad counts as a donation; it also earns
+  // [donateHearts] (allowed above [maxHearts]) at most every
+  // [donateRewardCooldown].
+  static const donateHearts = 2;
+  static const donateRewardCooldown = Duration(minutes: 30);
+
+  int get donations => storage.donations;
+
+  /// Time until a donation earns hearts again (zero when it will).
+  Duration donateRewardWait([DateTime? now]) {
+    final last = storage.lastDonationRewardAt;
+    if (last == null) {
+      return Duration.zero;
+    }
+    final wait =
+        donateRewardCooldown - (now ?? DateTime.now()).difference(last);
+    return wait.isNegative ? Duration.zero : wait;
+  }
+
+  /// Records a watched donation ad. Returns the hearts it earned (0 while
+  /// the thank-you is cooling down).
+  Future<int> recordDonation([DateTime? now]) async {
+    final at = now ?? DateTime.now();
+    await storage.setDonations(donations + 1);
+    var earned = 0;
+    if (donateRewardWait(at) == Duration.zero) {
+      earned = donateHearts;
+      await storage.setHearts(hearts + earned);
+      await storage.setLastDonationRewardAt(at);
+    }
+    notifyListeners();
+    return earned;
+  }
+
   Future<void> setSoundOn(bool value) async {
     _soundOn = value;
     await storage.setSoundOn(value);
@@ -49,9 +117,11 @@ class AppState extends ChangeNotifier implements RoundFeedback {
     notifyListeners();
   }
 
-  /// Saves the best score, play count and "last played" for a finished round.
+  /// Saves the best score, play count and "last played" for a finished round,
+  /// and unlocks that run's heart ad.
   Future<void> recordRound(RoundResult result) async {
     await storage.addPlay(result.game, result.difficulty);
+    await storage.setHeartAdUnlocked(true);
     await storage.saveBestIfHigher(
       result.game,
       result.difficulty,

@@ -8,6 +8,7 @@ import '../state/app_state.dart';
 import '../ui/brand.dart';
 import '../ui/chamfer.dart';
 import '../ui/kit.dart';
+import 'donate_screen.dart';
 import 'privacy_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -83,6 +84,24 @@ class SettingsScreen extends StatelessWidget {
                           onChanged: app.setVibrationOn,
                         ),
                         onTap: () => app.setVibrationOn(!app.vibrationOn),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+                  _Group(
+                    label: 'Support',
+                    rows: [
+                      _Row(
+                        icon: Icons.favorite_border_rounded,
+                        title: 'Donate a view',
+                        subtitle:
+                            'Watch an ad, get ${AppState.donateHearts} hearts',
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: LS.dim,
+                        ),
+                        onTap: () =>
+                            Navigator.of(context).push(DonateScreen.route()),
                       ),
                     ],
                   ),

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:clock/clock.dart';
@@ -165,11 +164,19 @@ class GuessColorEngine extends RoundEngine {
   /// When the current word's countdown began (package:clock time).
   DateTime? wordStartedAt;
 
-  Timer? _next;
-  Timer? _countdown;
+  PausableTimer? _next;
+  PausableTimer? _countdown;
   int _ruleRun = 1;
 
   bool get locked => picked != null || !isPlaying;
+
+  /// What's left of the current word's countdown (frozen while paused);
+  /// null when no countdown is running (before word 13, after a pick).
+  Duration? get timeLeft {
+    final countdown = _countdown;
+    return countdown != null && countdown.isActive ? countdown.remaining : null;
+  }
+
   GuessStage get stage => GuessStage.of(number);
   GuessRule get rule => item.rule;
   bool get ruleChanged => item.ruleChanged;
@@ -267,7 +274,7 @@ class GuessColorEngine extends RoundEngine {
     wordStartedAt = clock.now();
     _countdown?.cancel();
     final limit = timeLimit;
-    _countdown = limit == null ? null : Timer(limit, _timeUp);
+    _countdown = limit == null ? null : PausableTimer(limit, _timeUp);
     notify();
   }
 
@@ -295,7 +302,7 @@ class GuessColorEngine extends RoundEngine {
     _countdown?.cancel();
     if (fill == item.target) {
       scoreCorrect();
-      _next = Timer(_feedbackPause, () {
+      _next = PausableTimer(_feedbackPause, () {
         if (isPlaying) {
           _nextWord();
         }
@@ -313,6 +320,19 @@ class GuessColorEngine extends RoundEngine {
 
   @override
   void onStart() => _showWord();
+
+  /// The countdown and the next-word delay keep their remaining time.
+  @override
+  void onPause() {
+    _next?.pause();
+    _countdown?.pause();
+  }
+
+  @override
+  void onResume() {
+    _next?.resume();
+    _countdown?.resume();
+  }
 
   @override
   void onDown() => _cancelTimers();

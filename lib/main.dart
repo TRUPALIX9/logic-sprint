@@ -8,6 +8,7 @@ import 'app.dart';
 import 'services/ads.dart';
 import 'services/leaderboard.dart';
 import 'services/leaderboard_api.dart';
+import 'services/network.dart';
 import 'services/storage.dart';
 import 'state/app_state.dart';
 
@@ -28,10 +29,14 @@ Future<void> main() async {
   await SupabaseLeaderboardApi.initialize();
   final leaderboard = Leaderboard(storage, api: SupabaseLeaderboardApi());
   final ads = Ads();
+  final appState = AppState(storage);
+  final network = Network();
+  await network.start();
 
   runApp(
     LogicSprintApp(
-      appState: AppState(storage),
+      appState: appState,
+      network: network,
       leaderboard: leaderboard,
       ads: ads,
       version: '${info.version} (${info.buildNumber})',

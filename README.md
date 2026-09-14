@@ -39,7 +39,7 @@ These are the Google Play screenshots (9:16), rendered from the real screens. Se
 
 ## Games
 
-Every game is an **endless run**: it keeps getting harder until your first mistake. Once per run you can watch a rewarded ad for **one more life**. +10 per correct action, plus a hidden +20 bonus every 5-in-a-row. Memory Lane and Quick Math also record how long each run took, and on their leaderboards a faster run wins a tie; Rocket Launch and Guess Color are about how far you get, so a tie goes to whoever reached the score first.
+Every game is an **endless run**: it keeps getting harder until your first mistake. Up to 3 times per run you can revive with a **heart** or by watching a rewarded ad. Runs pause automatically when the app leaves the screen. +10 per correct action, plus a hidden +20 bonus every 5-in-a-row. Memory Lane and Quick Math also record how long each run took, and on their leaderboards a faster run wins a tie; Rocket Launch and Guess Color are about how far you get, so a tie goes to whoever reached the score first.
 
 | Game | Skill | How it plays | Difficulty |
 |------|-------|--------------|------------|
@@ -123,7 +123,17 @@ Setup: enable **Anonymous sign-ins** (Authentication → Providers), then run [s
 
 ## Ads
 
-AdMob banner on the Play tab, and a rewarded ad ("Game Life") offered once per run for one more life — no interstitials. Consent is gathered with Google's UMP SDK before any ad request; users in consent regions get **Privacy choices** in Settings. IDs live in `config/admob.json` (`ADMOB_APP_ID`, `ADMOB_BANNER_ID`, `ADMOB_REWARDED_ID`).
+**Offline play is ad-free**: with no network connection there are no ads, no ad buttons and no revive offer (a mistake just ends the run); hearts wait until you're back online. No interstitials, and no ads during gameplay (AdMob treats banners on screens with continuous tapping as accidental-click placements).
+
+- **Banners** (full-width anchored adaptive): one shared across the Ranks / Play / Profile tabs, one at the top of Result (every run ends there), one on the Paused screen.
+- **Rewarded** (always opt-in):
+  - **+1 life:** revive a run, up to 3 per run, all ranked; offered from a score of 50, auto-declines after 5 s. Or pay with a heart.
+  - **Hearts:** no free hearts. Every finished run unlocks one rewarded ad worth a heart (on Result or in the Hearts sheet), up to 5.
+  - **Donate a view** (Settings → Support): +2 hearts, at most every 30 min; links to logicsprint.trupalpatel.com.
+  - **Refresh leaderboard now:** the daily update is free.
+- **Mediation (planned, not in this release):** AdMob stays in charge, with AppLovin added later as a bidder on rewarded via `gma_mediation_applovin`. That package needs `google_mobile_ads` ^9.1.0, and the app is on 5.x today. Steps are in docs/release_checklist.md.
+
+Consent is gathered with Google's UMP SDK before any ad request; users in consent regions get **Privacy choices** in Settings. IDs live in `config/admob.json` (`ADMOB_APP_ID`, `ADMOB_BANNER_ID`, `ADMOB_REWARDED_ID`, optional `ADMOB_REFRESH_REWARDED_ID`). `assets/brand/store/app-ads.txt` is the file to host on the developer website.
 
 ---
 

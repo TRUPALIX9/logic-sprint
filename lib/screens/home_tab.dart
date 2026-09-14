@@ -7,11 +7,11 @@ import '../core/theme.dart';
 import '../games/games.dart';
 import '../models/game.dart';
 import '../state/app_state.dart';
-import '../ui/ad_banner.dart';
 import '../ui/brand.dart';
 import '../ui/chamfer.dart';
 import '../ui/kit.dart';
 import 'game_sheet.dart';
+import 'hearts_sheet.dart';
 import 'settings_screen.dart';
 
 class HomeTab extends StatelessWidget {
@@ -33,6 +33,11 @@ class HomeTab extends StatelessWidget {
                 const SizedBox(width: 10),
                 const Wordmark(size: 20),
                 const Spacer(),
+                _HeartsChip(
+                  hearts: app.hearts,
+                  onTap: () => showHeartsSheet(context),
+                ),
+                const SizedBox(width: 4),
                 LSIconButton(
                   icon: Icons.settings_outlined,
                   tooltip: 'Settings',
@@ -120,8 +125,48 @@ class HomeTab extends StatelessWidget {
             ],
           ),
         ),
-        const AdBanner(),
       ],
+    );
+  }
+}
+
+/// Heart count in the header; opens the Hearts sheet.
+class _HeartsChip extends StatelessWidget {
+  const _HeartsChip({required this.hearts, required this.onTap});
+
+  final int hearts;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: '$hearts hearts',
+      excludeSemantics: true,
+      child: ChamferBox(
+        cut: Cut.sm,
+        height: 44,
+        borderColor: null,
+        color: LS.surface2,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        onTap: onTap,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.favorite_rounded, size: 18, color: LS.coral),
+            const SizedBox(width: 6),
+            Text(
+              '$hearts',
+              style: LSText.mono(
+                15,
+                weight: FontWeight.w700,
+                spacing: 0,
+                color: LS.text,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

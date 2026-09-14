@@ -4,24 +4,30 @@ import '../core/theme.dart';
 import '../models/game.dart';
 import 'kit.dart';
 
-/// In-game header: back, game + difficulty, score. No timer, no stat cards.
+/// In-game header: back, game + difficulty, score, and a pause button when
+/// [onPause] is given. No timer, no stat cards.
 class GameBar extends StatelessWidget {
   const GameBar({
     super.key,
     required this.game,
     required this.subtitle,
     required this.score,
+    this.onPause,
   });
 
   final GameId game;
   final String subtitle;
   final int score;
 
+  /// Shows a pause button at the end of the bar.
+  final VoidCallback? onPause;
+
   @override
   Widget build(BuildContext context) {
+    final onPause = this.onPause;
     return Container(
       height: 64,
-      padding: const EdgeInsets.only(left: 8, right: 20),
+      padding: EdgeInsets.only(left: 8, right: onPause == null ? 20 : 8),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: LS.line)),
       ),
@@ -61,6 +67,14 @@ class GameBar extends StatelessWidget {
               ),
             ],
           ),
+          if (onPause != null) ...[
+            const SizedBox(width: 10),
+            LSIconButton(
+              icon: Icons.pause_rounded,
+              tooltip: 'Pause',
+              onPressed: onPause,
+            ),
+          ],
         ],
       ),
     );

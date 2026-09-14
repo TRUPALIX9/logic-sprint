@@ -3,7 +3,7 @@ description: "LogicSprint: fast 30-second brain games."
 publish_to: 'none'
 
 # versionName+versionCode on Android, CFBundleShortVersionString+CFBundleVersion on iOS.
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.11.0 <4.0.0'
@@ -17,6 +17,8 @@ dependencies:
   supabase_flutter: ^2.8.0
   package_info_plus: ^9.0.0
   google_mobile_ads: ^5.1.0
+  url_launcher: ^6.3.2
+  connectivity_plus: ^7.3.1
 
 dev_dependencies:
   flutter_test:

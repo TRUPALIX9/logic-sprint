@@ -60,6 +60,7 @@ class GuessColorBoard extends StatelessWidget {
           _CountdownBar(
             key: ValueKey(engine.wordStartedAt),
             limit: engine.timeLimit,
+            left: engine.timeLeft,
             running: !engine.locked,
           ),
           const SizedBox(height: 14),
@@ -326,11 +327,21 @@ class _ShapePainter extends CustomPainter {
 }
 
 /// Drains over [limit]. It starts at limit ÷ 3 s of the track, so the
-/// shrinking limit shows without a number; freezes once [running] is false.
+/// shrinking limit shows without a number; freezes once [running] is false
+/// (a pick, the run going down, or a pause). Whenever it stops or starts it
+/// snaps to the engine's [left], so it stays in sync across a pause.
 class _CountdownBar extends StatefulWidget {
-  const _CountdownBar({super.key, required this.limit, required this.running});
+  const _CountdownBar({
+    super.key,
+    required this.limit,
+    required this.left,
+    required this.running,
+  });
 
   final Duration? limit;
+
+  /// The engine's remaining countdown; null when none is running.
+  final Duration? left;
   final bool running;
 
   @override
@@ -357,12 +368,27 @@ class _CountdownBarState extends State<_CountdownBar>
   }
 
   void _sync() {
-    if (widget.limit != null && widget.running) {
+    final limit = widget.limit;
+    if (limit == null) {
+      _controller.stop();
+      return;
+    }
+    if (widget.running) {
       if (!_controller.isAnimating && !_controller.isCompleted) {
+        _snapToEngine(limit);
         _controller.forward();
       }
     } else {
       _controller.stop();
+      _snapToEngine(limit);
+    }
+  }
+
+  void _snapToEngine(Duration limit) {
+    final left = widget.left;
+    if (left != null && limit > Duration.zero) {
+      _controller.value = (1 - left.inMicroseconds / limit.inMicroseconds)
+          .clamp(0.0, 1.0);
     }
   }
 

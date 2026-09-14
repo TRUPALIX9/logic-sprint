@@ -155,7 +155,8 @@ void main() {
     expect(engine.isPlaying, isTrue);
     _crash(engine);
     expect(engine.state, RunState.down);
-    expect(engine.canRevive, isFalse, reason: 'one revive per run');
+    expect(engine.revives, 1);
+    expect(engine.canRevive, isTrue, reason: 'up to 3 revives per run');
     engine.dispose();
   });
 

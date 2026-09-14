@@ -11,6 +11,10 @@
     {
       "id": "page-3",
       "name": "Guess Color stages"
+    },
+    {
+      "id": "page-4",
+      "name": "v1.1 · Hearts, Ads, Ranks"
     }
   ],
   "artboards": [
@@ -94,6 +98,96 @@
       "h": 844,
       "title": "Rule · TEXT",
       "page": "page-3"
+    },
+    {
+      "file": "PlayHearts.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "01 Play · hearts",
+      "page": "page-4"
+    },
+    {
+      "file": "HeartsSheet.dc.html",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "02 Hearts sheet",
+      "page": "page-4"
+    },
+    {
+      "file": "Donate.dc.html",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "03 Donate a view",
+      "page": "page-4"
+    },
+    {
+      "file": "ReviveHearts.dc.html",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "04 Revive · hearts",
+      "page": "page-4"
+    },
+    {
+      "file": "Paused.dc.html",
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "05 Paused",
+      "page": "page-4"
+    },
+    {
+      "file": "ResultBanner.dc.html",
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "06 Result · banner",
+      "page": "page-4"
+    },
+    {
+      "file": "RanksReveal.dc.html",
+      "x": 2820,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "07 Ranks · daily reveal",
+      "page": "page-4"
+    },
+    {
+      "file": "RanksRefresh.dc.html",
+      "x": 3290,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "08 Ranks · refresh",
+      "page": "page-4"
+    },
+    {
+      "file": "SettingsSupport.dc.html",
+      "x": 3760,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "09 Settings · support",
+      "page": "page-4"
+    },
+    {
+      "file": "OfflineHearts.dc.html",
+      "x": 4230,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "10 Hearts · offline",
+      "page": "page-4"
     },
     {
       "file": "ThemeSystem.dc.html",
@@ -420,10 +514,98 @@
       "w": 860,
       "page": "page-3",
       "text": "RULE · COLOR | TEXT SWITCH (chosen)\nBoth rules are always visible at the top of the word card, with the active side lit. A change is a visible slide + pulse + haptic, hard to miss. Every answer button echoes the rule in its corner (drop = COLOR, Aa = TEXT)."
+    },
+    {
+      "id": "v11-row",
+      "x": 0,
+      "y": -150,
+      "w": 900,
+      "page": "page-4",
+      "text": "v1.1 · Hearts, Donate, ads outside gameplay, animated daily Ranks\n\nNo free hearts: every finished run unlocks one heart ad. Offline is ad-free."
+    },
+    {
+      "id": "v11-PlayHearts",
+      "x": 0,
+      "y": 874,
+      "w": 390,
+      "page": "page-4",
+      "text": "PLAY\nHearts chip (heart + count) left of the gear opens the Hearts sheet. One shared banner ad, full width, 12 px above the nav on Ranks / Play / Profile; the old centred 320×50 slot is gone."
+    },
+    {
+      "id": "v11-HeartsSheet",
+      "x": 470,
+      "y": 874,
+      "w": 390,
+      "page": "page-4",
+      "text": "HEARTS SHEET\nNo free hearts: new players start with 0, and every finished run unlocks ONE heart ad. Button states: \"Watch ad · +1 heart\" · \"Finish a run to unlock a heart\" · \"Hearts full\" · \"No ad available right now\". Hearts cap at 5."
+    },
+    {
+      "id": "v11-Donate",
+      "x": 940,
+      "y": 874,
+      "w": 390,
+      "page": "page-4",
+      "text": "DONATE\nAfter one donation the thank-you cools down: the line under the button reads \"Next heart thank-you in 24:10\" and the button reads \"Watch ad to support\" until the timer ends."
+    },
+    {
+      "id": "v11-ReviveHearts",
+      "x": 1410,
+      "y": 874,
+      "w": 390,
+      "page": "page-4",
+      "text": "REVIVE\nOffered from score 50 · up to 3 revives per run · auto-ends after 5 s. \"Use heart\" spends a heart; \"Watch ad\" gives a life without spending one."
+    },
+    {
+      "id": "v11-Paused",
+      "x": 1880,
+      "y": 874,
+      "w": 390,
+      "page": "page-4",
+      "text": "PAUSED\nAuto-pauses when you leave the app; resume only on tap. New pause button in the game bar, next to the score. The banner shows only while paused, at the top of the scrim."
+    },
+    {
+      "id": "v11-ResultBanner",
+      "x": 2350,
+      "y": 874,
+      "w": 390,
+      "page": "page-4",
+      "text": "RESULT\nEvery run of every game ends here. Banner at the top, above GAME OVER; Home and Play again stay at the bottom. \"Earn a heart\" offers the one heart ad this run unlocked."
+    },
+    {
+      "id": "v11-RanksReveal",
+      "x": 2820,
+      "y": 874,
+      "w": 390,
+      "page": "page-4",
+      "text": "RANKS · DAILY REVEAL\nRows slide from old to new positions, scores count up, your rank ticks #57→#7 · reduce-motion shows the end state. The climb banner slides in from the top of the list."
+    },
+    {
+      "id": "v11-RanksRefresh",
+      "x": 3290,
+      "y": 874,
+      "w": 390,
+      "page": "page-4",
+      "text": "RANKS · REFRESH\nDaily update is free · Refresh now = rewarded ad, 30 s apart · free fallback every 5 min. Cached view: dates only, no movement chips."
+    },
+    {
+      "id": "v11-SettingsSupport",
+      "x": 3760,
+      "y": 874,
+      "w": 390,
+      "page": "page-4",
+      "text": "SETTINGS\nNew SUPPORT group at the top; \"Donate a view\" opens the Donate screen."
+    },
+    {
+      "id": "v11-OfflineHearts",
+      "x": 4230,
+      "y": 874,
+      "w": 390,
+      "page": "page-4",
+      "text": "OFFLINE\nOffline: no ads, no revive offer (a mistake just ends the run), no banners."
     }
   ],
   "launch": {
     "view": "canvas",
-    "page": "page-3"
+    "page": "page-4"
   }
 }

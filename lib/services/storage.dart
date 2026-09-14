@@ -37,6 +37,27 @@ class Storage {
   Future<void> addPlay(GameId game, Difficulty difficulty) =>
       _prefs.setInt(_playsKey(game, difficulty), plays(game, difficulty) + 1);
 
+  /// Hearts: stored revives, spendable in any game. Only earned by ads.
+  int get hearts => _prefs.getInt('hearts') ?? 0;
+  Future<void> setHearts(int value) => _prefs.setInt('hearts', value);
+
+  /// True after a finished run until its one heart ad is watched.
+  bool get heartAdUnlocked => _prefs.getBool('heartAdUnlocked') ?? false;
+  Future<void> setHeartAdUnlocked(bool value) =>
+      _prefs.setBool('heartAdUnlocked', value);
+
+  /// Ads watched from the Donate page, and when one last earned hearts.
+  int get donations => _prefs.getInt('donations') ?? 0;
+  Future<void> setDonations(int value) => _prefs.setInt('donations', value);
+
+  DateTime? get lastDonationRewardAt {
+    final millis = _prefs.getInt('lastDonationRewardAt');
+    return millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis);
+  }
+
+  Future<void> setLastDonationRewardAt(DateTime at) =>
+      _prefs.setInt('lastDonationRewardAt', at.millisecondsSinceEpoch);
+
   /// How long the best-scoring run took, if recorded.
   Duration? bestTime(GameId game, Difficulty difficulty) {
     final millis = _prefs.getInt(_timeKey(game, difficulty));

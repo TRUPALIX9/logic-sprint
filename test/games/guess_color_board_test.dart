@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:logic_sprint/core/theme.dart';
 import 'package:logic_sprint/games/guess_color/guess_color_board.dart';
 import 'package:logic_sprint/games/guess_color/guess_color_engine.dart';
+import 'package:logic_sprint/games/round_engine.dart';
 import 'package:logic_sprint/models/game.dart';
 import 'package:logic_sprint/ui/chamfer.dart';
 
@@ -114,6 +115,40 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(engine.timeLimit, isNotNull);
     expect(find.textContaining(RegExp(r'\d')), findsNothing);
+    engine.finish();
+  });
+
+  testWidgets('the countdown bar freezes while paused and resumes in sync', (
+    tester,
+  ) async {
+    final engine = newEngine()
+      ..number = 13
+      ..start();
+    await pumpBoard(tester, engine);
+    final bar = find.byWidgetPredicate(
+      (widget) =>
+          widget is FractionallySizedBox &&
+          widget.child is ColoredBox &&
+          (widget.child! as ColoredBox).color == accent,
+    );
+    double fill() => tester.widget<FractionallySizedBox>(bar).widthFactor!;
+    expect(fill(), closeTo(1, 0.01));
+
+    await tester.pump(const Duration(seconds: 1));
+    expect(fill(), closeTo(2 / 3, 0.02));
+
+    engine.pause();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 10));
+    expect(engine.state, RunState.paused);
+    expect(fill(), closeTo(2 / 3, 0.02));
+
+    engine.resume();
+    await tester.pump();
+    expect(fill(), closeTo(2 / 3, 0.02));
+    await tester.pump(const Duration(seconds: 1));
+    expect(fill(), closeTo(1 / 3, 0.02));
+    expect(engine.timeLeft!.inMilliseconds, closeTo(1000, 20));
     engine.finish();
   });
 

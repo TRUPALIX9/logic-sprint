@@ -1,0 +1,13 @@
+# app-ads.txt for LogicSprint (com.trupal.logicsprint)
+# Host this file at the root of the developer website listed in Play Console:
+#   https://logicsprint.trupalpatel.com/app-ads.txt
+# and also at https://trupalpatel.com/app-ads.txt (crawlers may check the
+# root domain). Serve as plain text.
+
+# Google AdMob (publisher ID from the AdMob app ID)
+google.com, pub-4460198288175671, DIRECT, f08c47fec0942fa0
+
+# AppLovin: not used yet (planned for AdMob mediation). When it's added,
+# uncomment and replace with the exact lines from AppLovin Dashboard →
+# Account → App-ads.txt Info, e.g.
+# applovin.com, <your AppLovin account id>, DIRECT

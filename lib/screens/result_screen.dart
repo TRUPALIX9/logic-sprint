@@ -8,7 +8,11 @@ import '../core/format.dart';
 import '../core/theme.dart';
 import '../games/games.dart';
 import '../models/round_result.dart';
+import '../services/ads.dart';
 import '../services/leaderboard.dart';
+import '../services/network.dart';
+import '../state/app_state.dart';
+import '../ui/ad_banner.dart';
 import '../ui/chamfer.dart';
 import '../ui/kit.dart';
 import 'name_sheet.dart';
@@ -31,90 +35,200 @@ class ResultScreen extends StatelessWidget {
     final game = result.game;
     return Scaffold(
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight - 48,
-              ),
-              child: IntrinsicHeight(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        GameTile(game: game, size: 44),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const DisplayText('Game over', size: 26),
-                              const SizedBox(height: 4),
-                              MonoLabel(game.titleWith(result.difficulty)),
-                            ],
+        child: _TopBanner(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 48,
+                ),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          GameTile(game: game, size: 44),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const DisplayText('Game over', size: 26),
+                                const SizedBox(height: 4),
+                                MonoLabel(game.titleWith(result.difficulty)),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(child: _ScoreCard(result: result)),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _Stat('Correct', '${result.correct}', LS.teal),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: game.tracksTime
-                              ? _Stat(
-                                  'Time',
-                                  formatDuration(result.duration),
-                                  LS.text,
-                                )
-                              : _Stat(
-                                  'Best',
-                                  '${math.max(result.score, result.previousBest)}',
-                                  LS.text,
-                                ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _SyncCard(result: result, synced: synced),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SecondaryButton(
-                            label: 'Home',
-                            onPressed: () => Navigator.of(
-                              context,
-                            ).popUntil((route) => route.isFirst),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(child: _ScoreCard(result: result)),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _Stat(
+                              'Correct',
+                              '${result.correct}',
+                              LS.teal,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: PrimaryButton(
-                            label: 'Play again',
-                            icon: Icons.refresh_rounded,
-                            onPressed: () =>
-                                Navigator.of(context).pushReplacement(
-                                  gameRoute(game, result.difficulty),
-                                ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: game.tracksTime
+                                ? _Stat(
+                                    'Time',
+                                    formatDuration(result.duration),
+                                    LS.text,
+                                  )
+                                : _Stat(
+                                    'Best',
+                                    '${math.max(result.score, result.previousBest)}',
+                                    LS.text,
+                                  ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _SyncCard(result: result, synced: synced),
+                      const _HeartAdCard(),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SecondaryButton(
+                              label: 'Home',
+                              onPressed: () => Navigator.of(
+                                context,
+                              ).popUntil((route) => route.isFirst),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: PrimaryButton(
+                              label: 'Play again',
+                              icon: Icons.refresh_rounded,
+                              onPressed: () =>
+                                  Navigator.of(context).pushReplacement(
+                                    gameRoute(game, result.difficulty),
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The run's heart ad: every finished run unlocks one rewarded ad worth a
+/// heart. Hidden offline (ad-free), when used, when hearts are full, or
+/// when no ad is loaded.
+class _HeartAdCard extends StatefulWidget {
+  const _HeartAdCard();
+
+  @override
+  State<_HeartAdCard> createState() => _HeartAdCardState();
+}
+
+class _HeartAdCardState extends State<_HeartAdCard> {
+  bool _watching = false;
+
+  void _watch() {
+    final app = context.read<AppState>();
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _watching = true);
+    context.read<Ads>().showRewarded(
+      onReward: () async {
+        await app.earnHeart();
+        messenger.showSnackBar(
+          SnackBar(content: Text('+1 heart · you have ${app.hearts}')),
+        );
+        if (mounted) {
+          setState(() => _watching = false);
+        }
+      },
+      onDone: () {
+        if (mounted) {
+          setState(() => _watching = false);
+        }
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final app = context.watch<AppState>();
+    final ads = context.read<Ads>();
+    final network = context.read<Network>();
+    return ListenableBuilder(
+      listenable: Listenable.merge([ads.rewardedReady, network.online]),
+      builder: (context, _) {
+        if (!network.online.value ||
+            !ads.rewardedReady.value ||
+            !app.canEarnHeart) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: ChamferBox(
+            borderColor: LS.coral.withValues(alpha: 0.4),
+            padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+            child: Row(
+              children: [
+                const Icon(Icons.favorite_rounded, color: LS.coral),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const DisplayText('Earn a heart', size: 18),
+                      const SizedBox(height: 4),
+                      MonoLabel(
+                        'Revive any run · you have ${app.hearts}',
+                        size: 10,
+                        color: LS.dim,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                CardAction(
+                  label: _watching ? 'Loading…' : '▶ Watch ad',
+                  onTap: _watching ? () {} : _watch,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// A banner above the result, far from the Home / Play again buttons at the
+/// bottom (every run of every game ends here).
+class _TopBanner extends StatelessWidget {
+  const _TopBanner({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const AdBanner(padding: EdgeInsets.only(top: 8)),
+        Expanded(child: child),
+      ],
     );
   }
 }

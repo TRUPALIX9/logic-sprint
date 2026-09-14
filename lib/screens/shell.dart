@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../app.dart';
 import '../core/theme.dart';
+import '../ui/ad_banner.dart';
 import '../ui/brand.dart';
 import '../ui/chamfer.dart';
 import '../ui/kit.dart';
@@ -29,9 +30,18 @@ class Shell extends StatelessWidget {
         body: CircuitBackground(
           child: SafeArea(
             bottom: false,
-            child: IndexedStack(
-              index: tabs.value,
-              children: const [RanksTab(), HomeTab(), ProfileTab()],
+            child: Column(
+              children: [
+                Expanded(
+                  child: IndexedStack(
+                    index: tabs.value,
+                    children: const [RanksTab(), HomeTab(), ProfileTab()],
+                  ),
+                ),
+                // One banner for all three tabs: loads once and stays while
+                // switching. The bottom gap keeps it off the nav buttons.
+                const AdBanner(padding: EdgeInsets.fromLTRB(0, 8, 0, 12)),
+              ],
             ),
           ),
         ),
