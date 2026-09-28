@@ -1,4 +1,4 @@
-# LogicSprint Release Checklist (v1.0.0, Google Play)
+# LogicSprint Release Checklist (v1.0.1, Google Play)
 
 ## 1. One-time setup (you)
 
@@ -81,8 +81,8 @@ Pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`, which builds the sa
 7. Result shows score and correct count, plus run time for Memory Lane / Quick Math (Best for the other two); banner shows on the Play tab
 8. First Result without a name shows "Join the Global Top 10" → Set name with a 4-digit code ("Find a free code" fills one) → a taken name + code is refused, a free one is saved; Ranks shows "Updated … · daily 00:00 UTC", a next-update countdown, and "Refresh ▶" plays the rewarded interstitial and then refreshes, with a 30 min cooldown; the next run shows "Global rank #N" and Ranks marks your row "YOU" (or pins it below the Top 10); airplane mode shows "Saved on this phone · Offline — will sync later", and the run syncs on the next launch
 9. Profile shows your name (Edit works), runs played, bests with play counts, and History; Settings → Reset high scores clears the bests
-10. Settings footer shows `1.0.0 (1)`; Privacy policy screen shows the current text
+10. Settings footer shows `1.0.1 (3)`; Privacy policy screen shows the current text
 
 ## 6. Release
 - [ ] Upload AAB to **Internal testing**, then closed testing, then production
-- [ ] Tag `v1.0.0` on `production` and push the tag
+- [x] Tag `v1.0.1` on `production` and push the tag (the release workflow builds it and publishes [docs/release_notes/1.0.1.md](release_notes/1.0.1.md))

@@ -6,7 +6,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.0.0 |
+| **Version** | 1.0.1 |
 | **Platform** | Android (Google Play); iOS later |
 | **Stack** | Flutter 3.x, Dart 3.11+ |
 | **Storage** | `shared_preferences` on the device; Supabase for the leaderboard |
