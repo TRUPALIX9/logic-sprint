@@ -14,9 +14,9 @@ LogicSprint is a free brain game app with four endless games that test your refl
 
 FOUR GAMES
 
-• Rocket Launch – Pick your ship (rocket, UFO, spaceship or missile) and steer it through an asteroid storm with a touch of your finger. It speeds up little by little, space changes colour every 1250 points, and one hit ends the run. Can you reach 10,000?
+• Rocket Launch – Pick your ship (rocket, UFO, spaceship or missile) and steer it through an asteroid storm with a touch of your finger. Planets drift past, shooting stars streak across the sky, and every 1250 points space changes colour. It speeds up little by little, and one hit ends the run. Can you reach 10,000?
 
-• Memory Lane – Watch tiles light up on a 3×3, 4×4 or 5×5 grid and tap them back in the same order. Every level adds one more tile.
+• Memory Lane – Watch tiles light up on a 3×3, 4×4 or 5×5 grid, then tap them back in the same order. Red corners mean watch, teal means your turn. Every level replays the same pattern with one more tile, a little faster.
 
 • Quick Math – Pick the right answer to addition, subtraction, multiplication and division problems that get harder every 10 questions. Your time is saved with your best.
 
@@ -36,6 +36,15 @@ FEATURES
 Contains ads.
 
 Questions or feedback: trupal.work@gmail.com
+```
+
+## Release notes – 1.0.1 (What's new, max 500)
+```
+• Rocket Launch: pick your ship, 5 colour themes, drifting planets and shooting stars, and a gentler speed-up
+• Memory Lane: the pattern grows by one tile per level; red/teal corners show when to watch and when to tap
+• Pause button in every game – the back button pauses too
+• Leaderboard names now have a 4-digit code (NAME#1234), so names can repeat
+• Boards update daily at 00:00 UTC, or refresh early with a short video
 ```
 
 ## Category and tags
