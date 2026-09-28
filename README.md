@@ -18,7 +18,7 @@
 <table>
   <tr>
     <td align="center"><img src="assets/brand/store/google_play/screenshots/01_home.png" width="240" alt="Home"><br><sub>Home (Play tab)</sub></td>
-    <td align="center"><img src="assets/brand/store/google_play/screenshots/02_game_sheet.png" width="240" alt="Game sheet"><br><sub>Game sheet</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/02_game_sheet.png" width="240" alt="Game sheet"><br><sub>Game sheet (ship picker)</sub></td>
     <td align="center"><img src="assets/brand/store/google_play/screenshots/03_rocket_launch.png" width="240" alt="Rocket Launch"><br><sub>Rocket Launch</sub></td>
   </tr>
   <tr>
@@ -39,11 +39,11 @@ These are the Google Play screenshots (9:16), rendered from the real screens. Se
 
 ## Games
 
-Every game is an **endless run**: it keeps getting harder until your first mistake. Up to 3 times per run you can revive with a **heart** or by watching a rewarded ad. Runs pause automatically when the app leaves the screen. +10 per correct action, plus a hidden +20 bonus every 5-in-a-row. Memory Lane and Quick Math also record how long each run took, and on their leaderboards a faster run wins a tie; Rocket Launch and Guess Color are about how far you get, so a tie goes to whoever reached the score first.
+Every game is an **endless run**: it keeps getting harder until your first mistake. Up to 3 times per run you can revive with a **heart** or by watching a rewarded ad. In a run the top bar is one row: `||` (pause, which turns into ▶ resume), a banner, and the score. There's no back button: pause, then End run to leave (the phone's back button pauses too). Runs pause automatically when the app leaves the screen. +10 per correct action, plus a hidden +20 bonus every 5-in-a-row. Memory Lane and Quick Math also record how long each run took, and on their leaderboards a faster run wins a tie; Rocket Launch and Guess Color are about how far you get, so a tie goes to whoever reached the score first.
 
 | Game | Skill | How it plays | Difficulty |
 |------|-------|--------------|------------|
-| **Rocket Launch** | Reflex | Touch and drag anywhere to steer through a green asteroid storm; one hit ends the run | Speeds up the longer you survive |
+| **Rocket Launch** | Reflex | Pick a Rocket, UFO, Spaceship or Missile and steer through the asteroid storm; one hit ends the run. The colours change every 1250 points (ship, then rocks, then space) | Speeds up gently the longer you survive; a sharp player can reach about 10 000 |
 | **Memory Lane** | Memory | Tiles flash in sequence; tap them back in order, one more tile each level; one wrong tap ends the run | Easy 3×3 · Medium 4×4 · Hard 5×5 |
 | **Quick Math** | Arithmetic | Tap the right answer of four; numbers and operations grow every 10 problems; one wrong answer ends the run | Easy + − · Medium + − × · Hard + − × ÷ |
 | **Guess Color** | Focus | A COLOR \| TEXT switch sets the rule: COLOR = tap the color the word is painted in, TEXT = tap the color the word names. The rule flips, buttons shuffle, their labels stop matching their colors, and the countdown shrinks from 3 s to 1 s | Gets trickier as you go |
@@ -111,29 +111,29 @@ Gradle refuses release builds without `ADMOB_APP_ID`, and bundles without a rele
 
 ## Leaderboard
 
-- An invisible anonymous Supabase account per install; the display name is chosen once (Result, Ranks or Profile) and is unique
+- An invisible anonymous Supabase account per install; the display name (Result, Ranks or Profile) comes with a 4-digit code, `NEON_FOX#0420`: names can repeat, name + code can't, and the app can find a free code
 - Every finished run is sent automatically (queued while offline): the server keeps each player's best and play count per game and difficulty
 - One Top 10 per game (and per difficulty for Memory Lane and Quick Math) plus your own rank pinned below it; ties go to the faster run in Memory Lane and Quick Math, and to the earlier best elsewhere
-- Each board cached for a day and refetched after a new personal best; manual refresh has a 60 s cooldown; requests time out after 8 s
+- Boards update once a day for everyone: the first look after 00:00 UTC fetches every board in one request, and Ranks shows when they were fetched and counts down to the next update. A new personal best moves you on your own board straight away and goes to the server; others see it after the next reset, or sooner with **Refresh ▶** (a rewarded interstitial that pulls everyone's latest scores now, then a 30 min cooldown). Your row shines when it appears. Requests time out after 8 s
 - Run History stays on the device (Profile); fully playable offline
 
-Setup: enable **Anonymous sign-ins** (Authentication → Providers), then run [supabase/schema.sql](supabase/schema.sql) in the SQL editor. The publishable key in `lib/core/config.dart` is safe to ship: tables are read-only under RLS, and writes go through `claim_name` / `record_run`, which only touch the caller's own rows. The `player_stats` and `game_stats` views feed the product page.
+Setup: enable **Anonymous sign-ins** (Authentication → Providers), then run [supabase/schema.sql](supabase/schema.sql) in the SQL editor. The publishable key in `lib/core/config.dart` is safe to ship: tables are read-only under RLS, and writes go through `claim_name` / `record_run` (`free_tag` suggests a code), which only touch the caller's own rows. The `player_stats` and `game_stats` views feed the product page.
 
 ---
 
 ## Ads
 
-**Offline play is ad-free**: with no network connection there are no ads, no ad buttons and no revive offer (a mistake just ends the run); hearts wait until you're back online. No interstitials, and no ads during gameplay (AdMob treats banners on screens with continuous tapping as accidental-click placements).
+**Offline play is ad-free**: with no network connection there are no ads, no ad buttons and no revive offer (a mistake just ends the run); hearts wait until you're back online. No interstitials that interrupt play; the one rewarded interstitial is the opt-in Ranks "Refresh ▶" (with an intro and a "No thanks"). The only ad on a game screen is the top-bar banner, spaced away from the controls (AdMob treats ads next to controls tapped continuously as accidental-click placements).
 
-- **Banners** (full-width anchored adaptive): one shared across the Ranks / Play / Profile tabs, one at the top of Result (every run ends there), one on the Paused screen.
+- **Banners** (anchored adaptive): one shared across the Ranks / Play / Profile tabs, one at the top of Result (every run ends there), and one in the in-game top bar between `||` and the score, kept 16 px clear of the pause button.
 - **Rewarded** (always opt-in):
   - **+1 life:** revive a run, up to 3 per run, all ranked; offered from a score of 50, auto-declines after 5 s. Or pay with a heart.
   - **Hearts:** no free hearts. Every finished run unlocks one rewarded ad worth a heart (on Result or in the Hearts sheet), up to 5.
   - **Donate a view** (Settings → Support): +2 hearts, at most every 30 min; links to logicsprint.trupalpatel.com.
-  - **Refresh leaderboard now:** the daily update is free.
+  - **Refresh ▶** (Ranks, rewarded interstitial): pulls every leaderboard now instead of at 00:00 UTC; 30 min cooldown.
 - **Mediation (planned, not in this release):** AdMob stays in charge, with AppLovin added later as a bidder on rewarded via `gma_mediation_applovin`. That package needs `google_mobile_ads` ^9.1.0, and the app is on 5.x today. Steps are in docs/release_checklist.md.
 
-Consent is gathered with Google's UMP SDK before any ad request; users in consent regions get **Privacy choices** in Settings. IDs live in `config/admob.json` (`ADMOB_APP_ID`, `ADMOB_BANNER_ID`, `ADMOB_REWARDED_ID`, optional `ADMOB_REFRESH_REWARDED_ID`). `assets/brand/store/app-ads.txt` is the file to host on the developer website.
+Consent is gathered with Google's UMP SDK before any ad request; users in consent regions get **Privacy choices** in Settings. IDs live in `config/admob.json` (`ADMOB_APP_ID`, `ADMOB_BANNER_ID`, `ADMOB_REWARDED_ID`, `ADMOB_REFRESH_INTERSTITIAL_ID`). `assets/brand/store/app-ads.txt` is the file to host on the developer website.
 
 ---
 

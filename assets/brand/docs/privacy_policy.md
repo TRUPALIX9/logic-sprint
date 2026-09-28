@@ -16,7 +16,7 @@ If you choose a display name, it is shown publicly next to your best scores on t
 
 ## Advertising
 
-LogicSprint shows ads through Google AdMob: banner ads outside of gameplay, and optional video ads you can choose to watch for an extra life, to refresh the leaderboard, to earn hearts, or to support the app from the Donate page. To serve ads, measure their performance, and prevent fraud, Google may collect and process your device's advertising ID, IP address, approximate location derived from the IP address, device and app information, and your interactions with ads. Google's use of this data is described at https://policies.google.com/technologies/partner-sites. When you have no internet connection the app shows no ads at all.
+LogicSprint shows ads through Google AdMob: banner ads (on the menus, the Result screen, and in the top bar of the game screens), and optional video ads you can choose to watch for an extra life, to refresh the leaderboard, to earn hearts, or to support the app from the Donate page. To serve ads, measure their performance, and prevent fraud, Google may collect and process your device's advertising ID, IP address, approximate location derived from the IP address, device and app information, and your interactions with ads. Google's use of this data is described at https://policies.google.com/technologies/partner-sites. When you have no internet connection the app shows no ads at all.
 
 Hearts, revives and donations are tracked only on your device and are never sold or linked to your identity.
 
@@ -32,7 +32,7 @@ LogicSprint is not directed at children under 13, and we do not knowingly collec
 
 ## Deleting your data
 
-Uninstalling the app deletes everything stored on your device. To have your player profile, display name and scores deleted from the leaderboard, contact us with your display name.
+Uninstalling the app deletes everything stored on your device. To have your player profile, display name and scores deleted from the leaderboard, contact us with your display name and its 4-digit code (for example NEON_FOX#0420).
 
 ## Changes
 

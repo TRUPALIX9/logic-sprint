@@ -14,7 +14,7 @@ LogicSprint is a free brain game app with four endless games that test your refl
 
 FOUR GAMES
 
-• Rocket Launch – Steer your rocket through an asteroid storm with a touch of your finger. It speeds up the longer you survive, and one hit ends the run.
+• Rocket Launch – Pick your ship (rocket, UFO, spaceship or missile) and steer it through an asteroid storm with a touch of your finger. It speeds up little by little, space changes colour every 1250 points, and one hit ends the run. Can you reach 10,000?
 
 • Memory Lane – Watch tiles light up on a 3×3, 4×4 or 5×5 grid and tap them back in the same order. Every level adds one more tile.
 
@@ -24,9 +24,10 @@ FOUR GAMES
 
 FEATURES
 
-• One extra life per run
+• Up to 3 extra lives per run with hearts or a short video
+• Pause any time – and runs pause by themselves when you leave the app
 • Easy, Medium and Hard for Memory Lane and Quick Math
-• Global Top 10 for every game – pick a display name once and your runs sync automatically
+• Global Top 10 for every game, updated daily at 00:00 UTC – pick a name with your own 4-digit code (like NEON_FOX#0420) and your runs sync automatically
 • Your rank, personal bests, play counts and run history in your Profile
 • Plays offline – runs sync when you're back online
 • No login or email required
@@ -44,7 +45,7 @@ Game → Puzzle. Tags: Brain games (or Logic), Memory, Math, Offline, Single pla
 - App icon: `assets/brand/store/google_play/play_store_icon_512.png` (512×512)
 - Feature graphic: `assets/brand/store/google_play/feature_graphic_1024x500.png` (1024×500)
 - Phone screenshots, 1080×1920 (9:16): `assets/brand/store/google_play/screenshots/`, in number order (Play accepts up to 8):
-  - 01_home
+  - 02_game_sheet (Rocket Launch with the ship picker)
   - 03_rocket_launch
   - 04_memory_lane
   - 05_quick_math
