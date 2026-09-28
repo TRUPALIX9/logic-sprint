@@ -101,6 +101,12 @@ void main() {
       async.elapse(const Duration(milliseconds: 800));
       expect(engine.phase, MemoryPhase.watch);
       expect(engine.sequenceLength, 4);
+      expect(
+        engine.sequence.take(3),
+        first,
+        reason: 'the same pattern, one tile longer',
+      );
+      expect(engine.sequence[3], isNot(first[2]), reason: 'a real move');
       expect(engine.stepsDone, 0);
 
       async.elapse(_playback(4));
@@ -119,11 +125,12 @@ void main() {
         _repeatAll(engine);
         async.elapse(const Duration(milliseconds: 800));
       }
-      // 3+4+5+6+7 taps; +20 per level and +20 per 5-tap streak.
+      // 3+4+5+6+7 taps; level bonuses 20+28+35+40+45 (a curve), and +20
+      // per 5-tap streak.
       expect(engine.level, 6);
       expect(engine.sequenceLength, 8);
       expect(engine.correct, 25);
-      expect(engine.score, 25 * 10 + 5 * 20 + 5 * 20);
+      expect(engine.score, 25 * 10 + (20 + 28 + 35 + 40 + 45) + 5 * 20);
       expect(engine.state, RunState.playing);
       engine.dispose();
     });
@@ -210,5 +217,30 @@ void main() {
       expect(engine.correct, 1);
       engine.dispose();
     });
+  });
+
+  test('playback speeds up on a curve that levels off', () {
+    expect(MemoryLaneEngine.paceAt(1), 1);
+    final paces = [for (var l = 1; l <= 40; l++) MemoryLaneEngine.paceAt(l)];
+    for (var i = 1; i < paces.length; i++) {
+      expect(paces[i], lessThan(paces[i - 1]), reason: 'always a bit faster');
+      if (i > 1) {
+        expect(
+          paces[i - 1] - paces[i],
+          lessThan(paces[i - 2] - paces[i - 1]),
+          reason: 'by less each level',
+        );
+      }
+    }
+    expect(paces.last, greaterThan(0.6), reason: 'never a blur');
+  });
+
+  test('the level bonus grows on a curve', () {
+    expect(
+      [
+        for (final l in [1, 2, 4, 9, 16]) MemoryLaneEngine.bonusFor(l),
+      ],
+      [20, 28, 40, 60, 80],
+    );
   });
 }

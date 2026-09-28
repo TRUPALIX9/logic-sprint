@@ -14,11 +14,9 @@ class MemoryLaneScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final n = MemoryLaneEngine.gridSizeFor(difficulty);
     return RoundScreen<MemoryLaneEngine>(
       game: GameId.memoryLane,
       difficulty: difficulty,
-      subtitle: '${difficulty.label} · $n×$n',
       createEngine: (feedback, best) => MemoryLaneEngine(
         difficulty: difficulty,
         previousBest: best,
@@ -52,11 +50,31 @@ class _MemoryLaneBody extends StatelessWidget {
           const SizedBox(height: 16),
           // Fills the rest of the screen; tiles stretch taller on tall phones.
           Expanded(
-            child: ChamferBox(
-              cut: Cut.lg,
-              color: LS.well,
-              padding: const EdgeInsets.all(16),
-              child: _Grid(engine),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ChamferBox(
+                  cut: Cut.lg,
+                  color: LS.well,
+                  padding: const EdgeInsets.all(16),
+                  child: _Grid(engine),
+                ),
+                // Red corners: wait, the pattern is playing. Teal: your turn.
+                IgnorePointer(
+                  child: TweenAnimationBuilder<Color?>(
+                    tween: ColorTween(
+                      end: engine.canTap
+                          ? LS.teal
+                          : engine.holdOff
+                          ? LS.coral
+                          : LS.dim,
+                    ),
+                    duration: const Duration(milliseconds: 220),
+                    builder: (context, color, _) =>
+                        CustomPaint(painter: _Corners(color ?? LS.dim)),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -73,7 +91,7 @@ class _StatusStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final watching = engine.phase == MemoryPhase.watch;
-    final accent = watching ? LS.aqua : LS.teal;
+    final accent = watching ? LS.coral : LS.teal;
     return ChamferBox(
       color: accent.withValues(alpha: watching ? 0.1 : 0.06),
       borderColor: watching ? null : LS.teal.withValues(alpha: 0.33),
@@ -82,7 +100,7 @@ class _StatusStrip extends StatelessWidget {
         children: [
           Expanded(
             child: DisplayText(
-              watching ? 'Watch the pattern' : 'Repeat the pattern',
+              watching ? "Watch · don't tap" : 'Your turn · repeat it',
               size: 19,
               color: accent,
               maxLines: 1,
@@ -189,4 +207,53 @@ class _Tile extends StatelessWidget {
           : tile,
     );
   }
+}
+
+/// Corner brackets around the grid in [color]: red while tapping would do
+/// nothing (the pattern is playing), teal when it's the player's turn.
+class _Corners extends CustomPainter {
+  const _Corners(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const arm = 26.0, inset = 1.5;
+    final w = size.width, h = size.height;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.square;
+    final glow = Paint()
+      ..color = color.withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+    for (final corner in [
+      Path()
+        ..moveTo(inset, arm)
+        ..lineTo(inset, inset)
+        ..lineTo(arm, inset),
+      Path()
+        ..moveTo(w - arm, inset)
+        ..lineTo(w - inset, inset)
+        ..lineTo(w - inset, arm),
+      Path()
+        ..moveTo(inset, h - arm)
+        ..lineTo(inset, h - inset)
+        ..lineTo(arm, h - inset),
+      Path()
+        ..moveTo(w - arm, h - inset)
+        ..lineTo(w - inset, h - inset)
+        ..lineTo(w - inset, h - arm),
+    ]) {
+      canvas
+        ..drawPath(corner, glow)
+        ..drawPath(corner, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_Corners oldDelegate) => oldDelegate.color != color;
 }

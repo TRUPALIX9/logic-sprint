@@ -8,15 +8,19 @@ import '../services/ads.dart';
 /// allowed; then reserves the banner's height before it loads, so nothing
 /// shifts under the player's finger. Collapses again if no ad loads.
 ///
-/// Never put this on a screen where the player is tapping continuously
-/// (game screens): AdMob treats that as an accidental-click placement.
+/// On game screens it sits only in the top bar, kept clear of the buttons on
+/// either side so a tap meant for a control can't land on the ad.
 class AdBanner extends StatefulWidget {
   const AdBanner({
     super.key,
     this.padding = const EdgeInsets.symmetric(vertical: 8),
+    this.width,
   });
 
   final EdgeInsetsGeometry padding;
+
+  /// Width to size the adaptive banner for; the screen width when null.
+  final double? width;
 
   @override
   State<AdBanner> createState() => _AdBannerState();
@@ -33,7 +37,7 @@ class _AdBannerState extends State<AdBanner> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _width = MediaQuery.sizeOf(context).width.truncate();
+    _width = (widget.width ?? MediaQuery.sizeOf(context).width).truncate();
     final ads = context.read<Ads>();
     if (!identical(ads, _ads)) {
       _ads?.ready.removeListener(_loadIfReady);
@@ -59,7 +63,8 @@ class _AdBannerState extends State<AdBanner> {
         ) ??
         AdSize.banner;
     _requesting = false;
-    if (!mounted) {
+    // Too narrow for any banner (e.g. the game bar on a small phone): none.
+    if (!mounted || size.width > _width) {
       return;
     }
     setState(() => _size = size);

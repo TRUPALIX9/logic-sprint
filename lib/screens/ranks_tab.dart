@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:math';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,17 +19,18 @@ import '../ui/kit.dart';
 import 'name_sheet.dart';
 import 'ranks/rank_board.dart';
 import 'ranks/rank_row.dart';
-import 'ranks/refresh_action.dart';
 
 /// One global Top 10 at a time: pick a game (and a difficulty for games that
 /// have them). Opens on the game you last played. Your own position is
 /// pinned below the list when you're outside the Top 10.
 ///
-/// Boards update on the first visit of each day and after a new best, and
-/// animate what changed since you last looked (see [RankBoard]). "Refresh ▶"
-/// fetches now after a rewarded ad (free, with a longer cooldown, when no ad
-/// is ready). Offline there are no ads: the action is replaced by "Offline"
-/// and the saved board is shown.
+/// Every board updates once a day, for everyone, at 00:00 UTC: the header
+/// shows when they were fetched and counts down to the next update. Your own
+/// new bests show up on your board right away (and go to the server);
+/// "Refresh ▶" plays a rewarded interstitial and then pulls everyone's
+/// latest scores now, with a cooldown after.
+/// Boards animate what changed since you last looked (see [RankBoard]).
+/// Offline, the saved board is shown.
 class RanksTab extends StatefulWidget {
   const RanksTab({super.key});
 
@@ -40,6 +45,7 @@ class _RanksTabState extends State<RanksTab> {
   Difficulty _difficulty = Difficulty.easy;
   NavTabs? _tabs;
   Network? _network;
+  Timer? _resetTimer;
 
   static const _shortTitles = {
     GameId.rocketLaunch: 'Rocket',
@@ -83,19 +89,19 @@ class _RanksTabState extends State<RanksTab> {
       _difficulty = last.$2;
     }
     if (_online) {
-      context.read<Ads>().preloadRefreshRewarded();
+      context.read<Ads>().preloadRefresh();
     }
     _refresh();
   }
 
   // Going offline shows the saved board with a notice; coming back clears
-  // it (and fetches if the board is out of date).
+  // it (and fetches if 00:00 UTC has passed).
   void _onNetworkChange() {
     if (!mounted || !_visible) {
       return;
     }
     if (_online) {
-      context.read<Ads>().preloadRefreshRewarded();
+      context.read<Ads>().preloadRefresh();
     }
     _refresh();
   }
@@ -109,16 +115,15 @@ class _RanksTabState extends State<RanksTab> {
     _refresh();
   }
 
-  Future<void> _refresh({bool force = false, bool rewarded = false}) async {
+  Future<void> _refresh({bool now = false}) async {
     final game = _game;
     final difficulty = _boardDifficulty;
     setState(() => _loading = true);
     final load = await context.read<Leaderboard>().load(
       game,
       difficulty,
-      refresh: force,
-      rewarded: rewarded,
       offline: !_online,
+      refresh: now,
     );
     // Ignore answers for a board the user already switched away from.
     if (!mounted || game != _game || difficulty != _boardDifficulty) {
@@ -130,25 +135,62 @@ class _RanksTabState extends State<RanksTab> {
     });
   }
 
-  /// "Refresh ▶": a rewarded ad, then a refresh. Without a ready ad the
-  /// refresh is free (the leaderboard applies the longer cooldown).
-  void _refreshNow() {
+  /// 00:00 UTC passed while the app is open: only a visible Ranks tab
+  /// fetches (a hidden one does on its next open), after a random delay so
+  /// open devices don't all hit the server in the same second.
+  void _onReset() {
+    _resetTimer?.cancel();
+    _resetTimer = Timer(Duration(seconds: Random().nextInt(60)), () {
+      if (mounted && _visible) {
+        _refresh();
+      }
+    });
+  }
+
+  /// "Refresh ▶": an intro with an opt-out (required before a rewarded
+  /// interstitial), the ad, then everyone's latest scores.
+  Future<void> _refreshNow() async {
     if (!_online) {
       return;
     }
-    final ads = context.read<Ads>();
-    if (ads.refreshRewardedReady.value) {
-      ads.showRefreshRewarded(
-        onReward: () {
-          if (mounted) {
-            _refresh(force: true, rewarded: true);
-          }
-        },
-        onDone: () {},
-      );
-    } else {
-      _refresh(force: true);
+    final watch = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: LS.surface,
+        shape: chamfer(Cut.lg, border: LS.line),
+        title: const DisplayText('Refresh now?', size: 24),
+        content: Text(
+          'Watch a short ad to get everyone’s latest scores now instead of '
+          'at 00:00 UTC.',
+          style: LSText.body(15, color: LS.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const MonoLabel('No thanks', weight: FontWeight.w700),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const MonoLabel(
+              'Watch ad',
+              weight: FontWeight.w700,
+              color: LS.teal,
+            ),
+          ),
+        ],
+      ),
+    );
+    if (watch != true || !mounted) {
+      return;
     }
+    context.read<Ads>().showRefresh(
+      onReward: () {
+        if (mounted) {
+          _refresh(now: true);
+        }
+      },
+      onDone: () {},
+    );
   }
 
   Future<void> _chooseName() async {
@@ -159,6 +201,7 @@ class _RanksTabState extends State<RanksTab> {
 
   @override
   void dispose() {
+    _resetTimer?.cancel();
     _tabs?.removeListener(_onTabChange);
     _network?.online.removeListener(_onNetworkChange);
     super.dispose();
@@ -169,10 +212,10 @@ class _RanksTabState extends State<RanksTab> {
     if (load?.message != null) {
       return load!.message!;
     }
-    final at = load?.updatedAt;
+    final at = context.read<Leaderboard>().fetchedAt;
     return at == null
-        ? _game.titleWith(_boardDifficulty)
-        : 'Updated ${formatDayTime(at, now: now)}';
+        ? 'Updates daily at 00:00 UTC'
+        : 'Updated ${formatDayTime(at, now: now)} · daily 00:00 UTC';
   }
 
   /// When the player's best on this board was set, from local History.
@@ -190,13 +233,12 @@ class _RanksTabState extends State<RanksTab> {
   Widget build(BuildContext context) {
     final leaderboard = context.watch<Leaderboard>();
     final app = context.watch<AppState>();
-    final ads = context.read<Ads>();
     final network = context.read<Network>();
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final now = leaderboard.now();
     final load = _load;
     final me = leaderboard.playerId;
-    final name = leaderboard.savedName;
+    final name = leaderboard.displayName;
     final entries = load?.entries ?? const <LeaderboardEntry>[];
     final myRank = load?.myRank;
     final timed = _game.tracksTime;
@@ -219,9 +261,9 @@ class _RanksTabState extends State<RanksTab> {
                   ValueListenableBuilder<bool>(
                     valueListenable: network.online,
                     builder: (context, online, _) => online
-                        ? RefreshAction(
+                        ? _RefreshButton(
                             wait: leaderboard.refreshWait,
-                            adReady: ads.refreshRewardedReady,
+                            adReady: context.read<Ads>().refreshReady,
                             busy: _loading,
                             onPressed: _refreshNow,
                           )
@@ -241,6 +283,10 @@ class _RanksTabState extends State<RanksTab> {
               ),
               const SizedBox(height: 5),
               MonoLabel(_subtitle(now)),
+              if (_online) ...[
+                const SizedBox(height: 4),
+                _NextUpdate(now: leaderboard.now, onReset: _onReset),
+              ],
             ],
           ),
         ),
@@ -451,6 +497,164 @@ class _Empty extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// "Next update 7h 12m" until the next 00:00 UTC; ticks every 20 s and calls
+/// [onReset] once the reset passes (the tab then fetches the new boards).
+class _NextUpdate extends StatefulWidget {
+  const _NextUpdate({required this.now, required this.onReset});
+
+  final DateTime Function() now;
+  final VoidCallback onReset;
+
+  @override
+  State<_NextUpdate> createState() => _NextUpdateState();
+}
+
+class _NextUpdateState extends State<_NextUpdate> {
+  late DateTime _next = Leaderboard.nextReset(widget.now());
+  late final Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (!widget.now().isBefore(_next)) {
+        _next = Leaderboard.nextReset(widget.now());
+        widget.onReset();
+      }
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final left = _next.difference(widget.now());
+    final hours = left.inHours;
+    final minutes = left.inMinutes.remainder(60).clamp(0, 59);
+    final label = hours > 0 ? '${hours}h ${minutes}m' : '${max(minutes, 1)}m';
+    return Semantics(
+      label: 'Next update for everyone in $label',
+      excludeSemantics: true,
+      child: Row(
+        children: [
+          const Icon(Icons.schedule_rounded, size: 13, color: LS.teal),
+          const SizedBox(width: 5),
+          MonoLabel(
+            'Next update $label',
+            size: 10,
+            weight: FontWeight.w700,
+            color: LS.teal,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Refresh ▶" in the Ranks header: plays the rewarded interstitial, then
+/// pulls everyone's latest scores. Disabled until the ad has loaded; during
+/// the cooldown it reads "Refresh in 28m" and ticks (only this widget
+/// rebuilds).
+class _RefreshButton extends StatefulWidget {
+  const _RefreshButton({
+    required this.wait,
+    required this.adReady,
+    required this.busy,
+    required this.onPressed,
+  });
+
+  /// Remaining cooldown (zero when a refresh is allowed).
+  final Duration Function() wait;
+  final ValueListenable<bool> adReady;
+  final bool busy;
+  final VoidCallback onPressed;
+
+  @override
+  State<_RefreshButton> createState() => _RefreshButtonState();
+}
+
+class _RefreshButtonState extends State<_RefreshButton> {
+  Timer? _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncTicker();
+  }
+
+  @override
+  void didUpdateWidget(_RefreshButton old) {
+    super.didUpdateWidget(old);
+    _syncTicker();
+  }
+
+  void _syncTicker() {
+    if (widget.wait() > Duration.zero) {
+      _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
+        if (widget.wait() <= Duration.zero) {
+          _ticker?.cancel();
+          _ticker = null;
+        }
+        setState(() {});
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final wait = widget.wait();
+    final cooling = wait > Duration.zero;
+    return ValueListenableBuilder<bool>(
+      valueListenable: widget.adReady,
+      builder: (context, ad, _) {
+        final enabled = !cooling && ad && !widget.busy;
+        final label = cooling
+            ? 'Refresh in ${wait > const Duration(minutes: 1) ? '${(wait.inSeconds / 60).ceil()}m' : '${(wait.inMilliseconds / 1000).ceil()}s'}'
+            : 'Refresh';
+        final icon = cooling
+            ? Icons.timer_outlined
+            : (ad ? Icons.play_circle_outline_rounded : Icons.hourglass_empty);
+        final color = enabled ? LS.teal : LS.dim;
+        return Semantics(
+          button: true,
+          enabled: enabled,
+          label: cooling
+              ? label
+              : (ad ? 'Refresh now, watch an ad' : 'Refresh, ad loading'),
+          excludeSemantics: true,
+          child: ChamferBox(
+            cut: Cut.sm,
+            height: 44,
+            borderColor: null,
+            color: LS.surface2,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            onTap: enabled ? widget.onPressed : null,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                MonoLabel(label, weight: FontWeight.w700, color: color),
+                const SizedBox(width: 6),
+                Icon(icon, size: 18, color: color),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

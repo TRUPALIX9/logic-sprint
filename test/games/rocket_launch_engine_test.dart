@@ -168,13 +168,13 @@ void main() {
     }
 
     var (interval, speed) = at(0);
-    for (final seconds in [30, 45, 60, 90, 120]) {
+    for (final seconds in [30, 45, 60, 90, 120, 240, 420]) {
       final (nextInterval, nextSpeed) = at(seconds);
       expect(nextInterval, lessThan(interval), reason: 'spawn at $seconds s');
       expect(nextSpeed, greaterThan(speed), reason: 'speed at $seconds s');
       (interval, speed) = (nextInterval, nextSpeed);
     }
-    expect(at(300), (interval, speed), reason: 'capped after 120 s');
+    expect(at(600), (interval, speed), reason: 'capped after 420 s');
     engine.dispose();
   });
 

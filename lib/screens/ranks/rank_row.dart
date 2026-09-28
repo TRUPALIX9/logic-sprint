@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../../core/format.dart';
@@ -6,9 +8,10 @@ import '../../models/leaderboard_entry.dart';
 import '../../ui/chamfer.dart';
 import '../../ui/kit.dart';
 
-/// One 56 px leaderboard row: rank, name (+ YOU), a dim detail line (when
-/// the best was set) with an optional movement chip, the run time for timed
-/// games, and the score.
+/// One 56 px leaderboard row: rank, name (its "#0420" tag dimmed) + YOU, a
+/// dim detail line (when the best was set) with an optional movement chip,
+/// the run time for timed games, and the score. The player's own row shines
+/// a few times when it appears.
 class RankRow extends StatelessWidget {
   const RankRow({
     super.key,
@@ -46,7 +49,10 @@ class RankRow extends StatelessWidget {
     final detail = this.detail;
     final move = this.move;
     final showChip = move != null && move.kind != RankMoveKind.same;
-    return ChamferBox(
+    final hash = name.lastIndexOf('#');
+    final hasTag =
+        hash > 0 && RegExp(r'^\d{4}$').hasMatch(name.substring(hash + 1));
+    final row = ChamferBox(
       cut: Cut.sm,
       height: height,
       color: highlight?.withValues(alpha: 0.06) ?? LS.surface,
@@ -78,8 +84,21 @@ class RankRow extends StatelessWidget {
                 Row(
                   children: [
                     Flexible(
-                      child: Text(
-                        name,
+                      child: Text.rich(
+                        TextSpan(
+                          text: hasTag ? name.substring(0, hash) : name,
+                          children: [
+                            if (hasTag)
+                              TextSpan(
+                                text: name.substring(hash),
+                                style: LSText.mono(
+                                  11,
+                                  color: LS.dim,
+                                  spacing: 0,
+                                ),
+                              ),
+                          ],
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: LSText.body(
@@ -147,6 +166,93 @@ class RankRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+    return isYou ? _YouShine(child: row) : row;
+  }
+}
+
+/// A light sweep across the player's row and a pulsing teal glow, three
+/// times when it appears (none with reduce motion).
+class _YouShine extends StatefulWidget {
+  const _YouShine({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_YouShine> createState() => _YouShineState();
+}
+
+class _YouShineState extends State<_YouShine>
+    with SingleTickerProviderStateMixin {
+  late final _shine = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _shine.stop();
+    } else if (!_shine.isAnimating && _shine.value == 0) {
+      _shine.repeat(count: 3);
+    }
+  }
+
+  @override
+  void dispose() {
+    _shine.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _shine,
+      child: widget.child,
+      builder: (context, child) {
+        final t = _shine.value;
+        if (!_shine.isAnimating || t == 0) {
+          return child!;
+        }
+        final glow = sin(t * pi);
+        return DecoratedBox(
+          decoration: ShapeDecoration(
+            shape: chamfer(Cut.sm),
+            shadows: [
+              BoxShadow(
+                color: LS.teal.withValues(alpha: 0.35 * glow),
+                blurRadius: 14 * glow,
+              ),
+            ],
+          ),
+          child: ClipPath(
+            clipper: ShapeBorderClipper(shape: chamfer(Cut.sm)),
+            child: Stack(
+              children: [
+                child!,
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment(-1 + 4 * t - 1.2, -0.4),
+                          end: Alignment(-1 + 4 * t - 0.2, 0.4),
+                          colors: [
+                            LS.teal.withValues(alpha: 0),
+                            LS.teal.withValues(alpha: 0.22),
+                            LS.teal.withValues(alpha: 0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

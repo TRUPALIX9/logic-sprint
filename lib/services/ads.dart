@@ -3,21 +3,19 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-/// AdMob banner + rewarded ads ("extra life" revive, and "Refresh now" on
-/// the Ranks tab), gated behind Google UMP consent.
+/// AdMob banner + rewarded ads ("extra life" revive) + a rewarded
+/// interstitial (the Ranks "Refresh ▶"), gated behind Google UMP consent.
 ///
 /// Unit IDs come from `--dart-define-from-file=config/admob.json`
 /// (template: config/admob.example.json). Debug and profile builds fall back
 /// to Google's test IDs; a release build without an ID shows no such ad.
-/// `ADMOB_REFRESH_REWARDED_ID` is optional: without it the Ranks refresh uses
-/// the revive unit (and the same preloaded ad).
 class Ads {
   Ads();
 
   static const _bannerId = String.fromEnvironment('ADMOB_BANNER_ID');
   static const _rewardedId = String.fromEnvironment('ADMOB_REWARDED_ID');
-  static const _refreshRewardedId = String.fromEnvironment(
-    'ADMOB_REFRESH_REWARDED_ID',
+  static const _refreshId = String.fromEnvironment(
+    'ADMOB_REFRESH_INTERSTITIAL_ID',
   );
 
   // Official Google test unit IDs.
@@ -25,6 +23,10 @@ class Ads {
   static const iosTestBanner = 'ca-app-pub-3940256099942544/2934735716';
   static const androidTestRewarded = 'ca-app-pub-3940256099942544/5224354917';
   static const iosTestRewarded = 'ca-app-pub-3940256099942544/1712485313';
+  static const androidTestRewardedInterstitial =
+      'ca-app-pub-3940256099942544/5354046379';
+  static const iosTestRewardedInterstitial =
+      'ca-app-pub-3940256099942544/6978759866';
 
   /// True once consent allows ad requests and the SDK is initialized.
   final ValueNotifier<bool> ready = ValueNotifier(false);
@@ -33,31 +35,31 @@ class Ads {
   final ValueNotifier<bool> privacyOptionsRequired = ValueNotifier(false);
 
   late final _RewardedSlot _revive = _RewardedSlot(rewardedUnitId);
-
-  // One unit → one shared slot, so the same ad isn't preloaded twice.
-  late final _RewardedSlot _refresh = refreshRewardedUnitId == rewardedUnitId
-      ? _revive
-      : _RewardedSlot(refreshRewardedUnitId);
+  late final _RewardedSlot _refresh = _RewardedSlot(
+    refreshUnitId,
+    interstitial: true,
+  );
 
   /// True while a rewarded ad is loaded and can be offered as a revive.
   ValueNotifier<bool> get rewardedReady => _revive.loaded;
 
-  /// True while a rewarded ad is loaded for the Ranks "Refresh now".
-  ValueNotifier<bool> get refreshRewardedReady => _refresh.loaded;
+  /// True while the Ranks refresh ad is loaded.
+  ValueNotifier<bool> get refreshReady => _refresh.loaded;
 
   String get bannerUnitId =>
       _resolve(_bannerId, androidTestBanner, iosTestBanner);
   String get rewardedUnitId =>
       _resolve(_rewardedId, androidTestRewarded, iosTestRewarded);
-
-  /// The Ranks refresh unit, or the revive unit when none is configured.
-  String get refreshRewardedUnitId =>
-      _refreshRewardedId.isNotEmpty ? _refreshRewardedId : rewardedUnitId;
+  String get refreshUnitId => _resolve(
+    _refreshId,
+    androidTestRewardedInterstitial,
+    iosTestRewardedInterstitial,
+  );
 
   bool get isConfigured =>
       bannerUnitId.isNotEmpty ||
       rewardedUnitId.isNotEmpty ||
-      refreshRewardedUnitId.isNotEmpty;
+      refreshUnitId.isNotEmpty;
 
   static String _resolve(String configured, String android, String ios) {
     if (configured.isNotEmpty) {
@@ -119,14 +121,14 @@ class Ads {
   }) => _revive.show(onReward: onReward, onDone: onDone);
 
   /// Loads the Ranks refresh ad if none is ready (call when Ranks opens).
-  void preloadRefreshRewarded() {
+  void preloadRefresh() {
     if (ready.value) {
       _refresh.load();
     }
   }
 
   /// Shows the Ranks refresh ad; same contract as [showRewarded].
-  void showRefreshRewarded({
+  void showRefresh({
     required VoidCallback onReward,
     required VoidCallback onDone,
   }) => _refresh.show(onReward: onReward, onDone: onDone);
@@ -158,18 +160,20 @@ class Ads {
     }
     await MobileAds.instance.initialize();
     ready.value = true;
-    // The refresh slot (if separate) loads when Ranks opens.
+    // The refresh ad loads when Ranks opens.
     _revive.load();
   }
 }
 
-/// One preloaded [RewardedAd] for one ad unit; reloads after each show.
+/// One preloaded rewarded ad ([RewardedAd], or [RewardedInterstitialAd]
+/// when [interstitial]) for one ad unit; reloads after each show.
 class _RewardedSlot {
-  _RewardedSlot(this.unitId);
+  _RewardedSlot(this.unitId, {this.interstitial = false});
 
   final String unitId;
+  final bool interstitial;
   final ValueNotifier<bool> loaded = ValueNotifier(false);
-  RewardedAd? _ad;
+  AdWithoutView? _ad;
   bool _loading = false;
 
   void load() {
@@ -177,23 +181,38 @@ class _RewardedSlot {
       return;
     }
     _loading = true;
-    RewardedAd.load(
-      adUnitId: unitId,
-      request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) {
-          _loading = false;
-          _ad = ad;
-          loaded.value = true;
-        },
-        onAdFailedToLoad: (error) {
-          debugPrint('Ads: rewarded ($unitId) failed to load: $error');
-          _loading = false;
-          _ad = null;
-          loaded.value = false;
-        },
-      ),
-    );
+    void onLoaded(AdWithoutView ad) {
+      _loading = false;
+      _ad = ad;
+      loaded.value = true;
+    }
+
+    void onFailed(LoadAdError error) {
+      debugPrint('Ads: rewarded ($unitId) failed to load: $error');
+      _loading = false;
+      _ad = null;
+      loaded.value = false;
+    }
+
+    if (interstitial) {
+      RewardedInterstitialAd.load(
+        adUnitId: unitId,
+        request: const AdRequest(),
+        rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
+          onAdLoaded: onLoaded,
+          onAdFailedToLoad: onFailed,
+        ),
+      );
+    } else {
+      RewardedAd.load(
+        adUnitId: unitId,
+        request: const AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: onLoaded,
+          onAdFailedToLoad: onFailed,
+        ),
+      );
+    }
   }
 
   void show({required VoidCallback onReward, required VoidCallback onDone}) {
@@ -211,10 +230,23 @@ class _RewardedSlot {
       load();
     }
 
-    ad.fullScreenContentCallback = FullScreenContentCallback(
-      onAdDismissedFullScreenContent: (_) => close(),
-      onAdFailedToShowFullScreenContent: (_, _) => close(),
-    );
-    ad.show(onUserEarnedReward: (_, _) => earned = true);
+    switch (ad) {
+      case RewardedInterstitialAd():
+        ad
+          ..fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (_) => close(),
+            onAdFailedToShowFullScreenContent: (_, _) => close(),
+          )
+          ..show(onUserEarnedReward: (_, _) => earned = true);
+      case RewardedAd():
+        ad
+          ..fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (_) => close(),
+            onAdFailedToShowFullScreenContent: (_, _) => close(),
+          )
+          ..show(onUserEarnedReward: (_, _) => earned = true);
+      default:
+        close();
+    }
   }
 }

@@ -28,7 +28,7 @@ class ProfileTab extends StatelessWidget {
       children: [
         const DisplayText('Profile', size: 30),
         const SizedBox(height: 16),
-        _NameCard(name: leaderboard.savedName, runs: app.totalPlays),
+        _NameCard(name: leaderboard.displayName, runs: app.totalPlays),
         const SizedBox(height: 22),
         const MonoLabel('Your bests'),
         const SizedBox(height: 10),

@@ -184,6 +184,38 @@ void main() {
     expect(text('^paused\$'), findsNothing);
   });
 
+  testWidgets('the bar is || and the score; || turns into resume', (
+    tester,
+  ) async {
+    await pumpRound(tester);
+    expect(text(GameId.quickMath.title), findsNothing);
+    expect(find.byTooltip('Quit round'), findsNothing, reason: 'no back');
+    expect(text('^score\$'), findsOneWidget);
+    expect(text('^0\$'), findsOneWidget);
+    expect(find.byTooltip('Pause'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Pause'));
+    await tester.pump();
+    expect(engine.state, RunState.paused);
+    expect(find.byTooltip('Pause'), findsNothing);
+
+    // The bar's resume stays reachable above the paused card.
+    await tester.tap(find.byTooltip('Resume'));
+    await tester.pump();
+    expect(engine.state, RunState.playing);
+    expect(find.byTooltip('Pause'), findsOneWidget);
+  });
+
+  testWidgets("the phone's back button pauses instead of quitting", (
+    tester,
+  ) async {
+    await pumpRound(tester);
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(engine.state, RunState.paused);
+    expect(roundScreen, findsOneWidget);
+  });
+
   testWidgets('the pause button pauses; End run finishes', (tester) async {
     await pumpRound(tester);
     await tester.tap(find.byTooltip('Pause'));

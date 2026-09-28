@@ -46,6 +46,16 @@ class LeaderboardEntry {
     );
   }
 
+  LeaderboardEntry withName(String name) => LeaderboardEntry(
+    playerId: playerId,
+    playerName: name,
+    score: score,
+    game: game,
+    difficulty: difficulty,
+    duration: duration,
+    bestAt: bestAt,
+  );
+
   /// Same shape as the view row, so the cache round-trips via [fromRow].
   Map<String, dynamic> toRow() => {
     'player_id': playerId,

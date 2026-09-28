@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logic_sprint/app.dart';
+import 'package:logic_sprint/games/rocket_launch/rocket_launch_engine.dart';
 import 'package:logic_sprint/models/game.dart';
 import 'package:logic_sprint/models/round_result.dart';
 import 'package:logic_sprint/models/run_record.dart';
@@ -59,26 +60,28 @@ const _prefs = <String, Object>{
   'lastGame': 'quickMath',
   'lastDifficulty': 'medium',
   'playerName': 'NEON_FOX',
+  'playerTag': 420,
+  'rocketShip': 'missile',
   'hearts': 2,
 };
 
-/// Sample Top 10 (Quick Math · Medium) for the Ranks shot. NEON_FOX is the
-/// player ("me" in FakeLeaderboardApi).
+/// Sample Top 10 (Quick Math · Medium) for the Ranks shot. NEON_FOX#0420 is
+/// the player ("me" in FakeLeaderboardApi); two players share AXON.
 final _ranks = [
   for (final (i, (name, score, seconds)) in const [
-    ('AXON', 610, 131),
-    ('SYNAPSE_9', 560, 118),
-    ('KIRA-X', 520, 122),
-    ('BITWISE', 490, 97),
-    ('NEON_FOX', 420, 84),
-    ('LUMEN', 390, 88),
-    ('DENDRITE', 360, 79),
-    ('VOLT_RAY', 330, 90),
-    ('PIXEL_OWL', 310, 71),
-    ('QUARK', 290, 76),
+    ('AXON#1187', 610, 131),
+    ('SYNAPSE_9#3918', 560, 118),
+    ('KIRA-X#0649', 520, 122),
+    ('BITWISE#5380', 490, 97),
+    ('NEON_FOX#0420', 420, 84),
+    ('LUMEN#2203', 390, 88),
+    ('DENDRITE#9075', 360, 79),
+    ('AXON#7741', 330, 90),
+    ('PIXEL_OWL#4466', 310, 71),
+    ('QUARK#0812', 290, 76),
   ].indexed)
     {
-      'player_id': name == 'NEON_FOX' ? 'me' : 'p$i',
+      'player_id': name == 'NEON_FOX#0420' ? 'me' : 'p$i',
       'player_name': name,
       'score': score,
       'game_type': 'quickMath',
@@ -220,6 +223,8 @@ Future<void> _startFromSheet(
   await _frames(tester, const Duration(milliseconds: 500));
 }
 
+const _frame = Duration(milliseconds: 16);
+
 void main() {
   setUpAll(_loadFonts);
 
@@ -230,9 +235,8 @@ void main() {
 
   testWidgets('02 game sheet', skip: _skip, (tester) async {
     await _pumpApp(tester);
-    await tester.tap(find.text('MEMORY LANE'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('MEDIUM'));
+    // Rocket Launch's sheet: rules, best, and the ship picker.
+    await tester.tap(find.text('ROCKET LAUNCH').last);
     await tester.pumpAndSettle();
     await _capture(tester, '02_game_sheet');
   });
@@ -240,12 +244,38 @@ void main() {
   testWidgets('03 rocket launch', skip: _skip, (tester) async {
     await _pumpApp(tester);
     await _startFromSheet(tester, 'ROCKET LAUNCH');
-    await _frames(tester, const Duration(seconds: 3));
-    // Asteroids are random: take a few shots and keep one without a hit flash.
+    final engine =
+        (tester.widget(
+                      find.byWidgetPredicate(
+                        (w) => w.runtimeType.toString() == '_RocketLaunchBody',
+                      ),
+                    )
+                    as dynamic)
+                .engine
+            as RocketLaunchEngine;
+    // Past 3750 points: the purple Nebula theme, fully rolled in.
+    engine.score = 3 * RocketLaunchEngine.themeEvery + 180;
+    // Rocks never reach the ship, so no take ends in a crash.
+    Future<void> fly(Duration duration) async {
+      for (var t = Duration.zero; t < duration; t += _frame) {
+        engine.asteroids.removeWhere((rock) => rock.y > 0.7);
+        await tester.pump(_frame);
+      }
+    }
+
+    await fly(const Duration(seconds: 4));
+    // A finger held left of centre: the ship steers there and the
+    // "Touch and drag" hint fades out.
+    final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+    final finger = await tester.startGesture(
+      Offset(size.width * 0.38, size.height * 0.8),
+    );
+    await fly(const Duration(seconds: 1));
     for (var take = 1; take <= 4; take++) {
-      await _frames(tester, const Duration(milliseconds: 700));
+      await fly(const Duration(milliseconds: 700));
       await _capture(tester, '03_rocket_launch_take$take');
     }
+    await finger.up();
     await _teardown(tester);
   });
 

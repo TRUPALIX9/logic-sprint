@@ -107,7 +107,10 @@ void main() {
     final h = await _setUp();
     await _pump(tester, h);
 
-    expect(find.text('UPDATED TODAY, 3:00 PM'), findsOneWidget);
+    expect(
+      find.text('UPDATED TODAY, 3:00 PM · DAILY 00:00 UTC'),
+      findsOneWidget,
+    );
     expect(find.text('#1 SINCE SEP 10'), findsOneWidget);
     expect(find.text('2 H AGO'), findsOneWidget);
     expect(find.text('YESTERDAY'), findsOneWidget);
@@ -116,7 +119,11 @@ void main() {
     // Outside the Top 10: pinned under the list.
     expect(find.text('#14'), findsOneWidget);
     expect(find.text('YOUR BEST'), findsOneWidget);
-    expect(find.text('REFRESH'), findsOneWidget);
+    expect(
+      find.textContaining(RegExp(r'^NEXT UPDATE \d+H \d+M$')),
+      findsOneWidget,
+    );
+    expect(find.text('REFRESH'), findsOneWidget, reason: 'waits for its ad');
   });
 
   testWidgets('a changed board: chips, dates and the climb banner', (
@@ -142,7 +149,10 @@ void main() {
     expect(find.text('YESTERDAY'), findsOneWidget);
     expect(find.text('SEP 9'), findsOneWidget);
     expect(find.text('#14'), findsNothing, reason: 'now in the list');
-    expect(find.text('UPDATED TODAY, 3:00 PM'), findsOneWidget);
+    expect(
+      find.text('UPDATED TODAY, 3:00 PM · DAILY 00:00 UTC'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('reduced motion: the final state and chips at once', (
@@ -165,35 +175,39 @@ void main() {
     expect(find.text('#4'), findsOneWidget, reason: 'rank ticker at the end');
   });
 
-  testWidgets('a free refresh (no ad ready) starts the 5 min cooldown', (
+  testWidgets('the countdown reaching 00:00 UTC fetches the new day', (
     tester,
   ) async {
     final h = await _setUp();
     await _pump(tester, h);
+    expect(h.api.fetches, 1);
 
-    await tester.tap(find.text('REFRESH'));
+    h.nextDay();
+    await tester.pump(const Duration(seconds: 20));
+    await tester.pump(const Duration(seconds: 60)); // random spread
     await tester.pumpAndSettle();
-    expect(h.api.topCalls, hasLength(2));
-    expect(find.text('REFRESH IN 5:00'), findsOneWidget);
+    expect(h.api.fetches, 2);
+    expect(find.text('NEW'), findsOneWidget, reason: 'the player entered');
   });
 
-  testWidgets('offline: no ad action, the saved board, restored online', (
-    tester,
-  ) async {
+  testWidgets('offline: the saved board, restored online', (tester) async {
     final h = await _setUp(online: false);
     await h.leaderboard.load(_game, _difficulty);
     await _pump(tester, h);
 
     expect(find.text('OFFLINE'), findsOneWidget);
-    expect(find.text('REFRESH'), findsNothing);
+    expect(find.textContaining('NEXT UPDATE'), findsNothing);
     expect(find.text('OFFLINE — SHOWING SAVED SCORES.'), findsOneWidget);
     expect(find.text('AXON'), findsOneWidget);
-    expect(h.api.topCalls, hasLength(1), reason: 'no server call offline');
+    expect(h.api.fetches, 1, reason: 'no server call offline');
 
     h.network.online.value = true;
     await tester.pumpAndSettle();
     expect(find.text('OFFLINE'), findsNothing);
-    expect(find.text('REFRESH'), findsOneWidget);
-    expect(find.text('UPDATED TODAY, 3:00 PM'), findsOneWidget);
+    expect(find.textContaining('NEXT UPDATE'), findsOneWidget);
+    expect(
+      find.text('UPDATED TODAY, 3:00 PM · DAILY 00:00 UTC'),
+      findsOneWidget,
+    );
   });
 }

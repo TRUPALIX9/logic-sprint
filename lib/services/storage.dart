@@ -106,9 +106,23 @@ class Storage {
   Future<void> setVibrationOn(bool value) =>
       _prefs.setBool('isVibrationEnabled', value);
 
+  /// Rocket Launch easter-egg lines this player has already seen.
+  List<String> get whispersSeen => _prefs.getStringList('whispersSeen') ?? [];
+  Future<void> setWhispersSeen(List<String> lines) =>
+      _prefs.setStringList('whispersSeen', lines);
+
+  /// Rocket Launch ship, by [ShipKind.name].
+  String? get rocketShip => _prefs.getString('rocketShip');
+  Future<void> setRocketShip(String value) =>
+      _prefs.setString('rocketShip', value);
+
   String? get playerName => _prefs.getString('playerName');
   Future<void> setPlayerName(String value) =>
       _prefs.setString('playerName', value);
+
+  /// The 4-digit tag that goes with [playerName] ("NAME#0420").
+  int? get playerTag => _prefs.getInt('playerTag');
+  Future<void> setPlayerTag(int value) => _prefs.setInt('playerTag', value);
 
   /// Last game + difficulty played, for Home's "Jump back in".
   (GameId, Difficulty)? get lastPlayed {
@@ -140,6 +154,7 @@ class Storage {
   Future<void> setLeaderboardCache(String json) =>
       _prefs.setString('leaderboardBoards', json);
 
+  /// When "Refresh ▶" last fetched the boards.
   DateTime? get lastLeaderboardRefresh {
     final millis = _prefs.getInt('leaderboardLastRefreshAt');
     return millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis);

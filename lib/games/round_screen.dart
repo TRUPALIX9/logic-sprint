@@ -11,7 +11,6 @@ import '../services/ads.dart';
 import '../services/leaderboard.dart';
 import '../services/network.dart';
 import '../state/app_state.dart';
-import '../ui/ad_banner.dart';
 import '../ui/chamfer.dart';
 import '../ui/game_bar.dart';
 import '../ui/kit.dart';
@@ -34,7 +33,7 @@ bool offersRevive(
 
 /// Hosts one endless run: builds the engine, starts it after the first frame,
 /// shows the game bar, pauses when the app leaves the foreground (or on the
-/// pause button), offers a revive (heart or rewarded ad) when the run goes
+/// pause button or the phone's back button), offers a revive (heart or rewarded ad) when the run goes
 /// down, then saves the best and replaces itself with the Result screen.
 class RoundScreen<T extends RoundEngine> extends StatefulWidget {
   const RoundScreen({
@@ -43,16 +42,12 @@ class RoundScreen<T extends RoundEngine> extends StatefulWidget {
     required this.difficulty,
     required this.createEngine,
     required this.builder,
-    this.subtitle,
   });
 
   final GameId game;
   final Difficulty difficulty;
   final T Function(RoundFeedback feedback, int previousBest) createEngine;
   final Widget Function(BuildContext context, T engine) builder;
-
-  /// Overrides the difficulty label under the title (e.g. "MEDIUM · 4×4").
-  final String? subtitle;
 
   @override
   State<RoundScreen<T>> createState() => _RoundScreenState<T>();
@@ -185,50 +180,61 @@ class _RoundScreenState<T extends RoundEngine> extends State<RoundScreen<T>> {
   @override
   Widget build(BuildContext context) {
     final hearts = context.select<AppState, int>((app) => app.hearts);
-    return Scaffold(
-      backgroundColor: LS.bg,
-      body: SafeArea(
-        child: AnimatedBuilder(
-          animation: _engine,
-          builder: (context, _) => Stack(
-            children: [
-              Column(
-                children: [
-                  GameBar(
-                    game: widget.game,
-                    subtitle:
-                        widget.subtitle ??
-                        (widget.game.hasDifficulty
-                            ? widget.difficulty.label
-                            : widget.game.skill),
-                    score: _engine.score,
-                    onPause: _engine.pause,
-                  ),
-                  Expanded(child: widget.builder(context, _engine)),
-                ],
-              ),
-              if (_engine.isPaused)
-                _PausedOverlay(
+    // The phone's back button pauses a live run instead of throwing it
+    // away; End run on the paused card is the way out.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _engine.pause();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: LS.bg,
+        body: SafeArea(
+          child: AnimatedBuilder(
+            animation: _engine,
+            // The bar stays above the overlays so Back and Resume work while
+            // paused.
+            builder: (context, _) => Column(
+              children: [
+                GameBar(
+                  game: widget.game,
                   score: _engine.score,
+                  paused: _engine.isPaused,
+                  onPause: _engine.isPlaying ? _engine.pause : null,
                   onResume: _engine.resume,
-                  onEnd: _engine.finish,
                 ),
-              if (_offering && _engine.state == RunState.down)
-                ValueListenableBuilder<bool>(
-                  valueListenable: _ads.rewardedReady,
-                  builder: (context, adReady, _) => ReviveOffer(
-                    // A fresh offer (and countdown) for every down.
-                    key: ValueKey(_engine.revives),
-                    score: _engine.score,
-                    revives: _engine.revives,
-                    hearts: hearts,
-                    adReady: adReady,
-                    onHeart: _useHeart,
-                    onWatch: _watchAd,
-                    onEnd: _engine.finish,
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Positioned.fill(child: widget.builder(context, _engine)),
+                      if (_engine.isPaused)
+                        _PausedOverlay(
+                          score: _engine.score,
+                          onResume: _engine.resume,
+                          onEnd: _engine.finish,
+                        ),
+                      if (_offering && _engine.state == RunState.down)
+                        ValueListenableBuilder<bool>(
+                          valueListenable: _ads.rewardedReady,
+                          builder: (context, adReady, _) => ReviveOffer(
+                            // A fresh offer (and countdown) for every down.
+                            key: ValueKey(_engine.revives),
+                            score: _engine.score,
+                            revives: _engine.revives,
+                            hearts: hearts,
+                            adReady: adReady,
+                            onHeart: _useHeart,
+                            onWatch: _watchAd,
+                            onEnd: _engine.finish,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -238,12 +244,9 @@ class _RoundScreenState<T extends RoundEngine> extends State<RoundScreen<T>> {
 
 /// Dark scrim with a chamfered card in the middle.
 class _Scrim extends StatelessWidget {
-  const _Scrim({required this.child, this.top});
+  const _Scrim({required this.child});
 
   final Widget child;
-
-  /// Pinned above the card (e.g. an ad slot).
-  final Widget? top;
 
   @override
   Widget build(BuildContext context) {
@@ -259,21 +262,14 @@ class _Scrim extends StatelessWidget {
     return Positioned.fill(
       child: ColoredBox(
         color: const Color(0xD9000000),
-        child: Column(
-          children: [
-            ?top,
-            Expanded(
-              child: Center(child: SingleChildScrollView(child: card)),
-            ),
-          ],
-        ),
+        child: Center(child: SingleChildScrollView(child: card)),
       ),
     );
   }
 }
 
-/// The run on hold (app backgrounded or the pause button). Only Resume
-/// continues it; returning to the app doesn't.
+/// The run on hold (app backgrounded or the pause button). Only Resume (here
+/// or in the bar) continues it; returning to the app doesn't.
 class _PausedOverlay extends StatelessWidget {
   const _PausedOverlay({
     required this.score,
@@ -288,13 +284,6 @@ class _PausedOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _Scrim(
-      // ── Ad slot ── The banner sits at the very top, with at least 48 px
-      // before the card so it can't be mistaken for (or tapped instead of)
-      // Resume / End run.
-      top: const Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [AdBanner(), SizedBox(height: 48)],
-      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

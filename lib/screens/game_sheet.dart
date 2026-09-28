@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../core/theme.dart';
 import '../games/games.dart';
+import '../games/rocket_launch/rocket_look.dart';
 import '../models/game.dart';
 import '../state/app_state.dart';
 import '../ui/chamfer.dart';
@@ -112,6 +113,16 @@ class _GameSheetState extends State<GameSheet> {
                   game: game,
                   best: app.best(game, GameId.rampDifficulty),
                 ),
+              if (game == GameId.rocketLaunch) ...[
+                const SizedBox(height: 18),
+                const MonoLabel('Your ship', size: 12),
+                const SizedBox(height: 10),
+                _ShipPicker(
+                  accent: game.accent,
+                  selected: app.rocketShip,
+                  onPick: app.setRocketShip,
+                ),
+              ],
               const SizedBox(height: 10),
               PrimaryButton(
                 label: 'Start',
@@ -239,6 +250,71 @@ class _DifficultyOption extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Rocket Launch's ship choice: one tile per [ShipKind], remembered on the
+/// device. Purely cosmetic; every ship has the same hit box.
+class _ShipPicker extends StatelessWidget {
+  const _ShipPicker({
+    required this.accent,
+    required this.selected,
+    required this.onPick,
+  });
+
+  final Color accent;
+  final ShipKind selected;
+  final ValueChanged<ShipKind> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final kind in ShipKind.values) ...[
+          if (kind != ShipKind.values.first) const SizedBox(width: 8),
+          Expanded(
+            child: Semantics(
+              selected: kind == selected,
+              label: kind.label,
+              excludeSemantics: true,
+              button: true,
+              child: ChamferBox(
+                height: 104,
+                color: kind == selected
+                    ? accent.withValues(alpha: 0.1)
+                    : LS.surface2,
+                borderColor: kind == selected ? accent : LS.line,
+                padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+                onTap: () => onPick(kind),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: CustomPaint(
+                        size: Size.infinite,
+                        painter: ShipPainter(
+                          kind,
+                          SpaceTheme.all.first,
+                          Duration.zero,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    FittedBox(
+                      child: MonoLabel(
+                        kind.label,
+                        size: 10,
+                        weight: FontWeight.w700,
+                        color: kind == selected ? accent : LS.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

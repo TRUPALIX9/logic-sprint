@@ -60,10 +60,15 @@ class RocketLaunchEngine extends RoundEngine {
   /// Invulnerability after a revive.
   static const reviveShield = Duration(milliseconds: 1500);
 
-  /// Calm at 0 s, the old "meteor storm" by [stormAt] s, then creeping up
-  /// to a cap at [capAt] s so it stays playable.
-  static const stormAt = 60.0;
-  static const capAt = 120.0;
+  /// Calm at 0 s, busy by [stormAt] s, then a slow creep to a cap at
+  /// [capAt] s: small steps, so a sharp player can push toward 10 000
+  /// points (about five minutes of flying).
+  static const stormAt = 90.0;
+  static const capAt = 420.0;
+
+  /// The scenery (ship, rocks, then space) changes colour every this many
+  /// points.
+  static const themeEvery = 1250;
 
   static const _fallSpeed = 0.32;
 
@@ -97,10 +102,13 @@ class RocketLaunchEngine extends RoundEngine {
   }
 
   /// Seconds between spawns right now.
-  double get spawnInterval => _ramp(_seconds, 0.75, 0.24, 0.18);
+  double get spawnInterval => _ramp(_seconds, 0.75, 0.45, 0.30);
 
   /// Fall-speed multiplier right now.
-  double get speedFactor => _ramp(_seconds, 1.0, 2.8, 3.4);
+  double get speedFactor => _ramp(_seconds, 1.0, 1.7, 2.4);
+
+  /// Which colour theme the score has reached (0 at the start).
+  int get themeLevel => score ~/ themeEvery;
 
   /// Ignored while paused, down or over (allowed before the start).
   void steerTo(double x) {

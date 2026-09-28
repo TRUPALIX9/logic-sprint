@@ -2,13 +2,18 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/theme.dart';
 import '../../models/game.dart';
+import '../../state/app_state.dart';
 import '../../ui/kit.dart';
 import '../round_engine.dart';
 import '../round_screen.dart';
 import 'rocket_launch_engine.dart';
+import 'rocket_look.dart';
+import 'space_scenery.dart';
+import 'whispers.dart';
 
 class RocketLaunchScreen extends StatelessWidget {
   const RocketLaunchScreen({super.key, required this.difficulty});
@@ -44,8 +49,33 @@ class _RocketLaunchBody extends StatefulWidget {
 
 class _RocketLaunchBodyState extends State<_RocketLaunchBody>
     with SingleTickerProviderStateMixin {
-  static const _rocketSize = Size(56, 92);
+  static const _rocketSize = ShipPainter.size;
   static const _flashTime = Duration(milliseconds: 220);
+
+  /// A theme change rolls through the scene in order: the ship, then the
+  /// rocks, then space. Measured in flight time, so it holds while paused.
+  static const _shipFade = (0, 700);
+  static const _rockFade = (500, 1400);
+  static const _spaceFade = (1200, 2600);
+
+  /// How long "Level N" shows after a change.
+  static const _levelBanner = 2200;
+
+  /// The easter egg (see whispers.dart): a random unseen line drifts through
+  /// space from [_whisperFrom] to [_whisperTo] ms after each colour change.
+  static const _whisperFrom = 400;
+  static const _whisperTo = 3800;
+
+  late final ShipKind _ship = context.read<AppState>().rocketShip;
+
+  /// The easter-egg line for the current level (picked at each change).
+  String? _whisper;
+
+  /// The level the scene is heading to, the look it started from, and the
+  /// flight time the change began.
+  int _level = 0;
+  SpaceTheme _from = SpaceTheme.at(0);
+  Duration? _changedAt;
 
   late final Ticker _ticker;
   Duration _last = Duration.zero;
@@ -97,6 +127,51 @@ class _RocketLaunchBodyState extends State<_RocketLaunchBody>
     return t >= 1 ? 0 : 1 - t;
   }
 
+  /// Milliseconds of flight since the last theme change (null: none yet).
+  int? get _sinceChange {
+    final at = _changedAt;
+    return at == null ? null : (widget.engine.flightTime - at).inMilliseconds;
+  }
+
+  /// The look right now, mid-change or settled.
+  SpaceTheme _theme() {
+    final engine = widget.engine;
+    if (engine.themeLevel != _level) {
+      // Start from wherever the last change had got to.
+      _from = _blended();
+      _level = engine.themeLevel;
+      _changedAt = engine.flightTime;
+      _pickWhisper();
+    }
+    return _blended();
+  }
+
+  /// A random line this player hasn't seen yet; remembered across runs.
+  void _pickWhisper() {
+    final storage = context.read<AppState>().storage;
+    final (line, seen) = nextWhisper(storage.whispersSeen, Random());
+    _whisper = line;
+    storage.setWhispersSeen(seen);
+  }
+
+  /// [_from] rolling toward the current level's theme.
+  SpaceTheme _blended() {
+    final to = SpaceTheme.at(_level);
+    final since = _sinceChange;
+    if (since == null) {
+      return to;
+    }
+    double stage((int, int) window) => Curves.easeInOut.transform(
+      ((since - window.$1) / (window.$2 - window.$1)).clamp(0.0, 1.0),
+    );
+    return _from.blend(
+      to,
+      ship: stage(_shipFade),
+      rock: stage(_rockFade),
+      space: stage(_spaceFade),
+    );
+  }
+
   void _steer(Offset local, double width) {
     if (!_touched) {
       setState(() => _touched = true);
@@ -124,6 +199,19 @@ class _RocketLaunchBodyState extends State<_RocketLaunchBody>
         // Blink while the revive shield is up.
         final blink = (engine.flightTime.inMilliseconds ~/ 120).isEven;
         final rocketOpacity = engine.invulnerable ? (blink ? 0.3 : 0.85) : 1.0;
+        final theme = _theme();
+        final since = _sinceChange;
+        // Fades in, holds, fades out.
+        // 0 → 1 → 0 across its window, and how far it has drifted.
+        final whisperT = since == null
+            ? 1.0
+            : (since - _whisperFrom) / (_whisperTo - _whisperFrom);
+        final whisper = whisperT <= 0 || whisperT >= 1
+            ? 0.0
+            : sin(whisperT * pi);
+        final banner = since == null || since >= _levelBanner
+            ? 0.0
+            : min(1.0, min(since, _levelBanner - since) / 300);
         return Semantics(
           label: 'Touch and drag to steer',
           child: Listener(
@@ -138,9 +226,16 @@ class _RocketLaunchBodyState extends State<_RocketLaunchBody>
                       offset: Offset(shake, 0),
                       child: Stack(
                         children: [
-                          const Positioned.fill(
+                          Positioned.fill(
                             child: RepaintBoundary(
-                              child: CustomPaint(painter: _NebulaPainter()),
+                              child: CustomPaint(
+                                painter: _NebulaPainter(theme),
+                              ),
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: SceneryPainter(engine.flightTime, theme),
                             ),
                           ),
                           Positioned.fill(
@@ -150,7 +245,10 @@ class _RocketLaunchBodyState extends State<_RocketLaunchBody>
                           ),
                           Positioned.fill(
                             child: CustomPaint(
-                              painter: _AsteroidPainter(engine.asteroids),
+                              painter: _AsteroidPainter(
+                                engine.asteroids,
+                                theme.rock,
+                              ),
                             ),
                           ),
                           Positioned(
@@ -164,7 +262,7 @@ class _RocketLaunchBodyState extends State<_RocketLaunchBody>
                                 angle: lean,
                                 child: CustomPaint(
                                   size: _rocketSize,
-                                  painter: _RocketPainter(_now),
+                                  painter: ShipPainter(_ship, theme, _now),
                                 ),
                               ),
                             ),
@@ -178,6 +276,45 @@ class _RocketLaunchBodyState extends State<_RocketLaunchBody>
                       child: IgnorePointer(
                         child: ColoredBox(
                           color: LS.coral.withValues(alpha: 0.24 * flash),
+                        ),
+                      ),
+                    ),
+                  if (whisper > 0 && _whisper != null)
+                    Positioned(
+                      left: w * (0.1 + 0.22 * (_level % 3)),
+                      top: h * (0.46 - 0.06 * whisperT),
+                      child: IgnorePointer(
+                        child: Opacity(
+                          opacity: 0.5 * whisper,
+                          child: Text(
+                            _whisper!,
+                            style: LSText.mono(9, color: theme.hull),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (banner > 0)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 28,
+                      child: IgnorePointer(
+                        child: Opacity(
+                          opacity: banner,
+                          child: Column(
+                            children: [
+                              DisplayText(
+                                'Level ${_level + 1}',
+                                size: 30,
+                                color: theme.hull,
+                              ),
+                              const SizedBox(height: 4),
+                              MonoLabel(
+                                '${_level * RocketLaunchEngine.themeEvery} pts',
+                                color: theme.flame,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -208,15 +345,17 @@ class _RocketLaunchBodyState extends State<_RocketLaunchBody>
   }
 }
 
-/// Deep space: faint nebula glows and a distant planet. Static.
+/// Deep space in [theme]'s colours: the fill and faint nebula glows.
 class _NebulaPainter extends CustomPainter {
-  const _NebulaPainter();
+  const _NebulaPainter(this.theme);
+
+  final SpaceTheme theme;
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final all = Offset.zero & size;
-    canvas.drawRect(all, Paint()..color = LS.bg);
+    canvas.drawRect(all, Paint()..color = theme.space);
 
     void glow(Offset center, double radius, Color color, double alpha) {
       final rect = Rect.fromCircle(center: center, radius: radius);
@@ -232,44 +371,13 @@ class _NebulaPainter extends CustomPainter {
       );
     }
 
-    glow(Offset(w * 0.15, h * 0.3), w * 0.9, LS.violet, 0.10);
-    glow(Offset(w * 0.9, h * 0.62), w * 0.8, LS.blue, 0.09);
-    glow(Offset(w * 0.45, h * 1.02), w * 0.7, LS.teal, 0.06);
-
-    // Planet peeking in from the top-right corner, lit from the top-left.
-    final center = Offset(w * 1.02, h * 0.09);
-    final radius = w * 0.3;
-    final disc = Rect.fromCircle(center: center, radius: radius);
-    canvas
-      ..drawCircle(
-        center,
-        radius + 2,
-        Paint()
-          ..color = LS.aqua.withValues(alpha: 0.16)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
-      )
-      ..drawCircle(
-        center,
-        radius,
-        Paint()
-          ..shader = const RadialGradient(
-            center: Alignment(-0.55, -0.45),
-            colors: [LS.line, LS.surface2, LS.well],
-            stops: [0, 0.45, 1],
-          ).createShader(disc),
-      )
-      ..drawCircle(
-        center,
-        radius,
-        Paint()
-          ..color = LS.aqua.withValues(alpha: 0.3)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1,
-      );
+    glow(Offset(w * 0.15, h * 0.3), w * 0.9, theme.glows[0], 0.10);
+    glow(Offset(w * 0.9, h * 0.62), w * 0.8, theme.glows[1], 0.09);
+    glow(Offset(w * 0.45, h * 1.02), w * 0.7, theme.glows[2], 0.06);
   }
 
   @override
-  bool shouldRepaint(_NebulaPainter oldDelegate) => false;
+  bool shouldRepaint(_NebulaPainter oldDelegate) => oldDelegate.theme != theme;
 }
 
 typedef _Star = ({double x, double y, double size, Color color});
@@ -326,23 +434,25 @@ class _StarPainter extends CustomPainter {
   bool shouldRepaint(_StarPainter oldDelegate) => oldDelegate.time != time;
 }
 
-/// Teal shade: [t] 0 is LS.teal, 1 is black, negative mixes toward LS.text.
-Color _teal(double t) =>
-    t < 0 ? Color.lerp(LS.teal, LS.text, -t)! : Color.lerp(LS.teal, LS.bg, t)!;
-
-/// Irregular, shaded teal rocks. Each outline and its craters come from the
-/// asteroid's seed; light always falls from the top-left, whatever the spin.
+/// Irregular rocks shaded from [tint]. Each outline and its craters come
+/// from the asteroid's seed; light always falls from the top-left, whatever
+/// the spin.
 class _AsteroidPainter extends CustomPainter {
-  _AsteroidPainter(this.asteroids);
+  _AsteroidPainter(this.asteroids, this.tint)
+    : _lit = _shade(tint, -0.25),
+      _body = _shade(tint, 0.2),
+      _shadow = _shade(tint, 0.55),
+      _rim = _shade(tint, -0.6),
+      _pit = _shade(tint, 0.6),
+      _lip = _shade(tint, 0.05);
 
   final List<Asteroid> asteroids;
+  final Color tint;
+  final Color _lit, _body, _shadow, _rim, _pit, _lip;
 
-  static final _lit = _teal(0.45);
-  static final _body = _teal(0.72);
-  static final _shadow = _teal(0.9);
-  static final _rim = _teal(-0.3);
-  static final _pit = _teal(0.93);
-  static final _lip = _teal(0.5);
+  /// [t] 0 is [tint], 1 is black, negative mixes toward LS.text.
+  static Color _shade(Color tint, double t) =>
+      t < 0 ? Color.lerp(tint, LS.text, -t)! : Color.lerp(tint, LS.bg, t)!;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -387,6 +497,14 @@ class _AsteroidPainter extends CustomPainter {
       )
       ..drawPath(
         outline,
+        // A full light edge: the silhouette reads on any background.
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6
+          ..color = _rim.withValues(alpha: 0.55),
+      )
+      ..drawPath(
+        outline,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.2
@@ -423,84 +541,4 @@ class _AsteroidPainter extends CustomPainter {
   // The engine mutates rocks in place, so always repaint.
   @override
   bool shouldRepaint(_AsteroidPainter oldDelegate) => true;
-}
-
-/// The mockup's 56×92 rocket with a flickering exhaust flame.
-class _RocketPainter extends CustomPainter {
-  _RocketPainter(this.now);
-
-  final Duration now;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final body = Path()
-      ..moveTo(28, 2)
-      ..cubicTo(38, 10, 42, 22, 42, 36)
-      ..lineTo(42, 54)
-      ..lineTo(14, 54)
-      ..lineTo(14, 36)
-      ..cubicTo(14, 22, 18, 10, 28, 2)
-      ..close();
-    final fins = Path()
-      ..addPolygon(const [
-        Offset(14, 40),
-        Offset(4, 54),
-        Offset(4, 62),
-        Offset(14, 56),
-      ], true)
-      ..addPolygon(const [
-        Offset(42, 40),
-        Offset(52, 54),
-        Offset(52, 62),
-        Offset(42, 56),
-      ], true);
-    final t = now.inMilliseconds.toDouble();
-    final flicker = 1 + 0.12 * sin(t / 40) + 0.06 * sin(t / 17);
-    Path flame(double half, double length) => Path()
-      ..addPolygon([
-        Offset(28 - half, 66),
-        Offset(28 + half, 66),
-        Offset(28, 66 + length * flicker),
-      ], true);
-
-    canvas
-      ..drawPath(
-        body,
-        Paint()
-          ..color = LS.blue.withValues(alpha: 0.4)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
-      )
-      ..drawPath(
-        flame(8, 26),
-        Paint()
-          ..color = LS.blue.withValues(alpha: 0.5)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
-      )
-      ..drawPath(flame(6, 24), Paint()..color = LS.blue)
-      ..drawPath(flame(3, 14), Paint()..color = LS.teal)
-      ..drawPath(flame(1.2, 6), Paint()..color = LS.text)
-      ..drawPath(fins, Paint()..color = LS.blue)
-      ..drawPath(body, Paint()..color = LS.text)
-      ..drawPath(
-        Path()..addPolygon(const [
-          Offset(20, 58),
-          Offset(36, 58),
-          Offset(33, 64),
-          Offset(23, 64),
-        ], true),
-        Paint()..color = LS.dim,
-      )
-      ..drawCircle(const Offset(28, 28), 6, Paint()..color = LS.bg)
-      ..drawCircle(
-        const Offset(28, 28),
-        6,
-        Paint()
-          ..color = LS.teal
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.5,
-      );
-  }
-
-  @override
-  bool shouldRepaint(_RocketPainter oldDelegate) => oldDelegate.now != now;
 }

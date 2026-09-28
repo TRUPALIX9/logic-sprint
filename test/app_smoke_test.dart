@@ -115,11 +115,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('CHOOSE YOUR NAME'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextField), 'NEON_FOX');
+    await tester.enterText(find.byType(TextField).first, 'NEON_FOX');
+    await tester.enterText(find.byType(TextField).last, '0042');
     await tester.pump();
     await tester.tap(find.text('SAVE NAME'));
     await tester.pumpAndSettle();
-    expect(find.text('NEON_FOX'), findsOneWidget);
+    expect(find.text('NEON_FOX#0042'), findsOneWidget);
     expect(find.text('EDIT'), findsOneWidget);
   });
 

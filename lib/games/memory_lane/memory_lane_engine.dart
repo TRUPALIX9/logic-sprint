@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import '../../models/game.dart';
 import '../round_engine.dart';
@@ -6,7 +7,10 @@ import '../round_engine.dart';
 enum MemoryPhase { watch, repeat }
 
 /// Memory Lane: watch tiles light up in order, then tap them back. Every
-/// clean repeat levels up and adds one tile; one miss ends the run.
+/// clean repeat levels up and adds one tile to the end of the same pattern
+/// (like Simon), so each level only asks you to remember one more step; one
+/// miss ends the run. Playback speeds up along a curve that flattens out,
+/// and the level bonus grows along one too.
 class MemoryLaneEngine extends RoundEngine {
   MemoryLaneEngine({
     required super.difficulty,
@@ -19,11 +23,22 @@ class MemoryLaneEngine extends RoundEngine {
   }
 
   static const _leadIn = Duration(milliseconds: 600);
-  static const _litFor = Duration(milliseconds: 450);
-  static const _gap = Duration(milliseconds: 150);
+  static const _litFor = 450;
+  static const _gap = 150;
   static const _levelPause = Duration(milliseconds: 800);
   static const _flash = Duration(milliseconds: 250);
   static const levelBonus = 20;
+
+  /// Playback speed at [level]: 1 at level 1, easing toward 0.6 (tiles lit
+  /// for 450 ms, then quicker and quicker by less and less).
+  static double paceAt(int level) => 1 - 0.4 * (1 - exp(-(level - 1) / 6));
+
+  /// Bonus for clearing [level]: 20, 28, 35, 40, 45… grows like a square
+  /// root, so going far pays more without running away.
+  static int bonusFor(int level) => (levelBonus * sqrt(level)).round();
+
+  Duration _scaled(int ms) =>
+      Duration(milliseconds: (ms * paceAt(level)).round());
 
   final int gridSize;
   late List<int> _sequence;
@@ -74,6 +89,19 @@ class MemoryLaneEngine extends RoundEngine {
     return tiles;
   }
 
+  /// [tiles] plus one new random tile (never the same as the last).
+  List<int> _extended(List<int> tiles) {
+    var next = random.nextInt(tileCount);
+    while (next == tiles.last) {
+      next = random.nextInt(tileCount);
+    }
+    return [...tiles, next];
+  }
+
+  /// No tap would count right now: the pattern is playing, or the next
+  /// level is about to start. The grid shows red corners.
+  bool get holdOff => isPlaying && !canTap;
+
   @override
   void onStart() => _play();
 
@@ -91,11 +119,11 @@ class MemoryLaneEngine extends RoundEngine {
   void _show(int index) {
     litTile = _sequence[index];
     notify();
-    _step = PausableTimer(_litFor, () {
+    _step = PausableTimer(_scaled(_litFor), () {
       litTile = null;
       if (index + 1 < _sequence.length) {
         notify();
-        _step = PausableTimer(_gap, () => _show(index + 1));
+        _step = PausableTimer(_scaled(_gap), () => _show(index + 1));
       } else {
         phase = MemoryPhase.repeat;
         notify();
@@ -112,11 +140,11 @@ class MemoryLaneEngine extends RoundEngine {
       _flashCorrect(index);
       scoreCorrect();
       if (stepsDone == _sequence.length) {
-        addBonus(levelBonus);
+        addBonus(bonusFor(level));
         level++;
         _waiting = true;
         _step = PausableTimer(_levelPause, () {
-          _sequence = _generate(_sequence.length + 1);
+          _sequence = _extended(_sequence);
           _play();
         });
       }

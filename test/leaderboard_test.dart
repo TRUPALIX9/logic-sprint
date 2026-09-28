@@ -1,7 +1,4 @@
-import 'dart:convert';
-
 import 'package:flutter_test/flutter_test.dart';
-import 'package:logic_sprint/core/config.dart';
 import 'package:logic_sprint/models/game.dart';
 import 'package:logic_sprint/models/leaderboard_entry.dart';
 import 'package:logic_sprint/models/round_result.dart';
@@ -51,7 +48,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     storage = Storage(await SharedPreferences.getInstance());
     api = FakeLeaderboardApi(rows: [_row('a', 'AXON', 980)], rank: 7);
-    now = DateTime(2026, 9, 11, 10);
+    now = DateTime.utc(2026, 9, 11, 10);
     leaderboard = Leaderboard(storage, api: api, now: () => now);
   });
 
@@ -86,91 +83,152 @@ void main() {
   });
 
   group('claimName', () {
-    test('saves the name once the server accepts it', () async {
-      expect(await leaderboard.claimName(' NEON_FOX '), isNull);
-      expect(api.name, 'NEON_FOX');
+    test('saves the name and tag once the server accepts them', () async {
+      expect(await leaderboard.claimName(' NEON_FOX ', 420), isNull);
+      expect((api.name, api.tag), ('NEON_FOX', 420));
       expect(leaderboard.savedName, 'NEON_FOX');
+      expect(leaderboard.displayName, 'NEON_FOX#0420');
     });
 
     test('rejects invalid, taken, and offline attempts', () async {
-      expect(await leaderboard.claimName('bad!'), isNotNull);
-      api.takenNames.add('axon');
-      expect(await leaderboard.claimName('AXON'), contains('taken'));
+      expect(await leaderboard.claimName('bad!', 1), isNotNull);
+      expect(await leaderboard.claimName('AXON', 10000), isNotNull);
+      api.taken.add('axon#0001');
+      expect(await leaderboard.claimName('AXON', 1), contains('AXON#0001'));
+      expect(await leaderboard.claimName('AXON', 2), isNull, reason: 'free');
       api.online = false;
-      expect(await leaderboard.claimName('NEW_ONE'), isNotNull);
-      expect(leaderboard.savedName, isNull);
+      expect(await leaderboard.claimName('NEW_ONE', 3), isNotNull);
+      expect(leaderboard.displayName, 'AXON#0002');
     });
 
-    test('refetches boards cached before the name was set', () async {
+    test('suggests a free tag, or a random one offline', () async {
+      expect(await leaderboard.suggestTag('AXON'), 1234);
+      api.online = false;
+      expect(await leaderboard.suggestTag('AXON'), inInclusiveRange(0, 9999));
+    });
+
+    test('a name from before tags learns its tag from the server', () async {
+      await storage.setPlayerName('NEON');
+      api.tag = 77;
       await leaderboard.load(_math, _easy);
-      await leaderboard.claimName('NEON_FOX');
+      await pumpEventQueue();
+      expect(leaderboard.displayName, 'NEON#0077');
+    });
+
+    test('a new name shows on the cached rows right away', () async {
+      api.rows = [_row('me', 'OLD#0001', 990), _row('a', 'AXON', 980)];
       await leaderboard.load(_math, _easy);
-      expect(api.topCalls, hasLength(2));
+      await leaderboard.claimName('NEW', 5);
+      api.online = false;
+      final load = await leaderboard.load(_math, _easy, offline: true);
+      expect(load.entries.first.playerName, 'NEW#0005');
     });
   });
 
   group('load', () {
-    test('serves the cache until the next local calendar day', () async {
+    test('serves the cache until the next 00:00 UTC', () async {
       final first = await leaderboard.load(_math, _easy);
       expect(first.entries.single.playerName, 'AXON');
       expect(first.myRank, 7);
       expect(first.changed, isTrue, reason: 'first look');
       expect(first.previous, isNull);
+      expect(leaderboard.fetchedAt!.isAtSameMomentAs(now), isTrue);
 
-      now = DateTime(2026, 9, 11, 23, 59);
+      now = DateTime.utc(2026, 9, 11, 23, 59);
       final later = await leaderboard.load(_math, _easy);
-      expect(api.topCalls, hasLength(1));
+      expect(api.fetches, 1);
       expect(later.changed, isFalse);
 
-      // Two minutes later, but a new day.
-      now = DateTime(2026, 9, 12, 0, 1);
+      // Two minutes later, but past 00:00 UTC.
+      now = DateTime.utc(2026, 9, 12, 0, 1);
+      expect(leaderboard.due, isTrue);
       await leaderboard.load(_math, _easy);
-      expect(api.topCalls, hasLength(2));
+      expect(api.fetches, 2);
     });
 
-    test('a new personal best refetches, keeping the old snapshot', () async {
+    test('one fetch fills every board at once', () async {
+      api.rows = [
+        _row('a', 'AXON', 980),
+        {
+          ..._row('b', 'BOLT', 500),
+          'game_type': 'rocketLaunch',
+          'difficulty': 'medium',
+        },
+      ];
       await leaderboard.load(_math, _easy);
-      api
-        ..rows = [_row('me', 'NEON', 1000), _row('a', 'AXON', 980)]
-        ..rank = 1;
-
-      await leaderboard.recordRun(_result(score: 10, previousBest: 20));
-      await leaderboard.load(_math, _easy);
-      expect(api.topCalls, hasLength(1), reason: 'not a best: cache kept');
-
-      await leaderboard.recordRun(_result(score: 1000, previousBest: 20));
-      final after = await leaderboard.load(_math, _easy);
-      expect(api.topCalls, hasLength(2));
-      expect(after.changed, isTrue);
-      expect(after.previous!.single.playerId, 'a');
-      expect((after.previousMyRank, after.myRank), (7, 1));
-      expect(after.moves, {
-        'me': const RankMove(RankMoveKind.entered),
-        'a': const RankMove(RankMoveKind.down, places: 1, from: 0),
-      });
+      final rocket = await leaderboard.load(
+        GameId.rocketLaunch,
+        GameId.rampDifficulty,
+      );
+      expect(api.fetches, 1);
+      expect(rocket.entries.single.playerName, 'BOLT');
+      final empty = await leaderboard.load(_math, Difficulty.hard);
+      expect(empty.entries, isEmpty);
+      expect(api.fetches, 1);
     });
+
+    test('the next reset is the coming 00:00 UTC', () {
+      expect(
+        Leaderboard.nextReset(DateTime.utc(2026, 9, 11, 23, 30)),
+        DateTime.utc(2026, 9, 12),
+      );
+      expect(
+        Leaderboard.lastReset(DateTime.utc(2026, 9, 11, 0, 0)),
+        DateTime.utc(2026, 9, 11),
+      );
+    });
+
+    test(
+      'a new best moves the player on their own board, no refetch',
+      () async {
+        await leaderboard.claimName('NEON', 7);
+        api.rows = [_row('a', 'AXON', 980), _row('b', 'BOLT', 500)];
+        await leaderboard.load(_math, _easy);
+
+        await leaderboard.recordRun(_result(score: 10, previousBest: 20));
+        expect((await leaderboard.load(_math, _easy)).changed, isFalse);
+
+        await leaderboard.recordRun(_result(score: 700, previousBest: 20));
+        final after = await leaderboard.load(_math, _easy);
+        expect(api.fetches, 1, reason: 'others see it after the reset');
+        expect(api.runs.last.$3, 700, reason: 'still sent to the server');
+        expect(after.changed, isTrue);
+        expect(after.entries.map((e) => e.playerName), [
+          'AXON',
+          'NEON#0007',
+          'BOLT',
+        ]);
+        expect((after.previousMyRank, after.myRank), (7, 2));
+        expect(after.moves['me'], const RankMove(RankMoveKind.entered));
+        expect(
+          (await leaderboard.load(_math, _easy)).changed,
+          isFalse,
+          reason: 'animates once',
+        );
+      },
+    );
 
     test('snapshots persist; an unchanged board keeps the older one', () async {
       await leaderboard.load(_math, _easy);
       api
         ..rows = [_row('b', 'BOLT', 990), _row('a', 'AXON', 980)]
         ..rank = 3;
-      now = DateTime(2026, 9, 12, 9);
+      now = DateTime.utc(2026, 9, 12, 9);
       expect((await leaderboard.load(_math, _easy)).changed, isTrue);
 
       // App restart, same day: served from the cache, chips intact.
       final reopened = Leaderboard(storage, api: api, now: () => now);
       final cached = await reopened.load(_math, _easy);
-      expect(api.topCalls, hasLength(2));
+      expect(api.fetches, 2);
       expect(cached.changed, isFalse);
       expect(cached.previous!.map((e) => e.playerId), ['a']);
       expect(cached.previousMyRank, 7);
       expect(cached.moves['b']!.kind, RankMoveKind.entered);
 
       // Next day, nothing moved: no animation, same "before".
-      now = DateTime(2026, 9, 13, 9);
+      now = DateTime.utc(2026, 9, 13, 9);
       final unchanged = await reopened.load(_math, _easy);
-      expect(api.topCalls, hasLength(3));
+      expect(api.fetches, 3);
       expect(unchanged.changed, isFalse);
       expect(unchanged.previous!.map((e) => e.playerId), ['a']);
       expect(unchanged.previousMyRank, 7);
@@ -179,72 +237,57 @@ void main() {
     test('only a rank change still counts as a change', () async {
       await leaderboard.load(_math, _easy);
       api.rank = 5;
-      now = DateTime(2026, 9, 12, 9);
+      now = DateTime.utc(2026, 9, 12, 9);
       final load = await leaderboard.load(_math, _easy);
       expect(load.changed, isTrue);
       expect((load.previousMyRank, load.myRank), (7, 5));
     });
 
-    test('reads caches written before snapshots existed', () async {
-      await storage.setLeaderboardCache(
-        jsonEncode({
-          'quickMath_easy': {
-            'at': now.millisecondsSinceEpoch,
-            'rank': 7,
-            'rows': [_row('a', 'AXON', 980)],
-          },
-        }),
-      );
-      final load = await leaderboard.load(_math, _easy);
-      expect(api.topCalls, isEmpty);
-      expect(load.entries.single.playerName, 'AXON');
-      expect(load.previous, isNull);
-    });
-
-    test('a free refresh (no ad) waits 5 minutes', () async {
+    test('Refresh pulls every board now, then waits 30 minutes', () async {
+      await leaderboard.load(_math, _easy);
+      api
+        ..rows = [_row('b', 'BOLT', 990), _row('a', 'AXON', 980)]
+        ..rank = 3;
       expect(leaderboard.refreshWait(), Duration.zero);
+
+      final pulled = await leaderboard.load(_math, _easy, refresh: true);
+      expect(api.fetches, 2);
+      expect(pulled.changed, isTrue);
+      expect(pulled.entries.first.playerName, 'BOLT');
+      expect(leaderboard.refreshWait(), const Duration(minutes: 30));
+
+      now = now.add(const Duration(minutes: 29));
       await leaderboard.load(_math, _easy, refresh: true);
-      expect(api.topCalls, hasLength(1));
+      expect(api.fetches, 2, reason: 'still cooling down: cache served');
+
+      now = now.add(const Duration(minutes: 2));
+      await leaderboard.load(_math, _easy, refresh: true);
+      expect(api.fetches, 3);
+
+      now = now.subtract(const Duration(hours: 3));
       expect(
         leaderboard.refreshWait(),
-        AppConfig.leaderboardFreeRefreshCooldown,
+        const Duration(minutes: 30),
+        reason: 'a clock set backwards never lengthens it',
       );
-
-      now = now.add(const Duration(minutes: 4));
-      final early = await leaderboard.load(_math, _easy, refresh: true);
-      expect(api.topCalls, hasLength(1));
-      expect(early.message, 'Refresh available in 60s');
-      expect(early.entries, hasLength(1), reason: 'still shows the board');
-
-      now = now.add(const Duration(seconds: 61));
-      await leaderboard.load(_math, _easy, refresh: true);
-      expect(api.topCalls, hasLength(2));
     });
 
-    test('a rewarded refresh waits 30 seconds', () async {
-      await leaderboard.load(_math, _easy, refresh: true, rewarded: true);
-      expect(leaderboard.refreshWait(), const Duration(seconds: 30));
-
-      now = now.add(const Duration(seconds: 29));
-      final early = await leaderboard.load(
-        _math,
-        _easy,
-        refresh: true,
-        rewarded: true,
-      );
-      expect(early.message, 'Refresh available in 1s');
-      expect(api.topCalls, hasLength(1));
-
-      now = now.add(const Duration(seconds: 2));
+    test('a Refresh that fails does not start the cooldown', () async {
+      await leaderboard.load(_math, _easy);
+      api.online = false;
+      final failed = await leaderboard.load(_math, _easy, refresh: true);
+      expect(failed.message, contains('offline'));
       expect(leaderboard.refreshWait(), Duration.zero);
-      await leaderboard.load(_math, _easy, refresh: true, rewarded: true);
-      expect(api.topCalls, hasLength(2));
     });
 
-    test('a clock set backwards never lengthens the cooldown', () async {
-      await leaderboard.load(_math, _easy, refresh: true, rewarded: true);
-      now = now.subtract(const Duration(hours: 3));
-      expect(leaderboard.refreshWait(), const Duration(seconds: 30));
+    test('naming yourself refetches once so your row appears', () async {
+      await leaderboard.load(_math, _easy);
+      api.rows = [_row('a', 'AXON', 980), _row('me', 'NEON#0007', 500)];
+      await leaderboard.claimName('NEON', 7);
+      final load = await leaderboard.load(_math, _easy);
+      expect(api.fetches, 2);
+      expect(load.entries.last.playerName, 'NEON#0007');
+      expect(leaderboard.refreshWait(), Duration.zero, reason: 'free');
     });
 
     test('falls back to the cache, or an offline message', () async {
@@ -260,14 +303,14 @@ void main() {
       final cached = await leaderboard.load(_math, _easy);
       expect(cached.entries, hasLength(1));
       expect(cached.myRank, 7);
-      expect(cached.message, contains('saved scores'));
+      expect(cached.message, contains('offline'));
     });
 
     test('without a connection, serves the cache without trying', () async {
       await leaderboard.load(_math, _easy);
       now = now.add(const Duration(days: 1));
       final offline = await leaderboard.load(_math, _easy, offline: true);
-      expect(api.topCalls, hasLength(1));
+      expect(api.fetches, 1);
       expect(offline.entries, hasLength(1));
       expect(offline.message, contains('saved scores'));
     });

@@ -18,12 +18,10 @@ abstract final class AppConfig {
   static const supabasePublishableKey =
       'sb_publishable_dzJkARQ59BSHuvJIlhnoTg_4NI5kWo0';
   static const leaderboardLimit = 10;
-  // Boards refresh on the first Ranks visit of each local calendar day (and
-  // right after a new personal best). "Refresh now" is a rewarded ad, then
-  // waits [leaderboardRefreshCooldown]; with no ad available it's free but
-  // waits [leaderboardFreeRefreshCooldown].
-  static const leaderboardRefreshCooldown = Duration(seconds: 30);
-  static const leaderboardFreeRefreshCooldown = Duration(minutes: 5);
+  // Boards update for everyone once a day, on the first look after 00:00
+  // UTC; a player's own new best shows on their board straight away.
+  // "Refresh ▶" (a rewarded interstitial) fetches early, then waits this.
+  static const leaderboardRefreshCooldown = Duration(minutes: 30);
   // Rank-change reveal on the Ranks tab.
   static const leaderboardRowStagger = Duration(milliseconds: 60);
   static const leaderboardRowMove = Duration(milliseconds: 700);

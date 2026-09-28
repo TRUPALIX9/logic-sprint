@@ -22,9 +22,20 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
--- Display names are unique regardless of case.
-create unique index if not exists profiles_display_name_key
-  on public.profiles (lower(display_name));
+-- Every name carries a 4-digit tag ("NEON_FOX#0420"), so many players can
+-- share a name: only name + tag is unique (the name ignoring case).
+alter table public.profiles
+  add column if not exists tag smallint check (tag is null or tag between 0 and 9999);
+
+-- Players who named themselves before tags existed get a random one; their
+-- names were unique, so no two can clash.
+update public.profiles
+  set tag = floor(random() * 10000)::smallint
+  where tag is null and display_name is not null;
+
+drop index if exists public.profiles_display_name_key;
+create unique index if not exists profiles_name_tag_key
+  on public.profiles (lower(display_name), tag);
 
 create table if not exists public.game_bests (
   player_id uuid not null references public.profiles (id) on delete cascade,
@@ -63,9 +74,31 @@ grant select on public.profiles, public.game_bests to anon, authenticated;
 
 -- -------------------------------------------------------------- functions --
 
--- Sets or changes the caller's display name. Raises 'name_taken',
--- 'invalid_name' or 'not_signed_in'.
-create or replace function public.claim_name(p_name text)
+-- A random tag nobody else uses with this name (case-insensitive), or null
+-- if all 10 000 are gone. The caller's own current tag counts as free.
+create or replace function public.free_tag(p_name text)
+returns integer
+language sql
+volatile
+security definer
+set search_path = public
+as $$
+  select t
+  from generate_series(0, 9999) t
+  where not exists (
+    select 1 from profiles p
+    where lower(p.display_name) = lower(btrim(p_name))
+      and p.tag = t
+      and p.id is distinct from auth.uid()
+  )
+  order by random()
+  limit 1;
+$$;
+
+-- Sets or changes the caller's name and tag. Raises 'name_taken' (that
+-- name + tag belongs to someone else), 'invalid_name', 'invalid_tag' or
+-- 'not_signed_in'.
+create or replace function public.claim_name(p_name text, p_tag integer)
 returns void
 language plpgsql
 security definer
@@ -80,13 +113,34 @@ begin
   if v_name !~ '^[A-Za-z0-9 _-]{1,20}$' then
     raise exception 'invalid_name';
   end if;
+  if p_tag is null or p_tag not between 0 and 9999 then
+    raise exception 'invalid_tag';
+  end if;
   begin
-    insert into profiles (id, display_name)
-    values (auth.uid(), v_name)
-    on conflict (id) do update set display_name = excluded.display_name;
+    insert into profiles (id, display_name, tag)
+    values (auth.uid(), v_name, p_tag)
+    on conflict (id) do update
+      set display_name = excluded.display_name, tag = excluded.tag;
   exception when unique_violation then
     raise exception 'name_taken';
   end;
+end;
+$$;
+
+-- Builds from before tags: keep working by picking a free tag for them.
+create or replace function public.claim_name(p_name text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tag integer := public.free_tag(p_name);
+begin
+  if v_tag is null then
+    raise exception 'name_taken';
+  end if;
+  perform public.claim_name(p_name, v_tag);
 end;
 $$;
 
@@ -138,8 +192,12 @@ end;
 $$;
 
 revoke execute on function public.claim_name(text) from public, anon;
+revoke execute on function public.claim_name(text, integer) from public, anon;
+revoke execute on function public.free_tag(text) from public, anon;
 revoke execute on function public.record_run(text, text, integer, integer) from public, anon;
 grant execute on function public.claim_name(text) to authenticated;
+grant execute on function public.claim_name(text, integer) to authenticated;
+grant execute on function public.free_tag(text) to authenticated;
 grant execute on function public.record_run(text, text, integer, integer) to authenticated;
 
 -- ------------------------------------------------------------------ views --
@@ -148,12 +206,13 @@ grant execute on function public.record_run(text, text, integer, integer) to aut
 -- existing "leaderboard" table): named players with a score, ranked by score,
 -- then by tie_key (lower wins): the shorter run for Memory Lane and Quick Math,
 -- the earlier best for Rocket Launch and Guess Color. tie_key is only ever
--- compared within one board, so the two units never mix.
+-- compared within one board, so the two units never mix. player_name
+-- includes the tag: "NEON_FOX#0420".
 create or replace view public.leaderboard_top
 with (security_invoker = true) as
 select
   g.player_id,
-  p.display_name as player_name,
+  p.display_name || '#' || lpad(coalesce(p.tag, 0)::text, 4, '0') as player_name,
   g.game_type,
   g.difficulty,
   g.best_score as score,
@@ -166,6 +225,19 @@ select
 from public.game_bests g
 join public.profiles p on p.id = g.player_id
 where g.best_score > 0 and p.display_name is not null;
+
+-- Every board at once, each row with its position (ties share a rank, as
+-- in my_rank). The app fetches board_rank <= 10 for all boards in one
+-- request once per UTC day, plus its own rows for the ranks.
+create or replace view public.leaderboard_ranked
+with (security_invoker = true) as
+select
+  l.*,
+  rank() over (
+    partition by l.game_type, l.difficulty
+    order by l.score desc, l.tie_key asc
+  )::integer as board_rank
+from public.leaderboard_top l;
 
 -- The caller's position on one board (null if they haven't scored there or
 -- haven't claimed a name yet).
@@ -198,7 +270,7 @@ grant execute on function public.my_rank(text, text) to authenticated;
 create or replace view public.player_stats
 with (security_invoker = true) as
 select
-  p.display_name as player_name,
+  p.display_name || '#' || lpad(coalesce(p.tag, 0)::text, 4, '0') as player_name,
   g.game_type,
   g.difficulty,
   g.best_score,
@@ -220,5 +292,6 @@ select
 from public.game_bests
 group by game_type;
 
-grant select on public.leaderboard_top, public.player_stats, public.game_stats
+grant select on public.leaderboard_top, public.leaderboard_ranked,
+  public.player_stats, public.game_stats
   to anon, authenticated;

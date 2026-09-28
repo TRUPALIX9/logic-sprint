@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../games/rocket_launch/rocket_look.dart';
 import '../games/round_engine.dart';
 import '../models/game.dart';
 import '../models/round_result.dart';
@@ -103,6 +104,13 @@ class AppState extends ChangeNotifier implements RoundFeedback {
     }
     notifyListeners();
     return earned;
+  }
+
+  ShipKind get rocketShip => ShipKind.parse(storage.rocketShip);
+
+  Future<void> setRocketShip(ShipKind kind) async {
+    await storage.setRocketShip(kind.name);
+    notifyListeners();
   }
 
   Future<void> setSoundOn(bool value) async {
