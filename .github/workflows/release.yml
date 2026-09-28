@@ -72,6 +72,18 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag_version=$TAG_VERSION" >> $GITHUB_OUTPUT
 
+      - name: Assemble release notes
+        run: |
+          NOTES="docs/release_notes/$(echo '${{ steps.get_version.outputs.version }}' | cut -d+ -f1).md"
+          {
+            if [ -f "$NOTES" ]; then cat "$NOTES"; echo; fi
+            echo "### Artifacts"
+            echo "* **Android App Bundle (\`app-release.aab\`):** signed with the upload key, for Google Play."
+            echo "* **Android APK (\`app-release.apk\`):** for direct installs and manual QA."
+            echo
+            echo "Built by the release workflow after \`flutter analyze\` and all tests passed."
+          } > release_body.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -82,15 +94,6 @@ jobs:
           files: |
             build/app/outputs/flutter-apk/app-release.apk
             build/app/outputs/bundle/release/app-release.aab
-          body: |
-            LogicSprint Production Release for version ${{ steps.get_version.outputs.version }}.
-
-            ### Artifacts Included
-            * **Android APK (`app-release.apk`):** For direct installation and manual QA testing.
-            * **Android App Bundle (`app-release.aab`):** Signed bundle for Google Play Console deployment.
-
-            ### Actions Taken
-            * Ran code quality checks (`flutter analyze`) and all unit tests.
-            * Built release APK and AAB signed with the upload keystore.
+          body_path: release_body.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
