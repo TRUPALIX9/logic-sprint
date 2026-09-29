@@ -57,9 +57,9 @@ build asks for it, and upload the `.ipa` with Transporter.
 
 Android ad units don't serve on iOS; iOS needs its own AdMob app.
 
-- [ ] AdMob → Apps → Add app → **iOS**, "not listed yet" (link it to the store once live)
-- [ ] Create 3 units, matching Android: **Banner**, **Rewarded** ("Game Life Reward Ad", 1 reward), **Rewarded interstitial** (Ranks refresh)
-- [ ] Create `config/admob.ios.json` (gitignored, same keys as `config/admob.json`) with the iOS app ID and unit IDs. `ADMOB_APP_ID` is written into Info.plist by the "AdMob App ID" build phase; a release build fails without it
+- [x] AdMob → Apps → Add app → **iOS** (`ca-app-pub-4460198288175671~3620726902`), "not listed yet" (link it to the store once live)
+- [x] Create 3 units, matching Android: **Banner**, **Rewarded** ("Game Life Reward Ad", 1 reward), **Rewarded interstitial** (Ranks refresh)
+- [x] Create `config/admob.ios.json` (gitignored, same keys as `config/admob.json`) with the iOS app ID and unit IDs. `ADMOB_APP_ID` is written into Info.plist by the "AdMob App ID" build phase; a release build fails without it
 - [ ] AdMob → Privacy & messaging:
   - [ ] GDPR message: add the iOS app
   - [ ] **IDFA explainer** message: create and publish it (it's shown before Apple's tracking prompt)
