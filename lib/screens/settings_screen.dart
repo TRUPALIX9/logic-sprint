@@ -4,11 +4,11 @@ import 'package:provider/provider.dart';
 import '../app.dart';
 import '../core/theme.dart';
 import '../services/ads.dart';
+import '../services/leaderboard.dart';
 import '../state/app_state.dart';
 import '../ui/brand.dart';
 import '../ui/chamfer.dart';
 import '../ui/kit.dart';
-import 'donate_screen.dart';
 import 'privacy_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -49,6 +49,41 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _confirmDeleteData(BuildContext context) async {
+    final leaderboard = context.read<Leaderboard>();
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('DELETE LEADERBOARD DATA?'),
+        content: const Text(
+          'This permanently removes your name and scores from the global '
+          'leaderboard. Bests and History on this device stay.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancel', style: LSText.body(15, color: LS.muted)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              'Delete',
+              style: LSText.body(15, color: LS.coral, weight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+    final error = await leaderboard.deleteMyData();
+    messenger.showSnackBar(
+      SnackBar(content: Text(error ?? 'Leaderboard data deleted')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
@@ -84,24 +119,6 @@ class SettingsScreen extends StatelessWidget {
                           onChanged: app.setVibrationOn,
                         ),
                         onTap: () => app.setVibrationOn(!app.vibrationOn),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 22),
-                  _Group(
-                    label: 'Support',
-                    rows: [
-                      _Row(
-                        icon: Icons.favorite_border_rounded,
-                        title: 'Donate a view',
-                        subtitle:
-                            'Watch an ad, get ${AppState.donateHearts} hearts',
-                        trailing: const Icon(
-                          Icons.chevron_right_rounded,
-                          color: LS.dim,
-                        ),
-                        onTap: () =>
-                            Navigator.of(context).push(DonateScreen.route()),
                       ),
                     ],
                   ),
@@ -146,6 +163,14 @@ class SettingsScreen extends StatelessWidget {
                         subtitle: 'Clears every best on this device',
                         color: LS.coral,
                         onTap: () => _confirmReset(context),
+                      ),
+                      _Row(
+                        icon: Icons.person_remove_outlined,
+                        title: 'Delete leaderboard data',
+                        subtitle:
+                            'Removes your name and scores from the server',
+                        color: LS.coral,
+                        onTap: () => _confirmDeleteData(context),
                       ),
                     ],
                   ),

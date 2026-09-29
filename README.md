@@ -2,12 +2,12 @@
 
 ![LogicSprint feature graphic](assets/brand/store/google_play/feature_graphic_1024x500.png)
 
-**LogicSprint** is a free Flutter brain-training app for Android: four quick games, personal bests on the device, and an optional global Top 10 per game. No login. Ad-supported via Google AdMob.
+**LogicSprint** is a free Flutter brain-training app for Android and iPhone: four quick games, personal bests on the device, and an optional global Top 10 per game. No login. Ad-supported via Google AdMob.
 
 | | |
 |---|---|
-| **Version** | 1.0.1 |
-| **Platform** | Android (Google Play); iOS later |
+| **Version** | 1.0.2 |
+| **Platform** | Android (Google Play); iPhone (App Store, first release in progress: [docs/ios_release_plan.md](docs/ios_release_plan.md)) |
 | **Stack** | Flutter 3.x, Dart 3.11+ |
 | **Storage** | `shared_preferences` on the device; Supabase for the leaderboard |
 
@@ -107,6 +107,14 @@ make build-aab
 
 Gradle refuses release builds without `ADMOB_APP_ID`, and bundles without a release keystore. Full steps: [docs/release_checklist.md](docs/release_checklist.md)
 
+**iOS** needs Xcode, CocoaPods and `config/admob.ios.json` (same keys, with the iOS AdMob app's IDs; Android IDs don't serve on iOS):
+
+```bash
+make build-ios   # → build/ios/ipa/*.ipa, upload with Transporter
+```
+
+The "AdMob App ID" build phase writes `ADMOB_APP_ID` into Info.plist, and release builds fail without it. The app is iPhone-only and portrait-only. Full steps: [docs/ios_release_plan.md](docs/ios_release_plan.md)
+
 ---
 
 ## Leaderboard
@@ -116,8 +124,11 @@ Gradle refuses release builds without `ADMOB_APP_ID`, and bundles without a rele
 - One Top 10 per game (and per difficulty for Memory Lane and Quick Math) plus your own rank pinned below it; ties go to the faster run in Memory Lane and Quick Math, and to the earlier best elsewhere
 - Boards update once a day for everyone: the first look after 00:00 UTC fetches every board in one request, and Ranks shows when they were fetched and counts down to the next update. A new personal best moves you on your own board straight away and goes to the server; others see it after the next reset, or sooner with **Refresh ▶** (a rewarded interstitial that pulls everyone's latest scores now, then a 30 min cooldown). Your row shines when it appears. Requests time out after 8 s
 - Run History stays on the device (Profile); fully playable offline
+- Moderation: names with a word from `banned_words` are refused; long-press another player's row on Ranks to report it, and three reports hide the name until its owner picks a new one
+- Settings → **Delete leaderboard data** deletes the anonymous account with its name, bests and reports (`delete_my_data`); the next run starts a new player
+- `record_run` never turns an implausible score into a best (timed games over 60 points a second, other games over 50 000); the run still counts as a play
 
-Setup: enable **Anonymous sign-ins** (Authentication → Providers), then run [supabase/schema.sql](supabase/schema.sql) in the SQL editor. The publishable key in `lib/core/config.dart` is safe to ship: tables are read-only under RLS, and writes go through `claim_name` / `record_run` (`free_tag` suggests a code), which only touch the caller's own rows. The `player_stats` and `game_stats` views feed the product page.
+Setup: enable **Anonymous sign-ins** (Authentication → Providers), then run [supabase/schema.sql](supabase/schema.sql) in the SQL editor. The publishable key in `lib/core/config.dart` is safe to ship: tables are read-only under RLS, and writes go through `claim_name` / `record_run` / `report_name` / `delete_my_data` (`free_tag` suggests a code), which only touch the caller's own rows. The `player_stats` and `game_stats` views feed the product page.
 
 ---
 
@@ -129,7 +140,6 @@ Setup: enable **Anonymous sign-ins** (Authentication → Providers), then run [s
 - **Rewarded** (always opt-in):
   - **+1 life:** revive a run, up to 3 per run, all ranked; offered from a score of 50, auto-declines after 5 s. Or pay with a heart.
   - **Hearts:** no free hearts. Every finished run unlocks one rewarded ad worth a heart (on Result or in the Hearts sheet), up to 5.
-  - **Donate a view** (Settings → Support): +2 hearts, at most every 30 min; links to logicsprint.trupalpatel.com.
   - **Refresh ▶** (Ranks, rewarded interstitial): pulls every leaderboard now instead of at 00:00 UTC; 30 min cooldown.
 - **Mediation (planned, not in this release):** AdMob stays in charge, with AppLovin added later as a bidder on rewarded via `gma_mediation_applovin`. That package needs `google_mobile_ads` ^9.1.0, and the app is on 5.x today. Steps are in docs/release_checklist.md.
 
@@ -190,9 +200,10 @@ SCREENSHOTS=play ICONS_FONT="$(dirname "$(readlink -f "$(which flutter)")")/cach
 | `SCREENSHOTS=` | Size | Output |
 |----------------|------|--------|
 | `play` | 1080×1920 (9:16, Google Play) | `assets/brand/store/google_play/screenshots/` |
+| `appstore` | 1320×2868 (App Store 6.9" iPhone, 440×956 pt @3×) | `assets/brand/store/app_store/screenshots/` |
 | `1` | 1080×2400 | `assets/brand/store/screenshots/` |
 
-Extra takes named `*_take*.png` are gitignored.
+PNGs are written without an alpha channel (flattened onto black), as App Store Connect requires. Rocket Launch renders four takes (`03_rocket_launch_take1-4.png`, gitignored); keep take 3 as `03_rocket_launch.png`.
 
 ## License
 

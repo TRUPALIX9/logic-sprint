@@ -37,6 +37,7 @@ class RankBoard extends StatefulWidget {
     required this.now,
     this.reduceMotion = false,
     this.haptics = true,
+    this.onReport,
   });
 
   final LeaderboardLoad load;
@@ -51,6 +52,9 @@ class RankBoard extends StatefulWidget {
   final DateTime now;
   final bool reduceMotion;
   final bool haptics;
+
+  /// Long-press on another player's row (report their name).
+  final ValueChanged<LeaderboardEntry>? onReport;
 
   static const rowGap = 6.0;
   static const rowExtent = RankRow.height + rowGap;
@@ -263,7 +267,12 @@ class _RankBoardState extends State<RankBoard> with TickerProviderStateMixin {
           right: 0,
           top: top,
           height: RankRow.height,
-          child: t < 1 && dropIn ? Opacity(opacity: t, child: row) : row,
+          child: GestureDetector(
+            onLongPress: isYou || widget.onReport == null
+                ? null
+                : () => widget.onReport!(entry),
+            child: t < 1 && dropIn ? Opacity(opacity: t, child: row) : row,
+          ),
         );
       },
     );

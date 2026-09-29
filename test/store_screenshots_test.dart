@@ -1,4 +1,4 @@
-// Renders store / portfolio screenshots of the real screens at 1080×2400.
+// Renders store / portfolio screenshots of the real screens.
 // Skipped unless SCREENSHOTS is set; see README "Store screenshots".
 @Tags(['screenshots'])
 library;
@@ -29,13 +29,33 @@ import 'support/fake_leaderboard_api.dart';
 final _skip = !Platform.environment.containsKey('SCREENSHOTS');
 
 // SCREENSHOTS=play renders 1080×1920 (9:16, what Google Play accepts) into
-// google_play/screenshots; anything else renders 1080×2400 (portfolio).
-final _forPlay = Platform.environment['SCREENSHOTS'] == 'play';
-final _out = _forPlay
-    ? 'assets/brand/store/google_play/screenshots'
-    : 'assets/brand/store/screenshots';
-final _size = _forPlay ? const Size(1080, 1920) : const Size(1080, 2400);
-const _pixelRatio = 2.625;
+// google_play/screenshots; SCREENSHOTS=appstore renders 1320×2868 (App Store
+// 6.9" iPhone, 440×956 pt at 3×, Dynamic Island and home indicator insets)
+// into app_store/screenshots; anything else renders 1080×2400 (portfolio).
+final _mode = switch (Platform.environment['SCREENSHOTS']) {
+  'play' => (
+    'assets/brand/store/google_play/screenshots',
+    const Size(1080, 1920),
+    2.625,
+    const FakeViewPadding(top: 63, bottom: 42),
+  ),
+  'appstore' => (
+    'assets/brand/store/app_store/screenshots',
+    const Size(1320, 2868),
+    3.0,
+    const FakeViewPadding(top: 186, bottom: 102),
+  ),
+  _ => (
+    'assets/brand/store/screenshots',
+    const Size(1080, 2400),
+    2.625,
+    const FakeViewPadding(top: 63, bottom: 42),
+  ),
+};
+final _out = _mode.$1;
+final _size = _mode.$2;
+final _pixelRatio = _mode.$3;
+final _padding = _mode.$4;
 final _boundary = GlobalKey();
 
 /// A returning player: bests, play counts, Quick Math last played, a name.
@@ -150,8 +170,8 @@ Future<void> _pumpApp(WidgetTester tester) async {
   tester.view
     ..physicalSize = _size
     ..devicePixelRatio = _pixelRatio
-    ..padding = const FakeViewPadding(top: 63, bottom: 42)
-    ..viewPadding = const FakeViewPadding(top: 63, bottom: 42);
+    ..padding = _padding
+    ..viewPadding = _padding;
   addTearDown(tester.view.reset);
 
   SharedPreferences.setMockInitialValues(_prefs);
@@ -195,11 +215,55 @@ Future<void> _capture(WidgetTester tester, String name) async {
   );
   await tester.runAsync(() async {
     final image = await boundary.toImage(pixelRatio: _pixelRatio);
-    final png = await image.toByteData(format: ui.ImageByteFormat.png);
+    final rgba = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
     File('$_out/$name.png')
       ..createSync(recursive: true)
-      ..writeAsBytesSync(png!.buffer.asUint8List());
+      ..writeAsBytesSync(_opaquePng(rgba!, image.width, image.height));
   });
+}
+
+/// Encodes [rgba] as a 24-bit PNG (no alpha channel, which both stores
+/// prefer), flattened onto the app's black background.
+List<int> _opaquePng(ByteData rgba, int width, int height) {
+  final rows = Uint8List(height * (1 + width * 3));
+  var o = 0;
+  for (var y = 0; y < height; y++) {
+    rows[o++] = 0; // filter: none
+    for (var x = 0; x < width; x++) {
+      final i = (y * width + x) * 4;
+      // rawRgba is premultiplied, so dropping alpha composites onto black.
+      for (var c = 0; c < 3; c++) {
+        rows[o++] = rgba.getUint8(i + c);
+      }
+    }
+  }
+  List<int> chunk(String type, List<int> data) {
+    final body = [...type.codeUnits, ...data];
+    var crc = 0xFFFFFFFF;
+    for (final b in body) {
+      crc ^= b;
+      for (var k = 0; k < 8; k++) {
+        crc = crc & 1 != 0 ? (crc >> 1) ^ 0xEDB88320 : crc >> 1;
+      }
+    }
+    return [
+      ...(ByteData(4)..setUint32(0, data.length)).buffer.asUint8List(),
+      ...body,
+      ...(ByteData(4)..setUint32(0, crc ^ 0xFFFFFFFF)).buffer.asUint8List(),
+    ];
+  }
+
+  final header = ByteData(13)
+    ..setUint32(0, width)
+    ..setUint32(4, height)
+    ..setUint8(8, 8) // bit depth
+    ..setUint8(9, 2); // colour type: RGB
+  return [
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // signature
+    ...chunk('IHDR', header.buffer.asUint8List()),
+    ...chunk('IDAT', ZLibCodec(level: 6).encode(rows)),
+    ...chunk('IEND', const []),
+  ];
 }
 
 /// Disposes the tree so round timers are cancelled before the test ends.

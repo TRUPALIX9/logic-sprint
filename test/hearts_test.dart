@@ -20,8 +20,6 @@ const _run = RoundResult(
 );
 
 void main() {
-  final day1 = DateTime(2026, 9, 13, 9);
-
   test('no free hearts: new players start with none', () async {
     final app = await _app();
     expect(app.hearts, 0);
@@ -58,20 +56,5 @@ void main() {
     expect(app.canEarnHeart, isFalse);
     await app.earnHeart();
     expect(app.hearts, AppState.maxHearts);
-  });
-
-  test('a donation gives 2 hearts, above the cap, then just counts', () async {
-    final app = await _app({'hearts': AppState.maxHearts});
-    expect(await app.recordDonation(day1), AppState.donateHearts);
-    expect(app.hearts, AppState.maxHearts + AppState.donateHearts);
-    expect(app.donations, 1);
-
-    final later = day1.add(const Duration(minutes: 10));
-    expect(await app.recordDonation(later), 0);
-    expect(app.donations, 2);
-    expect(app.donateRewardWait(later), const Duration(minutes: 20));
-
-    final next = day1.add(AppState.donateRewardCooldown);
-    expect(await app.recordDonation(next), AppState.donateHearts);
   });
 }

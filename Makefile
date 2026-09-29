@@ -8,9 +8,10 @@ SHELL := /bin/bash
 PROJECT_DIR    := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 EMULATOR_ID    ?= Medium_Phone_API_36.0
 ADMOB_CONFIG   ?= $(PROJECT_DIR)config/admob.json
+ADMOB_IOS_CONFIG ?= $(PROJECT_DIR)config/admob.ios.json
 
 .PHONY: help setup doctor devices emulator run run-android analyze test check clean \
-        hooks-install icons build-apk build-aab build-ios android-licenses require-admob-config
+        hooks-install icons build-apk build-aab build-ios android-licenses require-admob-config require-admob-ios-config
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -68,8 +69,15 @@ build-apk: setup require-admob-config ## Release APK (local testing)
 build-aab: setup require-admob-config ## Release App Bundle for Google Play
 	cd "$(PROJECT_DIR)" && flutter build appbundle --release --dart-define-from-file="$(ADMOB_CONFIG)"
 
-build-ios: setup ## Release IPA for App Store (requires Xcode)
-	cd "$(PROJECT_DIR)" && flutter build ipa --release
+require-admob-ios-config:
+	@if [[ ! -f "$(ADMOB_IOS_CONFIG)" ]]; then \
+		echo "Missing: $(ADMOB_IOS_CONFIG)"; \
+		echo "Copy config/admob.example.json to config/admob.ios.json and fill in your iOS AdMob IDs."; \
+		exit 1; \
+	fi
+
+build-ios: setup require-admob-ios-config ## Release IPA for App Store (requires Xcode)
+	cd "$(PROJECT_DIR)" && flutter build ipa --release --dart-define-from-file="$(ADMOB_IOS_CONFIG)"
 
 android-licenses: ## Accept Android SDK licenses (one-time)
 	flutter doctor --android-licenses

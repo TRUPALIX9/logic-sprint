@@ -10,7 +10,6 @@ import '../services/network.dart';
 import '../state/app_state.dart';
 import '../ui/chamfer.dart';
 import '../ui/kit.dart';
-import 'donate_screen.dart';
 
 Future<void> showHeartsSheet(BuildContext context) =>
     showModalBottomSheet<void>(
@@ -162,18 +161,6 @@ class _HeartsSheetState extends State<HeartsSheet> {
                                 accent: LS.coral,
                                 onPressed: enabled ? _watch : null,
                               );
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          SecondaryButton(
-                            label:
-                                'Donate a view · +${AppState.donateHearts} hearts',
-                            icon: Icons.favorite_border_rounded,
-                            onPressed: () {
-                              final navigator = Navigator.of(context);
-                              navigator
-                                ..pop()
-                                ..push(DonateScreen.route());
                             },
                           ),
                           const SizedBox(height: 12),

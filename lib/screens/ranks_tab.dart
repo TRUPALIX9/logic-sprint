@@ -193,6 +193,52 @@ class _RanksTabState extends State<RanksTab> {
     );
   }
 
+  /// Long-press on another player's row: confirm, then report the name.
+  Future<void> _report(LeaderboardEntry entry) async {
+    final leaderboard = context.read<Leaderboard>();
+    final messenger = ScaffoldMessenger.of(context);
+    final report = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: LS.surface,
+        shape: chamfer(Cut.lg, border: LS.line),
+        title: const DisplayText('Report name?', size: 24),
+        content: Text(
+          'Report ${entry.playerName} as offensive? Names reported by several '
+          'players are hidden from the leaderboard.',
+          style: LSText.body(15, color: LS.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const MonoLabel('Cancel', weight: FontWeight.w700),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const MonoLabel(
+              'Report',
+              weight: FontWeight.w700,
+              color: LS.coral,
+            ),
+          ),
+        ],
+      ),
+    );
+    if (report != true) {
+      return;
+    }
+    final sent = await leaderboard.reportName(entry.playerId);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          sent
+              ? 'Thanks — ${entry.playerName} was reported'
+              : 'Couldn’t reach the server. Try again later.',
+        ),
+      ),
+    );
+  }
+
   Future<void> _chooseName() async {
     if (await showNameSheet(context) && mounted) {
       await _refresh();
@@ -333,6 +379,7 @@ class _RanksTabState extends State<RanksTab> {
                   now: now,
                   reduceMotion: reduceMotion,
                   haptics: app.vibrationOn,
+                  onReport: _online ? _report : null,
                 ),
         ),
         if (name == null)

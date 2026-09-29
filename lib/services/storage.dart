@@ -46,18 +46,6 @@ class Storage {
   Future<void> setHeartAdUnlocked(bool value) =>
       _prefs.setBool('heartAdUnlocked', value);
 
-  /// Ads watched from the Donate page, and when one last earned hearts.
-  int get donations => _prefs.getInt('donations') ?? 0;
-  Future<void> setDonations(int value) => _prefs.setInt('donations', value);
-
-  DateTime? get lastDonationRewardAt {
-    final millis = _prefs.getInt('lastDonationRewardAt');
-    return millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis);
-  }
-
-  Future<void> setLastDonationRewardAt(DateTime at) =>
-      _prefs.setInt('lastDonationRewardAt', at.millisecondsSinceEpoch);
-
   /// How long the best-scoring run took, if recorded.
   Duration? bestTime(GameId game, Difficulty difficulty) {
     final millis = _prefs.getInt(_timeKey(game, difficulty));
@@ -123,6 +111,19 @@ class Storage {
   /// The 4-digit tag that goes with [playerName] ("NAME#0420").
   int? get playerTag => _prefs.getInt('playerTag');
   Future<void> setPlayerTag(int value) => _prefs.setInt('playerTag', value);
+
+  /// Forgets the leaderboard identity: name, tag, unsent runs and cached
+  /// boards (after the server data is deleted). Local bests and History stay.
+  Future<void> clearPlayer() async {
+    for (final key in [
+      'playerName',
+      'playerTag',
+      'pendingRuns',
+      'leaderboardBoards',
+    ]) {
+      await _prefs.remove(key);
+    }
+  }
 
   /// Last game + difficulty played, for Home's "Jump back in".
   (GameId, Difficulty)? get lastPlayed {

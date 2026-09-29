@@ -24,6 +24,15 @@ class FakeLeaderboardApi implements LeaderboardApi {
   /// How many times [boards] was called.
   int fetches = 0;
 
+  /// Names containing any of these are refused (lower case).
+  final banned = <String>{};
+
+  /// Player ids passed to [reportName].
+  final reports = <String>[];
+
+  /// Set by [deleteMyData].
+  bool deleted = false;
+
   void _check() {
     if (!online) {
       throw StateError('offline');
@@ -41,6 +50,9 @@ class FakeLeaderboardApi implements LeaderboardApi {
     _check();
     if (taken.contains('${name.toLowerCase()}#${'$tag'.padLeft(4, '0')}')) {
       throw const NameTakenException();
+    }
+    if (banned.any(name.toLowerCase().contains)) {
+      throw const NameNotAllowedException();
     }
     this.name = name;
     this.tag = tag;
@@ -67,6 +79,20 @@ class FakeLeaderboardApi implements LeaderboardApi {
   ) async {
     _check();
     runs.add((game, difficulty, score, duration));
+  }
+
+  @override
+  Future<void> reportName(String playerId) async {
+    _check();
+    reports.add(playerId);
+  }
+
+  @override
+  Future<void> deleteMyData() async {
+    _check();
+    deleted = true;
+    name = null;
+    tag = null;
   }
 
   @override

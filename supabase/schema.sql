@@ -51,6 +51,35 @@ create table if not exists public.game_bests (
   primary key (player_id, game_type, difficulty)
 );
 
+-- Moderation: a name reported by enough players is hidden from the boards
+-- until the player picks another name (or you clear it in the dashboard).
+alter table public.profiles
+  add column if not exists hidden boolean not null default false;
+
+create table if not exists public.name_reports (
+  reporter_id uuid not null references public.profiles (id) on delete cascade,
+  player_id uuid not null references public.profiles (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (reporter_id, player_id)
+);
+
+-- Words a name may not contain, lower case. Checked by claim_name after
+-- folding look-alikes (0→o, 1→i, 3→e, 4→a, 5→s, 7→t, @→a, $→s) and
+-- dropping spaces, _ and -. Substring match, so avoid short words that hide
+-- inside ordinary ones ("grape", "analyst"). Add rows in the dashboard; no
+-- client reads it.
+create table if not exists public.banned_words (
+  word text primary key check (word = lower(word) and word ~ '^[a-z]+$')
+);
+
+insert into public.banned_words (word) values
+  ('fuck'), ('fuk'), ('shit'), ('cunt'), ('bitch'), ('whore'), ('slut'),
+  ('dick'), ('cock'), ('pussy'), ('penis'), ('vagina'), ('porn'),
+  ('rapist'), ('nazi'), ('hitler'), ('nigger'), ('nigga'), ('faggot'),
+  ('retard'), ('tranny'), ('kike'), ('chink'), ('wetback'), ('asshole'),
+  ('bastard'), ('motherf'), ('wank'), ('twat'), ('dildo'), ('kkk')
+on conflict do nothing;
+
 -- Serves "top 10 for one game + difficulty" and rank lookups.
 create index if not exists game_bests_board_idx
   on public.game_bests (game_type, difficulty, best_score desc, best_duration_ms);
@@ -59,6 +88,10 @@ create index if not exists game_bests_board_idx
 
 alter table public.profiles enable row level security;
 alter table public.game_bests enable row level security;
+-- No policies and no grants: only the functions below touch these.
+alter table public.name_reports enable row level security;
+alter table public.banned_words enable row level security;
+revoke all on public.name_reports, public.banned_words from anon, authenticated;
 
 -- Names and bests are public (they appear on the leaderboard).
 drop policy if exists "Profiles are public" on public.profiles;
@@ -95,9 +128,26 @@ as $$
   limit 1;
 $$;
 
+-- True when [p_name] contains a banned word (see banned_words).
+create or replace function public.name_is_banned(p_name text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from banned_words b
+    where position(
+      b.word in translate(lower(p_name), '013457@$ _-', 'oieastas')
+    ) > 0
+  );
+$$;
+
 -- Sets or changes the caller's name and tag. Raises 'name_taken' (that
--- name + tag belongs to someone else), 'invalid_name', 'invalid_tag' or
--- 'not_signed_in'.
+-- name + tag belongs to someone else), 'name_not_allowed' (a banned word),
+-- 'invalid_name', 'invalid_tag' or 'not_signed_in'. A new name starts
+-- clean: its old reports are dropped and it shows on the boards again.
 create or replace function public.claim_name(p_name text, p_tag integer)
 returns void
 language plpgsql
@@ -106,6 +156,7 @@ set search_path = public
 as $$
 declare
   v_name text := btrim(p_name);
+  v_old text;
 begin
   if auth.uid() is null then
     raise exception 'not_signed_in';
@@ -116,6 +167,10 @@ begin
   if p_tag is null or p_tag not between 0 and 9999 then
     raise exception 'invalid_tag';
   end if;
+  if name_is_banned(v_name) then
+    raise exception 'name_not_allowed';
+  end if;
+  select display_name into v_old from profiles where id = auth.uid();
   begin
     insert into profiles (id, display_name, tag)
     values (auth.uid(), v_name, p_tag)
@@ -124,6 +179,11 @@ begin
   exception when unique_violation then
     raise exception 'name_taken';
   end;
+  -- Reports were about the old name (a new code alone keeps them).
+  if v_old is distinct from v_name then
+    delete from name_reports where player_id = auth.uid();
+    update profiles set hidden = false where id = auth.uid();
+  end if;
 end;
 $$;
 
@@ -148,6 +208,13 @@ $$;
 -- the score is higher, or (Memory Lane / Quick Math only) equal in less time.
 -- Rocket Launch and Guess Color don't track time: their duration is dropped,
 -- so an equal score never replaces the earlier best.
+--
+-- A score no real run could reach still counts as a play but never becomes
+-- a best (no error: the app would retry a refused run forever). Real runs
+-- earn at most about 14 points per correct answer (10, plus 20 every 5 in a
+-- row), and no answer takes under 280 ms, so timed games stay under
+-- 60 points a second; the untimed games are capped well above the best
+-- runs seen (Rocket Launch tops out near 10 000).
 create or replace function public.record_run(
   p_game text,
   p_difficulty text,
@@ -164,9 +231,18 @@ begin
     raise exception 'not_signed_in';
   end if;
 
-  if p_game not in ('memoryLane', 'quickMath') then
+  if p_game in ('memoryLane', 'quickMath') then
+    if p_duration_ms is null or p_duration_ms < 0
+       or p_score > 100 + p_duration_ms::bigint * 60 / 1000 then
+      p_score := 0;
+    end if;
+  else
     p_duration_ms := null;
+    if p_score > 50000 then
+      p_score := 0;
+    end if;
   end if;
+  p_score := least(greatest(p_score, 0), 1000000);
 
   insert into profiles (id) values (auth.uid()) on conflict (id) do nothing;
 
@@ -191,6 +267,54 @@ begin
 end;
 $$;
 
+-- Reports another player's name. Three different reporters hide it from
+-- the boards (it comes back when they pick another name). Reporting
+-- yourself, an unnamed player or someone twice does nothing.
+create or replace function public.report_name(p_player uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'not_signed_in';
+  end if;
+  if p_player = auth.uid()
+     or not exists (select 1 from profiles where id = p_player and display_name is not null) then
+    return;
+  end if;
+  insert into profiles (id) values (auth.uid()) on conflict (id) do nothing;
+  insert into name_reports (reporter_id, player_id)
+  values (auth.uid(), p_player)
+  on conflict do nothing;
+  update profiles set hidden = true
+  where id = p_player
+    and (select count(*) from name_reports where player_id = p_player) >= 3;
+end;
+$$;
+
+-- Deletes the caller's account: the anonymous auth user, their profile,
+-- bests and reports (cascades). The app then signs in as a new player.
+create or replace function public.delete_my_data()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'not_signed_in';
+  end if;
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+revoke execute on function public.name_is_banned(text) from public, anon, authenticated;
+revoke execute on function public.report_name(uuid) from public, anon;
+revoke execute on function public.delete_my_data() from public, anon;
+grant execute on function public.report_name(uuid) to authenticated;
+grant execute on function public.delete_my_data() to authenticated;
 revoke execute on function public.claim_name(text) from public, anon;
 revoke execute on function public.claim_name(text, integer) from public, anon;
 revoke execute on function public.free_tag(text) from public, anon;
@@ -224,7 +348,7 @@ select
        else (extract(epoch from g.best_at) * 1000)::bigint end as tie_key
 from public.game_bests g
 join public.profiles p on p.id = g.player_id
-where g.best_score > 0 and p.display_name is not null;
+where g.best_score > 0 and p.display_name is not null and not p.hidden;
 
 -- Every board at once, each row with its position (ties share a rank, as
 -- in my_rank). The app fetches board_rank <= 10 for all boards in one
@@ -279,7 +403,7 @@ select
   g.last_played_at
 from public.game_bests g
 join public.profiles p on p.id = g.player_id
-where p.display_name is not null;
+where p.display_name is not null and not p.hidden;
 
 -- Public totals per game: players, plays and the top score.
 create or replace view public.game_stats

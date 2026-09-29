@@ -101,6 +101,12 @@ void main() {
       expect(leaderboard.displayName, 'AXON#0002');
     });
 
+    test('refuses a banned name with its own message', () async {
+      api.banned.add('rude');
+      expect(await leaderboard.claimName('RUDE_FOX', 1), contains('allowed'));
+      expect(leaderboard.savedName, isNull);
+    });
+
     test('suggests a free tag, or a random one offline', () async {
       expect(await leaderboard.suggestTag('AXON'), 1234);
       api.online = false;
@@ -122,6 +128,38 @@ void main() {
       api.online = false;
       final load = await leaderboard.load(_math, _easy, offline: true);
       expect(load.entries.first.playerName, 'NEW#0005');
+    });
+  });
+
+  group('moderation and deletion', () {
+    test('reports another player, false when offline', () async {
+      expect(await leaderboard.reportName('a'), isTrue);
+      expect(api.reports, ['a']);
+      api.online = false;
+      expect(await leaderboard.reportName('a'), isFalse);
+    });
+
+    test('deleting forgets the name, unsent runs and boards', () async {
+      await leaderboard.claimName('NEON', 7);
+      await leaderboard.load(_math, _easy);
+      api.online = false;
+      await leaderboard.recordRun(_result());
+      api.online = true;
+
+      expect(await leaderboard.deleteMyData(), isNull);
+      expect(api.deleted, isTrue);
+      expect(leaderboard.displayName, isNull);
+      expect(storage.pendingRuns, isEmpty);
+      expect(storage.leaderboardCache, isNull);
+      expect(leaderboard.history, hasLength(1), reason: 'History stays');
+    });
+
+    test('deleting offline keeps everything and says why', () async {
+      await leaderboard.claimName('NEON', 7);
+      api.online = false;
+      expect(await leaderboard.deleteMyData(), isNotNull);
+      expect(api.deleted, isFalse);
+      expect(leaderboard.displayName, 'NEON#0007');
     });
   });
 

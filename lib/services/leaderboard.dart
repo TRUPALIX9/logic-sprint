@@ -196,6 +196,8 @@ class Leaderboard extends ChangeNotifier {
       await _api.claimName(trimmed, tag);
     } on NameTakenException {
       return '$trimmed#${formatTag(tag)} is taken — try another code.';
+    } on NameNotAllowedException {
+      return 'That name isn’t allowed — try another.';
     } on ArgumentError {
       return 'Pick a 4-digit code.';
     } on Object {
@@ -207,6 +209,31 @@ class Leaderboard extends ChangeNotifier {
     // Unnamed players aren't on the server's boards: fetch again on the next
     // look so the new name shows up with its rank (free; not the cooldown).
     await _write(_cache()..remove(_fetchedKey));
+    notifyListeners();
+    return null;
+  }
+
+  /// Reports another player's name as offensive. False when offline.
+  Future<bool> reportName(String playerId) async {
+    try {
+      await _api.reportName(playerId);
+      return true;
+    } on Object {
+      return false;
+    }
+  }
+
+  /// Deletes this player's name and scores from the server, then forgets
+  /// the name, unsent runs and cached boards here (local bests and History
+  /// stay). Returns null on success, or a message to show.
+  Future<String?> deleteMyData() async {
+    try {
+      await _sync;
+      await _api.deleteMyData();
+    } on Object {
+      return 'Couldn’t reach the server. Check your connection and try again.';
+    }
+    await _storage.clearPlayer();
     notifyListeners();
     return null;
   }

@@ -8,6 +8,11 @@ class NameTakenException implements Exception {
   const NameTakenException();
 }
 
+/// The server refused a name because it contains a banned word.
+class NameNotAllowedException implements Exception {
+  const NameNotAllowedException();
+}
+
 /// Every board's Top 10 in one go, plus the caller's rank on each board
 /// they've scored on (keyed `<game>_<difficulty>`).
 typedef Boards = ({List<Map<String, dynamic>> rows, Map<String, int> myRanks});
@@ -22,7 +27,8 @@ abstract interface class LeaderboardApi {
   Future<void> signIn();
 
   /// Sets the display name and its 4-digit [tag]. Throws
-  /// [NameTakenException] if another player has that name + tag.
+  /// [NameTakenException] if another player has that name + tag, and
+  /// [NameNotAllowedException] if the name contains a banned word.
   Future<void> claimName(String name, int tag);
 
   /// A random tag no one else uses with [name], or null if none is left.
@@ -42,6 +48,13 @@ abstract interface class LeaderboardApi {
   /// Top 10 rows for every board (see the `leaderboard_ranked` view) and
   /// the caller's ranks.
   Future<Boards> boards();
+
+  /// Reports another player's name as offensive.
+  Future<void> reportName(String playerId);
+
+  /// Deletes this player's server account (name, bests, reports) and signs
+  /// out; the next [signIn] starts a new player.
+  Future<void> deleteMyData();
 }
 
 /// [LeaderboardApi] backed by supabase/schema.sql.
@@ -92,6 +105,9 @@ class SupabaseLeaderboardApi implements LeaderboardApi {
     } on PostgrestException catch (e) {
       if (e.message.contains('name_taken')) {
         throw const NameTakenException();
+      }
+      if (e.message.contains('name_not_allowed')) {
+        throw const NameNotAllowedException();
       }
       if (e.message.contains('invalid_tag') ||
           e.message.contains('invalid_name')) {
@@ -144,6 +160,24 @@ class SupabaseLeaderboardApi implements LeaderboardApi {
           },
         )
         .timeout(_timeout);
+  }
+
+  @override
+  Future<void> reportName(String playerId) async {
+    await signIn();
+    await _client
+        .rpc('report_name', params: {'p_player': playerId})
+        .timeout(_timeout);
+  }
+
+  @override
+  Future<void> deleteMyData() async {
+    if (_client.auth.currentUser == null) {
+      return;
+    }
+    await _client.rpc('delete_my_data').timeout(_timeout);
+    // The user is gone on the server; just drop the local session.
+    await _client.auth.signOut(scope: SignOutScope.local);
   }
 
   @override
