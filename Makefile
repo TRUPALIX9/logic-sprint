@@ -77,7 +77,7 @@ require-admob-ios-config:
 	fi
 
 build-ios: setup require-admob-ios-config ## Release IPA for App Store (requires Xcode)
-	cd "$(PROJECT_DIR)" && flutter build ipa --release --dart-define-from-file="$(ADMOB_IOS_CONFIG)"
+	cd "$(PROJECT_DIR)" && flutter build ipa --release --dart-define-from-file="$(ADMOB_IOS_CONFIG)" --export-options-plist=ios/ExportOptions.plist
 
 android-licenses: ## Accept Android SDK licenses (one-time)
 	flutter doctor --android-licenses
