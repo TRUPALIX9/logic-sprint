@@ -155,18 +155,16 @@ Upload each set in number order (all 9; up to 10 allowed). See README for the re
 No login: every player signs in anonymously in the background, and a leaderboard name is optional.
 Delete account data: Settings (gear on the Play tab) → Delete leaderboard data.
 Report a name: on the Ranks tab, long-press another player's row → Report. Names are also checked against a word filter.
-Ads: Google AdMob (banner and optional rewarded videos). The app does not use App Tracking Transparency and never accesses the IDFA; EEA/UK users see Google's GDPR consent form.
+Ads: Google AdMob (banner and optional rewarded videos). The App Tracking Transparency prompt appears on first launch, after Google's explainer; ads still show (not personalized) when tracking is declined.
 ```
 - Contact: Trupal Patel, trupal.work@gmail.com
 
 ## App Privacy (App Store Connect → App Privacy)
 | Data type | Linked to user | Tracking | Purposes |
 |---|---|---|---|
-| Identifiers → Device ID (AdMob; IDFV only, the IDFA is never accessed) | No | No | Third-party advertising, Analytics |
-| Usage data → Product interaction (AdMob) | No | No | Third-party advertising, Analytics |
-| Usage data → Advertising data (AdMob) | No | No | Third-party advertising |
-
-No tracking: the app has no App Tracking Transparency prompt, so every "Used for tracking" answer is **No** and the listing shows no "Data Used to Track You" section.
+| Identifiers → Device ID (IDFA, AdMob) | No | Yes | Third-party advertising, Analytics |
+| Usage data → Product interaction (AdMob) | No | Yes | Third-party advertising, Analytics |
+| Usage data → Advertising data (AdMob) | No | Yes | Third-party advertising |
 | Diagnostics → Other diagnostic data (AdMob) | No | No | Analytics |
 | Contact info → Name (leaderboard display name) | Yes | No | App functionality |
 | User content → Gameplay content (scores) | Yes | No | App functionality |

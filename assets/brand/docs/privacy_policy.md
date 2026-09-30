@@ -25,7 +25,7 @@ Hearts and revives are tracked only on your device and are never sold or linked 
 If you are in the European Economic Area, the United Kingdom, or Switzerland, the app asks for your consent before showing personalized ads. You can change your choice at any time in **Settings → Privacy Choices**.
 
 - **Android:** you can reset or delete your advertising ID in your device's Google settings.
-- **iPhone:** the app does not ask for permission to track you, so your device's advertising identifier (IDFA) is never available to the app or to Google. Ads on iPhone are not personalized using that identifier.
+- **iPhone:** the app asks for permission to track (Apple's App Tracking Transparency prompt) before your device's advertising identifier (IDFA) can be used for personalized ads. If you choose "Ask App Not to Track", Google shows ads that are not personalized using that identifier. You can change this at any time in **iOS Settings → Privacy & Security → Tracking**.
 
 ## What we do not collect
 

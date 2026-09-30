@@ -11,7 +11,7 @@ class TabletFrame extends StatelessWidget {
 
   final Widget child;
 
-  static const designWidth = 720.0;
+  static const designWidth = 620.0;
 
   /// True inside a scaled tablet frame.
   static bool isTablet(BuildContext context) =>

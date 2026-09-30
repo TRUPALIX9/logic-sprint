@@ -62,7 +62,7 @@ Android ad units don't serve on iOS; iOS needs its own AdMob app.
 - [x] Create `config/admob.ios.json` (gitignored, same keys as `config/admob.json`) with the iOS app ID and unit IDs. `ADMOB_APP_ID` is written into Info.plist by the "AdMob App ID" build phase; a release build fails without it
 - [ ] AdMob → Privacy & messaging:
   - [ ] GDPR message: add the iOS app
-  - [ ] **IDFA explainer** message: **unpublish / delete it**. The app has no tracking prompt (decision: no ATT)
+  - [ ] **IDFA explainer** message: create and publish it (it's shown before Apple's tracking prompt)
   - [ ] US state regulations message: add the iOS app
 - [ ] Add the iOS app ID line to `assets/brand/store/app-ads.txt` and re-host it at https://logicsprint.trupalpatel.com/app-ads.txt
 
@@ -74,7 +74,7 @@ Android ad units don't serve on iOS; iOS needs its own AdMob app.
 |---|---|---|---|
 | 1 | `ios/Runner/Info.plist` + "AdMob App ID" build phase | `GADApplicationIdentifier` keeps Google's test ID in the file; every build replaces it with `ADMOB_APP_ID` from the dart-defines (same approach as `android/app/build.gradle.kts`). Release builds fail without it | ✅ |
 | 2 | `Info.plist` | `SKAdNetworkItems` with Google's ID (`cstr6suwn9`). Add the third-party buyer list from https://developers.google.com/admob/ios/3p-skadnetworks for more ad demand | ✅ (Google only) |
-| 3 | `Info.plist` | No `NSUserTrackingUsageDescription`: no tracking prompt, the IDFA is never accessed | ✅ (removed) |
+| 3 | `Info.plist` | `NSUserTrackingUsageDescription` (tracking prompt kept: Allow = personalized ads, Ask Not to Track = non-personalized ads, still paid) | ✅ |
 | 4 | `Info.plist` | `ITSAppUsesNonExemptEncryption = false` | ✅ |
 | 5 | `Info.plist` | Portrait only (iPad: portrait both ways, `UIRequiresFullScreen`) | ✅ |
 | 6 | `Runner.xcodeproj` | `TARGETED_DEVICE_FAMILY = 1` (iPhone) in all configurations | ✅ |
@@ -84,13 +84,13 @@ Android ad units don't serve on iOS; iOS needs its own AdMob app.
 | 10 | `Makefile` | `make build-ios` uses `config/admob.ios.json` and stops if it's missing | ✅ |
 | 11 | `pubspec.yaml` | `version: 1.0.2+4` | ✅ |
 
-### 3b. No App Tracking Transparency (decided)
+### 3b. App Tracking Transparency (kept)
 
-The app never shows Apple's tracking prompt: `NSUserTrackingUsageDescription` is not in
-Info.plist, so iOS can't show it and the Google Mobile Ads SDK can't read the IDFA. AdMob
-still serves (non-IDFA-personalized) ads and pays as usual; SKAdNetwork still attributes
-installs. EEA/UK users still get Google's GDPR consent form. Remaining: unpublish the IDFA
-explainer in AdMob, and answer **No** to every "used for tracking" question in App Privacy.
+Google's UMP SDK shows the IDFA explainer, then Apple's prompt. **Allow** → personalized ads
+(higher revenue); **Ask App Not to Track** → ads still show, not personalized with the IDFA
+(lower revenue). Nobody is opted out by default. Remaining: keep the IDFA explainer published
+in AdMob, and answer **Yes** to "used for tracking" for Device ID, Product Interaction and
+Advertising Data in App Privacy.
 
 ### 3c. In-app data deletion ✅
 
@@ -136,15 +136,15 @@ select column_name from information_schema.columns
   - Keywords (100, comma separated, no spaces)
   - Promotional text (170), description (4000), What's New
   - Support URL and Marketing URL: https://logicsprint.trupalpatel.com
-- [x] **Privacy policy** covers iOS (no tracking, IDFA never accessed), in-app deletion and name reporting; it's bundled in the app too
+- [x] **Privacy policy** covers iOS (IDFA, the tracking prompt, iOS Settings → Tracking), in-app deletion and name reporting; it's bundled in the app too
 - [ ] Host the updated policy and set its URL in App Store Connect
 - [ ] **App Privacy** questionnaire in App Store Connect:
 
 | Data type | Linked to user | Used for tracking | Purpose |
 |---|---|---|---|
-| Device ID (AdMob, IDFV only) | No | No | Third-party advertising, Analytics |
-| Product interaction | No | No | Third-party advertising, Analytics |
-| Advertising data | No | No | Third-party advertising |
+| Device ID (IDFA) | No | **Yes** | Third-party advertising, Analytics |
+| Product interaction | No | Yes | Third-party advertising, Analytics |
+| Advertising data | No | Yes | Third-party advertising |
 | Name (leaderboard display name) | Yes | No | App functionality |
 | Gameplay content (scores) | Yes | No | App functionality |
 
@@ -162,7 +162,7 @@ make build-ios   # → build/ios/ipa/*.ipa
 - [ ] Upload with **Transporter** (Mac App Store), or open `build/ios/archive/Runner.xcarchive` in Xcode → Distribute App
 - [ ] Wait for processing (about 15–30 min), then TestFlight → internal testing → install on your iPhone
 - [ ] Run the QA smoke test in `docs/release_checklist.md` §5, plus these iOS-specific checks:
-  - [ ] No tracking prompt ever appears; ads still load (and the GDPR form appears in the EEA)
+  - [ ] The tracking prompt appears once, after the IDFA explainer; ads load when it's allowed and when it's denied
   - [ ] Real ads (not test ads) show on banner, rewarded and Ranks refresh
   - [ ] Swipe-from-edge back gesture during a run pauses the run and never quits it (Android's back button does the same)
   - [ ] Home indicator and Dynamic Island don't overlap the game top bar or the Rocket Launch play area
