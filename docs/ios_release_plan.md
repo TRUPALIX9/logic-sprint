@@ -38,19 +38,19 @@ build asks for it, and upload the `.ipa` with Transporter.
 
 - [x] Remove "Donate a view" (screen, Settings row, Hearts sheet button, state, storage, test, README, privacy policy)
 - [x] Everything in Phase 3 that doesn't need the account (see Status)
-- [ ] Install **Xcode** from the Mac App Store (large download; start it tonight)
-- [ ] `sudo xcode-select -s /Applications/Xcode.app && sudo xcodebuild -license accept`
-- [ ] `xcodebuild -runFirstLaunch` and install the iOS platform (Xcode → Settings → Components)
-- [ ] `brew install cocoapods`
+- [x] Install **Xcode** from the Mac App Store (large download; start it tonight)
+- [x] `sudo xcode-select -s /Applications/Xcode.app && sudo xcodebuild -license accept`
+- [x] `xcodebuild -runFirstLaunch` and install the iOS platform (Xcode → Settings → Components)
+- [x] `brew install cocoapods`
 - [ ] `flutter doctor -v`: the Xcode and CocoaPods lines are green
 - [ ] `flutter run` on the iOS Simulator: all four games, Ranks, Profile and Settings work (test ads)
 
 ## Phase 1: Tomorrow morning (Apple Developer Program)
 
-- [ ] Enroll at https://developer.apple.com/programs/enroll/ ($99/year, **Individual**). Use the Apple ID you'll keep for the app. Approval is usually quick but can take up to 48 h (ID check)
-- [ ] Note the **Team ID** (Membership details)
-- [ ] Certificates, Identifiers & Profiles → Identifiers → register App ID `com.trupal.logicsprint` (no extra capabilities needed)
-- [ ] App Store Connect → My Apps → **+ New App**: iOS, name **LogicSprint: Brain Games**, primary language English (U.S.), bundle ID `com.trupal.logicsprint`, SKU `logicsprint-ios`
+- [x] Enroll at https://developer.apple.com/programs/enroll/ ($99/year, **Individual**). Use the Apple ID you'll keep for the app. Approval is usually quick but can take up to 48 h (ID check)
+- [x] Note the **Team ID** (Membership details)
+- [x] Certificates, Identifiers & Profiles → Identifiers → register App ID `com.trupal.logicsprint` (no extra capabilities needed)
+- [x] App Store Connect → My Apps → **+ New App**: iOS, name **LogicSprint: Brain Games**, primary language English (U.S.), bundle ID `com.trupal.logicsprint`, SKU `logicsprint-ios`
 - [ ] Agreements, Tax and Banking: accept the **Free Apps** agreement (the Paid Apps agreement isn't needed, since there are no in-app purchases)
 
 ## Phase 2: AdMob for iOS (in parallel with Phase 1)
@@ -64,7 +64,7 @@ Android ad units don't serve on iOS; iOS needs its own AdMob app.
   - [ ] GDPR message: add the iOS app
   - [x] **IDFA explainer** message: created and published ("Keep LogicSprint free"; shown before Apple's tracking prompt)
   - [ ] US state regulations message: add the iOS app
-- [ ] Add the iOS app ID line to `assets/brand/store/app-ads.txt` and re-host it at https://logicsprint.trupalpatel.com/app-ads.txt
+- [x] app-ads.txt: no change needed; the existing `google.com, pub-4460198288175671, …` line covers every app under the publisher account, iOS included (already live)
 
 ## Phase 3: Code and config changes
 
@@ -129,7 +129,7 @@ select column_name from information_schema.columns
 ## Phase 4: Store listing and documents
 
 - [x] **Screenshots: 6.9" iPhone, 1320 × 2868**, 9 of them, no alpha → `assets/brand/store/app_store/screenshots/` (`SCREENSHOTS=appstore`, see README)
-- [ ] App icon: 1024 × 1024, no alpha (already produced by `flutter_launcher_icons` with `remove_alpha_ios`)
+- [x] App icon: 1024 × 1024, no alpha (already produced by `flutter_launcher_icons` with `remove_alpha_ios`)
 - [x] Listing copy in `assets/brand/docs/store_listing.md`, new App Store section (also has App Review notes and App Privacy answers):
   - Name (30): `LogicSprint: Brain Games`
   - Subtitle (30): e.g. `Reflex, memory & math games`
@@ -148,7 +148,7 @@ select column_name from information_schema.columns
 | Name (leaderboard display name) | Yes | No | App functionality |
 | Gameplay content (scores) | Yes | No | App functionality |
 
-- [ ] Age rating questionnaire: no violence, no gambling, **user-generated content: yes (names)**, which gives 12+ or 13+; that matches Android's 13+ target
+- [ ] Age rating questionnaire: no violence, no gambling, **user-generated content: yes (names)**; Apple calculated 4+ → **override to 13+** (matches Android and the privacy policy)
 - [ ] Category: Games → Puzzle (secondary: Games → Casual)
 - [ ] App Review notes: "No login. Players sign in anonymously; a name is optional. Delete data: Settings → Privacy → Delete my leaderboard data. Report a name: long-press a row on Ranks."
 
