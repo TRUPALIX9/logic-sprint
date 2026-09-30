@@ -6,6 +6,8 @@ and store assets. This file is the whole plan in order; tick items off as they'r
 
 ## Status (September 29, 2026)
 
+**Submitted for App Review on September 29, 2026 at 9:51 PM: 1.0.2 (6), submission `ea00a28b-a2cd-4e73-ad06-fdea90fc3916`, manual release.** Privacy policy live at https://logicsprint.trupalpatel.com/privacy; `supabase/schema.sql` applied to the live project.
+
 **Done in the repo, not yet committed:** everything in Phase 3 (iOS config, in-app deletion,
 name moderation, score checks), App Store screenshots, listing copy, privacy policy, 1.0.2 notes.
 **Waiting on:** Xcode + CocoaPods on this Mac, the Apple Developer payment to clear, the
