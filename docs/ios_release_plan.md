@@ -27,7 +27,7 @@ build asks for it, and upload the `.ipa` with Transporter.
 | Decision | Choice | Why |
 |---|---|---|
 | Devices | **iPhone only** (`TARGETED_DEVICE_FAMILY = 1`) | No iPad screenshots and no iPad review; the app is portrait-only anyway |
-| Minimum iOS | 13.0 (unchanged) | Google Mobile Ads needs 12+ |
+| Minimum iOS | 15.0 | App Store requires 15.0+ for uploads from April 2027 (warning 90068) |
 | "Donate a view" | **Removed** (done) | Not needed; the word "donate" invites App Store guideline 3.1.1 questions |
 | Builds | Local `flutter build ipa` + Xcode/Transporter upload | The GitHub release workflow runs on Ubuntu, which can't build iOS |
 | Version | `1.0.2+4` for both stores (done in `pubspec.yaml`) | One version line; Android ships the same Dart code |
