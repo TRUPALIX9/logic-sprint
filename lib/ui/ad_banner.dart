@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 
 import '../services/ads.dart';
+import 'tablet_frame.dart';
 
 /// Full-width (anchored adaptive) AdMob banner. Takes no space until ads are
 /// allowed; then reserves the banner's height before it loads, so nothing
@@ -22,6 +25,9 @@ class AdBanner extends StatefulWidget {
   /// Width to size the adaptive banner for; the screen width when null.
   final double? width;
 
+  /// Widest banner requested on a tablet, in the app's (scaled) pixels.
+  static const tabletMaxWidth = 360.0;
+
   @override
   State<AdBanner> createState() => _AdBannerState();
 }
@@ -37,7 +43,14 @@ class _AdBannerState extends State<AdBanner> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _width = (widget.width ?? MediaQuery.sizeOf(context).width).truncate();
+    final width = widget.width ?? MediaQuery.sizeOf(context).width;
+    // Tablets scale the whole app up (TabletFrame): ask for a phone-sized
+    // banner there, so it doesn't stretch across the screen.
+    _width =
+        (TabletFrame.isTablet(context)
+                ? math.min(width, AdBanner.tabletMaxWidth)
+                : width)
+            .truncate();
     final ads = context.read<Ads>();
     if (!identical(ads, _ads)) {
       _ads?.ready.removeListener(_loadIfReady);

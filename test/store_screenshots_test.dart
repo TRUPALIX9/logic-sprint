@@ -31,7 +31,9 @@ final _skip = !Platform.environment.containsKey('SCREENSHOTS');
 // SCREENSHOTS=play renders 1080×1920 (9:16, what Google Play accepts) into
 // google_play/screenshots; SCREENSHOTS=appstore renders 1320×2868 (App Store
 // 6.9" iPhone, 440×956 pt at 3×, Dynamic Island and home indicator insets)
-// into app_store/screenshots; anything else renders 1080×2400 (portfolio).
+// into app_store/screenshots; SCREENSHOTS=ipad renders 2064×2752 (App Store
+// 13" iPad, 1032×1376 pt at 2×, status bar and home indicator insets) into
+// app_store/screenshots_ipad; anything else renders 1080×2400 (portfolio).
 final _mode = switch (Platform.environment['SCREENSHOTS']) {
   'play' => (
     'assets/brand/store/google_play/screenshots',
@@ -44,6 +46,12 @@ final _mode = switch (Platform.environment['SCREENSHOTS']) {
     const Size(1320, 2868),
     3.0,
     const FakeViewPadding(top: 186, bottom: 102),
+  ),
+  'ipad' => (
+    'assets/brand/store/app_store/screenshots_ipad',
+    const Size(2064, 2752),
+    2.0,
+    const FakeViewPadding(top: 48, bottom: 40),
   ),
   _ => (
     'assets/brand/store/screenshots',

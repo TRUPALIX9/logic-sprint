@@ -7,6 +7,7 @@ import 'services/ads.dart';
 import 'services/leaderboard.dart';
 import 'services/network.dart';
 import 'state/app_state.dart';
+import 'ui/tablet_frame.dart';
 
 /// Build info shown in Settings.
 class AppInfo {
@@ -62,6 +63,7 @@ class LogicSprintApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: buildTheme(),
         home: home ?? const SplashScreen(),
+        builder: (context, child) => TabletFrame(child: child!),
       ),
     );
   }

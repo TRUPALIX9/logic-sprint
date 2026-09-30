@@ -113,7 +113,7 @@ Gradle refuses release builds without `ADMOB_APP_ID`, and bundles without a rele
 make build-ios   # → build/ios/ipa/*.ipa, upload with Transporter
 ```
 
-The "AdMob App ID" build phase writes `ADMOB_APP_ID` into Info.plist, and release builds fail without it. The app is iPhone-only and portrait-only. Full steps: [docs/ios_release_plan.md](docs/ios_release_plan.md)
+The "AdMob App ID" build phase writes `ADMOB_APP_ID` into Info.plist, and release builds fail without it. iPhone and iPad, portrait only; on iPad (shortest side 600+) `TabletFrame` scales the phone layout up to fill the screen, and banners stay phone-sized. Full steps: [docs/ios_release_plan.md](docs/ios_release_plan.md)
 
 ---
 
@@ -201,6 +201,7 @@ SCREENSHOTS=play ICONS_FONT="$(dirname "$(readlink -f "$(which flutter)")")/cach
 |----------------|------|--------|
 | `play` | 1080×1920 (9:16, Google Play) | `assets/brand/store/google_play/screenshots/` |
 | `appstore` | 1320×2868 (App Store 6.9" iPhone, 440×956 pt @3×) | `assets/brand/store/app_store/screenshots/` |
+| `ipad` | 2064×2752 (App Store 13" iPad, 1032×1376 pt @2×) | `assets/brand/store/app_store/screenshots_ipad/` |
 | `1` | 1080×2400 | `assets/brand/store/screenshots/` |
 
 PNGs are written without an alpha channel (flattened onto black), as App Store Connect requires. Rocket Launch renders four takes (`03_rocket_launch_take1-4.png`, gitignored); keep take 3 as `03_rocket_launch.png`.
