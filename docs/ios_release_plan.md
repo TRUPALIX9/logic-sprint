@@ -62,7 +62,7 @@ Android ad units don't serve on iOS; iOS needs its own AdMob app.
 - [x] Create `config/admob.ios.json` (gitignored, same keys as `config/admob.json`) with the iOS app ID and unit IDs. `ADMOB_APP_ID` is written into Info.plist by the "AdMob App ID" build phase; a release build fails without it
 - [ ] AdMob → Privacy & messaging:
   - [ ] GDPR message: add the iOS app
-  - [ ] **IDFA explainer** message: create and publish it (it's shown before Apple's tracking prompt)
+  - [x] **IDFA explainer** message: created and published ("Keep LogicSprint free"; shown before Apple's tracking prompt)
   - [ ] US state regulations message: add the iOS app
 - [ ] Add the iOS app ID line to `assets/brand/store/app-ads.txt` and re-host it at https://logicsprint.trupalpatel.com/app-ads.txt
 
