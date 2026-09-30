@@ -34,7 +34,7 @@
 - [x] Anonymous sign-ins enabled (Authentication → Providers)
 - [x] [supabase/schema.sql](../supabase/schema.sql) run (profiles, game_bests, RLS, `claim_name` / `record_run` / `my_rank`, views `leaderboard_top`, `player_stats`, `game_stats`) — verified: views readable, direct writes and anonymous RPC calls refused
 - [x] Re-run [supabase/schema.sql](../supabase/schema.sql) for name tags (`profiles.tag`, `claim_name(text, integer)`, `free_tag`) and the `leaderboard_ranked` view — the new build needs them; older builds keep working
-- [ ] Database password rotated (it was shared in chat)
+- [x] Database password rotated (it was shared in chat)
 
 ### Privacy policy
 - [x] Support email (trupal.work@gmail.com) in [assets/brand/docs/privacy_policy.md](../assets/brand/docs/privacy_policy.md)
