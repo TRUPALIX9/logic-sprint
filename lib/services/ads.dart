@@ -223,30 +223,80 @@ class _RewardedSlot {
     }
     _ad = null;
     loaded.value = false;
-    var earned = false;
-    void close() {
+    void after(VoidCallback then) {
       ad.dispose();
-      earned ? onReward() : onDone();
+      then();
       load();
     }
 
+    final outcome = RewardOutcome(
+      onReward: () => after(onReward),
+      onDone: () => after(onDone),
+    );
     switch (ad) {
       case RewardedInterstitialAd():
         ad
           ..fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (_) => close(),
-            onAdFailedToShowFullScreenContent: (_, _) => close(),
+            onAdDismissedFullScreenContent: (_) => outcome.dismissed(),
+            onAdFailedToShowFullScreenContent: (_, _) => outcome.failed(),
           )
-          ..show(onUserEarnedReward: (_, _) => earned = true);
+          ..show(onUserEarnedReward: (_, _) => outcome.rewarded());
       case RewardedAd():
         ad
           ..fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (_) => close(),
-            onAdFailedToShowFullScreenContent: (_, _) => close(),
+            onAdDismissedFullScreenContent: (_) => outcome.dismissed(),
+            onAdFailedToShowFullScreenContent: (_, _) => outcome.failed(),
           )
-          ..show(onUserEarnedReward: (_, _) => earned = true);
+          ..show(onUserEarnedReward: (_, _) => outcome.rewarded());
       default:
-        close();
+        outcome.failed();
     }
+  }
+}
+
+/// Settles a shown rewarded ad once: [onReward] if the reward came,
+/// otherwise [onDone]. Android sends the reward before the dismissal, but
+/// iOS can send it after, so a dismissal without one waits [grace] for it.
+@visibleForTesting
+class RewardOutcome {
+  RewardOutcome({
+    required this.onReward,
+    required this.onDone,
+    this.grace = const Duration(milliseconds: 1500),
+  });
+
+  final VoidCallback onReward;
+  final VoidCallback onDone;
+  final Duration grace;
+
+  bool _earned = false;
+  bool _settled = false;
+  Timer? _wait;
+
+  void rewarded() {
+    _earned = true;
+    if (_wait != null) {
+      _settle();
+    }
+  }
+
+  void dismissed() {
+    if (_earned) {
+      _settle();
+    } else {
+      _wait ??= Timer(grace, _settle);
+    }
+  }
+
+  /// The ad couldn't be shown: no reward is coming.
+  void failed() => _settle();
+
+  void _settle() {
+    if (_settled) {
+      return;
+    }
+    _settled = true;
+    _wait?.cancel();
+    _earned ? onReward() : onDone();
   }
 }
