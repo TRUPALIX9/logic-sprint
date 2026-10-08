@@ -3,7 +3,7 @@ description: "LogicSprint: fast 30-second brain games."
 publish_to: 'none'
 
 # versionName+versionCode on Android, CFBundleShortVersionString+CFBundleVersion on iOS.
-version: 1.0.2+6
+version: 1.0.2+7
 
 environment:
   sdk: '>=3.11.0 <4.0.0'
