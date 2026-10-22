@@ -4,7 +4,9 @@ The Flutter code already runs on iOS. What's left is Apple setup, some iOS confi
 App Store review requirements (in-app data deletion, and moderation of leaderboard names)
 and store assets. This file is the whole plan in order; tick items off as they're done.
 
-## Status (September 29, 2026)
+## Status (October 22, 2026)
+
+**Live on the App Store: 1.0.2 (6)**, https://apps.apple.com/us/app/logicsprint-brain-games/id6817549079. Next: **1.0.3 (8)** with the late-reward fix (e02b8f2), which isn't in build 6; see [release_notes/1.0.3.md](release_notes/1.0.3.md).
 
 **Submitted for App Review on September 29, 2026 at 9:51 PM: 1.0.2 (6), submission `ea00a28b-a2cd-4e73-ad06-fdea90fc3916`, manual release.** Privacy policy live at https://logicsprint.trupalpatel.com/privacy; `supabase/schema.sql` applied to the live project.
 
@@ -175,10 +177,14 @@ make build-ios   # → build/ios/ipa/*.ipa
 
 ## Phase 6: Submit
 
-- [ ] Select the TestFlight build on the 1.0.2 version page, fill in every section above, **Add for Review**
-- [ ] Release option: **Manually release** (you choose when it goes live after approval)
-- [ ] Review usually takes 1–3 days. Common first-time rejections for this app: missing in-app deletion (3c), UGC moderation (3d), missing tracking prompt text, and a privacy policy that doesn't mention iOS
-- [ ] After release: link the AdMob iOS app to the App Store listing; update the README (Platform: Android + iOS)
+- [x] Select the TestFlight build on the 1.0.2 version page, fill in every section above, **Add for Review**
+- [x] Release option: **Manually release** (you choose when it goes live after approval)
+- [x] Review usually takes 1–3 days. Common first-time rejections for this app: missing in-app deletion (3c), UGC moderation (3d), missing tracking prompt text, and a privacy policy that doesn't mention iOS
+- [x] Released: 1.0.2 (6) is live
+- [x] README updated (Platform: Android + iOS)
+- [x] Link the AdMob iOS app to the App Store listing
+- [ ] AdMob app-ads.txt verification for iOS: the first check (October 22, 2026) said the details don't match, but everything is right: the App Store developer website is https://logicsprint.trupalpatel.com, and its `/app-ads.txt` (and www.trupalpatel.com's) serves `google.com, pub-4460198288175671, DIRECT, f08c47fec0942fa0` as text/plain, the publisher ID of the iOS AdMob app. AdMob's crawler lags behind a new listing; press **Check for updates** again after 24 hours
+- [ ] 1.0.3 (8): reward fix; test a real rewarded ad through TestFlight on a physical iPhone, then submit (a released version can't take a new build)
 
 ## Phase 7: Later (optional)
 

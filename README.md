@@ -6,8 +6,8 @@
 
 | | |
 |---|---|
-| **Version** | 1.0.2 |
-| **Platform** | Android (Google Play); iPhone (App Store, first release in progress: [docs/ios_release_plan.md](docs/ios_release_plan.md)) |
+| **Version** | 1.0.3 |
+| **Platform** | Android (Google Play); iPhone and iPad ([App Store](https://apps.apple.com/us/app/logicsprint-brain-games/id6817549079)) |
 | **Stack** | Flutter 3.x, Dart 3.11+ |
 | **Storage** | `shared_preferences` on the device; Supabase for the leaderboard |
 
