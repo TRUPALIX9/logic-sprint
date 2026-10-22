@@ -1,0 +1,59 @@
+/* Shared look for the App Store creative assets (header, search results).
+   Colors and fonts match lib/core/theme.dart. */
+@font-face { font-family: Rajdhani; font-weight: 700; src: url(../../assets/fonts/Rajdhani-Bold.ttf); }
+@font-face { font-family: Plex; font-weight: 500; src: url(../../assets/fonts/IBMPlexSans-Medium.ttf); }
+@font-face { font-family: Mono; font-weight: 700; src: url(../../assets/fonts/JetBrainsMono-Bold.ttf); }
+
+:root {
+  --bg: #000; --line: #1E2A36; --text: #EAF2F7; --muted: #8C9DAD;
+  --teal: #34C29A; --blue: #3B7BF0; --aqua: #2BB3D6; --violet: #8C8CFF; --gold: #F5C542; --coral: #FF5A6E;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { background: var(--bg); overflow: hidden; }
+body { position: relative; color: var(--text); font-family: Plex, sans-serif; }
+
+.traces { position: absolute; inset: 0; width: 100%; height: 100%; }
+.traces path { fill: none; stroke: var(--line); stroke-width: 6; }
+.traces circle { fill: var(--line); }
+
+.glow { position: absolute; border-radius: 50%; filter: blur(220px); opacity: .5; }
+
+/* iPhone 17 Pro Max style frame, built around each .phone by phone.js.
+   Sizes are in cqw (percent of the phone's width) so every phone scales alike. */
+.phone { position: absolute; container-type: inline-size; aspect-ratio: 0.4745; height: auto !important; }
+.frame {
+  position: absolute; inset: 0; padding: 1.3cqw; border-radius: 15cqw;
+  background: linear-gradient(135deg, #6d7782 0%, #2b323a 22%, #48525c 50%, #1d2329 78%, #59636d 100%);
+  box-shadow: 0 6cqw 18cqw rgba(0,0,0,.85), 0 1cqw 3cqw rgba(0,0,0,.6),
+              inset 0 0 0 .35cqw rgba(255,255,255,.18);
+}
+.bezel { width: 100%; height: 100%; padding: 3.1cqw; border-radius: 13.8cqw; background: #000; }
+.screen { position: relative; width: 100%; height: 100%; border-radius: 10.9cqw; overflow: hidden; background: #000; }
+.screen img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.screen::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(115deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 32%); }
+.status { position: absolute; left: 0; right: 0; top: 0; height: 14.6cqw; display: flex;
+  align-items: center; justify-content: space-between; padding: 0 9cqw 0 12cqw;
+  font: 600 5.6cqw/1 Plex, sans-serif; color: #fff; letter-spacing: -.1cqw; }
+.status svg { height: 3.9cqw; width: auto; }
+.status .icons { display: flex; gap: 1.6cqw; align-items: center; }
+.island { position: absolute; top: 3.2cqw; left: 50%; width: 30cqw; height: 8.6cqw;
+  transform: translateX(-50%); border-radius: 5cqw; background: #000; }
+.btn { position: absolute; width: 1.1cqw; border-radius: .6cqw;
+  background: linear-gradient(90deg, #2a3138, #6a737c, #2a3138); }
+
+/* Logo + LOGICSPRINT wordmark, filled in by parts.js. Size it with font-size. */
+.brand { display: flex; align-items: center; gap: .22em; font: 700 170px/1 Rajdhani; }
+.brand svg { height: 1.05em; width: auto; }
+.brand .word { font-style: italic; letter-spacing: .02em; }
+.brand .word b { color: var(--teal); }
+.chips { display: flex; gap: 1.1em; font: 700 64px/1 Mono; color: var(--muted); }
+.chips span { display: flex; align-items: center; gap: .4em; }
+.chips i { width: .75em; height: .75em; border-radius: .14em; transform: skewX(-12deg); }
+.card { position: absolute; overflow: hidden; border-radius: 64px; background: #05090D;
+  box-shadow: 0 50px 140px rgba(0,0,0,.85), inset 0 0 0 4px #1E2A36; }
+.card img { width: 100%; height: 100%; object-fit: cover; }
+.card .label { position: absolute; left: 0; right: 0; bottom: 0; padding: 150px 56px 48px;
+  background: linear-gradient(transparent, rgba(0,0,0,.92) 55%);
+  display: flex; align-items: center; gap: 22px; font: 700 64px/1 Mono; letter-spacing: 4px; }
+.card .label i { width: 44px; height: 44px; border-radius: 8px; transform: skewX(-12deg); }

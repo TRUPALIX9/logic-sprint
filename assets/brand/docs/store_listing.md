@@ -10,36 +10,56 @@ Play Console → Grow users → Store presence → Main store listing.
 LogicSprint: Brain Games
 
 ## Short description (max 80)
-Endless brain games for reflexes, memory, math and focus. How far can you go?
+Brain training games for memory, math, reflexes & focus. How far can you go?
 
 ## Full description (max 4000)
 ```
-LogicSprint is a free brain game app with four endless games that test your reflexes, memory, arithmetic and focus. Every game keeps getting harder until your first mistake. How far can you go?
+Train your brain in a minute a day. LogicSprint is a free brain training app with four endless mini games for memory, mental math, reflexes and focus. Every run gets harder until your first mistake. How far can you go?
 
-FOUR GAMES
+FOUR BRAIN GAMES
 
-• Rocket Launch – Pick your ship (rocket, UFO, spaceship or missile) and steer it through an asteroid storm with a touch of your finger. Planets drift past, shooting stars streak across the sky, and every 1250 points space changes colour. It speeds up little by little, and one hit ends the run. Can you reach 10,000?
+• Rocket Launch (reflexes) – Pick a rocket, UFO, spaceship or missile and steer it through an asteroid storm with one finger. Space changes colour every 1250 points and the storm speeds up little by little. One hit ends the run. Can you reach 10,000?
 
-• Memory Lane – Watch tiles light up on a 3×3, 4×4 or 5×5 grid, then tap them back in the same order. Red corners mean watch, teal means your turn. Every level replays the same pattern with one more tile, a little faster.
+• Memory Lane (memory) – Watch tiles light up on a 3×3, 4×4 or 5×5 grid, then tap them back in the same order. Every level replays the pattern with one more tile, a little faster.
 
-• Quick Math – Pick the right answer to addition, subtraction, multiplication and division problems that get harder every 10 questions. Your time is saved with your best.
+• Quick Math (mental math) – Addition, subtraction, multiplication and division against the clock. Pick the right answer of four; the numbers grow every 10 problems.
 
-• Guess Color – A color word appears painted in another color. The COLOR | TEXT switch tells you what to tap: the color it's painted in, or the color the word names. The rule flips, the buttons shuffle, their labels stop matching and the clock gets shorter.
+• Guess Color (focus) – A Stroop color test: tap the color a word is painted in, or the color the word names, as the COLOR | TEXT rule flips. The buttons shuffle, their labels stop matching and the clock gets shorter.
 
-FEATURES
+WHY PLAYERS LIKE IT
 
-• Up to 3 extra lives per run with hearts or a short video
-• Pause any time – and runs pause by themselves when you leave the app
+• Quick runs, made for a coffee break or the commute
+• Up to 3 revives per run with hearts or a short video
 • Easy, Medium and Hard for Memory Lane and Quick Math
-• Global Top 10 for every game, updated daily at 00:00 UTC – pick a name with your own 4-digit code (like NEON_FOX#0420) and your runs sync automatically
-• Your rank, personal bests, play counts and run history in your Profile
+• Global Top 10 for every game, updated daily at 00:00 UTC – pick a name with your own 4-digit code (like NEON_FOX#0420)
+• Personal bests, play counts and run history in your Profile
 • Plays offline – runs sync when you're back online
-• No login or email required
+• No login, email or sign-up
+• Pause any time; runs pause by themselves when you leave the app
 • Clean dark design built for AMOLED screens
 
-Contains ads.
+FAIR LEADERBOARDS
+
+• Offensive names are blocked, and you can report a name with a long-press on Ranks
+• Impossible scores don't count
+• Delete your leaderboard name and scores any time in Settings
+
+Free, with ads.
 
 Questions or feedback: trupal.work@gmail.com
+```
+
+## Release notes – 1.0.3 (What's new, max 500)
+```
+• Fixed: a revive from a fully watched video could be missed
+```
+
+## Release notes – 1.0.2 (What's new, max 500)
+```
+• On iPhone and iPad too – same games, same Global Top 10
+• Delete your leaderboard data any time from Settings
+• Report offensive names with a long-press on Ranks
+• Fairer boards: impossible scores no longer count
 ```
 
 ## Release notes – 1.0.1 (What's new, max 500)
@@ -53,6 +73,9 @@ Questions or feedback: trupal.work@gmail.com
 
 ## Category and tags
 Game → Puzzle. Tags: Brain games (or Logic), Memory, Math, Offline, Single player.
+
+## Promo video
+YouTube (Unlisted is fine): the Play promo cut from `tool/record_demo.sh` (see "Store videos" in README). Paste its link into the listing's Video field.
 
 ## Graphics (upload these)
 - App icon: `assets/brand/store/google_play/play_store_icon_512.png` (512×512)
@@ -73,11 +96,11 @@ Game → Puzzle. Tags: Brain games (or Logic), Memory, Math, Offline, Single pla
 Support email: trupal.work@gmail.com
 
 ## Keywords
-brain games, logic games, memory game, math game, reflex game, color game, endless games, puzzle games, rocket launch, memory lane
+brain games, brain training, logic games, memory game, math game, mental math, reflex game, stroop color test, focus, endless games, puzzle games, offline games, rocket launch, memory lane
 
 ---
 
-# App Store (iPhone)
+# App Store (iPhone and iPad)
 
 App Store Connect → LogicSprint: Brain Games → iOS App → version page (and App Information for name, subtitle and category).
 
@@ -85,49 +108,61 @@ App Store Connect → LogicSprint: Brain Games → iOS App → version page (and
 LogicSprint: Brain Games
 
 ## Subtitle (max 30)
-Reflex, memory & math games
+Memory, Math & Reflex Training
 
 ## Promotional text (max 170, can change without a new version)
-Four endless brain games – Rocket Launch, Memory Lane, Quick Math and Guess Color. Beat your best and climb the daily Global Top 10. No login needed.
+Four endless brain games: Rocket Launch, Memory Lane, Quick Math and Guess Color. Climb the daily Global Top 10. No login, no sign-up.
 
 ## Keywords (max 100, commas, no spaces)
-memory,math,reflex,puzzle,focus,training,iq,mind,stroop,color,arcade,rocket,offline,sequence,tap
+puzzle,logic,focus,iq,mind,stroop,color,arcade,rocket,offline,sequence,quiz,mental,arithmetic,test
 
-Words already in the name and subtitle (brain, games, reflex…) are indexed from there; don't repeat them here, and don't use other apps' names.
+Words already in the name and subtitle (brain, games, memory, math, reflex, training) are indexed from there; don't repeat them here, and don't use other apps' names.
 
 ## Description (max 4000)
 ```
-LogicSprint is a free brain game app with four endless games that test your reflexes, memory, arithmetic and focus. Every game keeps getting harder until your first mistake. How far can you go?
+Train your brain in a minute a day. LogicSprint is a free brain training app with four endless mini games for memory, mental math, reflexes and focus. Every run gets harder until your first mistake. How far can you go?
 
-FOUR GAMES
+FOUR BRAIN GAMES
 
-• Rocket Launch – Pick your ship (rocket, UFO, spaceship or missile) and steer it through an asteroid storm with a touch of your finger. Planets drift past, shooting stars streak across the sky, and every 1250 points space changes colour. It speeds up little by little, and one hit ends the run. Can you reach 10,000?
+• Rocket Launch (reflexes) – Pick a rocket, UFO, spaceship or missile and steer it through an asteroid storm with one finger. Space changes colour every 1250 points and the storm speeds up little by little. One hit ends the run. Can you reach 10,000?
 
-• Memory Lane – Watch tiles light up on a 3×3, 4×4 or 5×5 grid, then tap them back in the same order. Red corners mean watch, teal means your turn. Every level replays the same pattern with one more tile, a little faster.
+• Memory Lane (memory) – Watch tiles light up on a 3×3, 4×4 or 5×5 grid, then tap them back in the same order. Every level replays the pattern with one more tile, a little faster.
 
-• Quick Math – Pick the right answer to addition, subtraction, multiplication and division problems that get harder every 10 questions. Your time is saved with your best.
+• Quick Math (mental math) – Addition, subtraction, multiplication and division against the clock. Pick the right answer of four; the numbers grow every 10 problems.
 
-• Guess Color – A color word appears painted in another color. The COLOR | TEXT switch tells you what to tap: the color it's painted in, or the color the word names. The rule flips, the buttons shuffle, their labels stop matching and the clock gets shorter.
+• Guess Color (focus) – A Stroop color test: tap the color a word is painted in, or the color the word names, as the COLOR | TEXT rule flips. The buttons shuffle, their labels stop matching and the clock gets shorter.
 
-FEATURES
+WHY PLAYERS LIKE IT
 
-• Up to 3 extra lives per run with hearts or a short video
-• Pause any time – and runs pause by themselves when you leave the app
+• Quick runs, made for a coffee break or the commute
+• Up to 3 revives per run with hearts or a short video
 • Easy, Medium and Hard for Memory Lane and Quick Math
-• Global Top 10 for every game, updated daily at 00:00 UTC – pick a name with your own 4-digit code (like NEON_FOX#0420) and your runs sync automatically
-• Your rank, personal bests, play counts and run history in your Profile
+• Global Top 10 for every game, updated daily at 00:00 UTC – pick a name with your own 4-digit code (like NEON_FOX#0420)
+• Personal bests, play counts and run history in your Profile
 • Plays offline – runs sync when you're back online
-• No login or email required
-• Clean dark design that looks great on OLED screens
+• No login, email or sign-up
+• Pause any time; runs pause by themselves when you leave the app
+• Clean dark design for iPhone and iPad
 
-Contains ads.
+FAIR LEADERBOARDS
+
+• Offensive names are blocked, and you can report a name with a long-press on Ranks
+• Impossible scores don't count
+• Delete your leaderboard name and scores any time in Settings
+
+Free, with ads.
 
 Questions or feedback: trupal.work@gmail.com
 ```
 
+## What's New – 1.0.3
+```
+Fixed: watching a video to the end now always gives you the revive or heart.
+```
+
 ## What's New – 1.0.2 (first App Store release)
 ```
-Welcome to LogicSprint on iPhone! Four endless brain games, a daily Global Top 10 and no login.
+Welcome to LogicSprint on iPhone and iPad! Four endless brain games, a daily Global Top 10 and no login. Delete your leaderboard data any time in Settings, and report offensive names with a long-press on Ranks.
 ```
 
 ## URLs
@@ -147,6 +182,11 @@ Answer "None" for everything except **Unrestricted web access: No** and **User-g
 - iPad 13", 2064×2752: `assets/brand/store/app_store/screenshots_ipad/` (`SCREENSHOTS=ipad`)
 
 Upload each set in number order (all 9; up to 10 allowed). See README for the render command.
+
+## App previews (videos)
+Up to 3 per device size, 15–30 s, cut from `tool/record_demo.sh` (see "Store videos" in README):
+- iPhone 6.9"/6.5": 886×1920, `build/demo/previews/iphone_*.mp4`
+- iPad 13": 1200×1600, `build/demo/previews/ipad_*.mp4`
 
 ## App Review information
 - Sign-in required: **No**
