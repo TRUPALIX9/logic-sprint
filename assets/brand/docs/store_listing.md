@@ -186,8 +186,8 @@ Welcome to LogicSprint on iPhone and iPad! Four endless brain games, a daily Glo
 ```
 
 ## URLs
-- Support URL: https://logicsprint.trupalpatel.com
-- Marketing URL: https://logicsprint.trupalpatel.com
+- Support URL: https://logicsprint.trueorfalse.dev
+- Marketing URL: https://logicsprint.trueorfalse.dev
 - Privacy Policy URL: the hosted `assets/brand/docs/privacy_policy.md` (must mention iOS; it does as of September 29, 2026)
 
 ## Category
@@ -218,7 +218,7 @@ Delete account data: Settings (gear on the Play tab) → Delete leaderboard data
 Report a name: on the Ranks tab, long-press another player's row → Report. Names are also checked against a word filter.
 Ads: Google AdMob (banner and optional rewarded videos). The App Tracking Transparency prompt appears on first launch, after Google's explainer; ads still show (not personalized) when tracking is declined.
 ```
-- Contact: Trupal Patel, trupal.work@gmail.com
+- Contact: True || False, hello@trueorfalse.dev
 
 ## App Privacy (App Store Connect → App Privacy)
 | Data type | Linked to user | Tracking | Purposes |

@@ -47,4 +47,4 @@ We will update this page when this policy changes and revise the date above.
 
 ## Contact
 
-Questions or requests: trupal.work@gmail.com
+Questions or requests: hello@trueorfalse.dev

@@ -1,7 +1,7 @@
 # app-ads.txt for LogicSprint (com.trupal.logicsprint)
 # Host this file at the root of the developer website listed in Play Console:
-#   https://logicsprint.trupalpatel.com/app-ads.txt
-# and also at https://trupalpatel.com/app-ads.txt (crawlers may check the
+#   https://logicsprint.trueorfalse.dev/app-ads.txt
+# and also at https://trueorfalse.dev/app-ads.txt (crawlers may check the
 # root domain). Serve as plain text.
 
 # Google AdMob (publisher ID from the AdMob app ID)

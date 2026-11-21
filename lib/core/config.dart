@@ -28,13 +28,13 @@ abstract final class AppConfig {
   static const maxPlayerNameLength = 20;
 
   // The app's page on the developer site (also hosts privacy + app-ads.txt).
-  static const websiteUrl = 'https://logicsprint.trupalpatel.com';
+  static const websiteUrl = 'https://logicsprint.trueorfalse.dev';
   // Download link printed on, and sent with, every shared stats image.
   static const shareHost = 'logicsprint.trueorfalse.dev';
   static const shareUrl = 'https://$shareHost';
   // Full URL so WhatsApp, Messages and others make it tappable.
   static const shareText = 'Can you beat my LogicSprint score? $shareUrl';
-  static const supportEmail = 'trupal.work@gmail.com';
+  static const supportEmail = 'hello@trueorfalse.dev';
 }
 
 abstract final class PlayerName {
