@@ -35,12 +35,16 @@ class SprintGauge extends StatefulWidget {
   const SprintGauge({
     super.key,
     required this.top,
+    this.hint = hiddenText,
     this.diameter = 200,
     this.animate = true,
   });
 
   /// "Top X percent", or null with no score yet.
   final int? top;
+
+  /// Shown in the middle while the rank is hidden.
+  final String hint;
   final double diameter;
   final bool animate;
 
@@ -147,7 +151,7 @@ class _SprintGaugeState extends State<SprintGauge>
     return Semantics(
       container: true,
       label: label == null
-          ? SprintGauge.hiddenText
+          ? widget.hint
           : 'Top ${level.top} percent of players',
       child: ExcludeSemantics(
         child: SizedBox(
@@ -173,7 +177,7 @@ class _SprintGaugeState extends State<SprintGauge>
                 bottom: 0,
                 child: label == null
                     ? Text(
-                        SprintGauge.hiddenText.toUpperCase(),
+                        widget.hint.toUpperCase(),
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

@@ -64,7 +64,7 @@ class BestText extends StatelessWidget {
 /// Play counts are hidden for now (kept in [GameStat.runs]).
 String gameMeta(GameStat stat, {bool withTime = true}) {
   if (!stat.hasBest) {
-    return stat.runs == 0 ? 'Not played yet' : 'No score yet';
+    return stat.runs == 0 ? 'Not played yet' : 'Played · best 0';
   }
   final difficulty = stat.difficulty;
   final rank = stat.rank;

@@ -124,6 +124,24 @@ class ProfileStats {
   final bool playedIsPartial;
 
   bool get hasAnyBest => games.any((g) => g.hasBest);
+
+  /// What the dim Sprint Score gauge says, following `player_ratings` in
+  /// supabase/schema.sql: a game counts after [runsPerGame] runs and the
+  /// score needs [gamesNeeded] such games. Once that is met the score
+  /// comes from the daily refresh (see [SprintLevel] for when it shows).
+  String get sprintHint {
+    final counted = games.where((g) => g.runs >= runsPerGame).length;
+    final left = gamesNeeded - counted;
+    if (left > 0) {
+      return left == gamesNeeded
+          ? 'Play $gamesNeeded games, $runsPerGame times each, to get it'
+          : 'Play 1 more game $runsPerGame times to get it';
+    }
+    return 'Updates daily · keep playing';
+  }
+
+  static const runsPerGame = 3;
+  static const gamesNeeded = 2;
 }
 
 /// "3h 12m", "12m", "45s"; "0m" for nothing.

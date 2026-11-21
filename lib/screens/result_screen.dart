@@ -283,6 +283,25 @@ class _ScoreCard extends StatelessWidget {
               'Best ${math.max(result.score, result.previousBest)}',
               color: LS.dim,
             ),
+          // The card is tall on most phones: a pointer for the next run
+          // keeps it from feeling empty, whatever the score.
+          ...[
+            const SizedBox(height: 28),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lightbulb_outline_rounded, size: 18, color: accent),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    result.game.tip,
+                    textAlign: TextAlign.center,
+                    style: LSText.body(15, color: LS.muted),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

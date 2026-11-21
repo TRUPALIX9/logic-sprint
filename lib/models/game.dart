@@ -97,6 +97,16 @@ enum GameId {
       'Touch the line where the number falls: ½, then ⅓, ⅜, 0.43… Slide to adjust and let go to answer. Close enough keeps you going. You have 2 shields: each miss breaks one.',
   };
 
+  /// One short pointer for the next run, shown on the Game Over card.
+  String get tip => switch (this) {
+    rocketLaunch => 'Small moves: drag a little and keep to open space.',
+    memoryLane => 'Say the order to yourself as the tiles light up.',
+    quickMath => 'Accuracy beats speed: one wrong answer ends the run.',
+    guessColor => 'Check COLOR or TEXT at the top before every tap.',
+    angleSense => 'Picture 90° first, then judge the angle from it.',
+    lineSplit => 'Find the middle first, then split from there.',
+  };
+
   /// How a ramp game escalates; null for games with difficulty levels.
   String? get rampNote => switch (this) {
     rocketLaunch => 'Gets faster as you go',

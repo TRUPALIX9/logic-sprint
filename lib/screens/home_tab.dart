@@ -198,6 +198,9 @@ class _GameGridState extends State<_GameGrid> {
                                   Expanded(
                                     child: _GameCard(
                                       game: game,
+                                      played: Difficulty.values.any(
+                                        (d) => app.plays(game, d) > 0,
+                                      ),
                                       best: Difficulty.values
                                           .map((d) => app.best(game, d))
                                           .reduce(math.max),
@@ -374,10 +377,17 @@ class _JumpBackIn extends StatelessWidget {
 }
 
 class _GameCard extends StatelessWidget {
-  const _GameCard({required this.game, required this.best});
+  const _GameCard({
+    required this.game,
+    required this.best,
+    required this.played,
+  });
 
   final GameId game;
   final int best;
+
+  /// At least one run finished (a best of 0 still counts as played).
+  final bool played;
 
   @override
   Widget build(BuildContext context) {
@@ -385,25 +395,54 @@ class _GameCard extends StatelessWidget {
       cut: Cut.lg,
       padding: const EdgeInsets.all(14),
       onTap: () => showGameSheet(context, game),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          // Compact enough that all six games fit above the pinned
-          // "Jump back in" card on a regular phone.
-          GameTile(game: game, size: 38),
-          const Spacer(),
-          DisplayText(game.title, size: 19, maxLines: 2),
-          const SizedBox(height: 6),
-          MonoLabel(game.skill, size: 10),
-          const SizedBox(height: 4),
-          MonoLabel(
-            best > 0 ? 'Best $best' : 'Not played',
-            size: 11,
-            weight: FontWeight.w700,
-            color: best > 0 ? game.accent : LS.dim,
+          // A large, faint copy of the game's icon fills the space the
+          // card gets on tall phones; it shrinks away on short ones.
+          Positioned.fill(
+            child: LayoutBuilder(
+              builder: (context, box) {
+                final size = math.min(box.maxHeight * 0.5, 84.0);
+                return size < 40
+                    ? const SizedBox.shrink()
+                    : Align(
+                        alignment: const Alignment(1, -0.55),
+                        child: ExcludeSemantics(
+                          child: Icon(
+                            game.icon,
+                            size: size,
+                            color: game.accent.withValues(alpha: 0.16),
+                          ),
+                        ),
+                      );
+              },
+            ),
           ),
+          _cardText(),
         ],
       ),
+    );
+  }
+
+  Widget _cardText() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Compact enough that all six games fit above the pinned
+        // "Jump back in" card on a regular phone.
+        GameTile(game: game, size: 38),
+        const Spacer(),
+        DisplayText(game.title, size: 19, maxLines: 2),
+        const SizedBox(height: 6),
+        MonoLabel(game.skill, size: 10),
+        const SizedBox(height: 4),
+        MonoLabel(
+          best > 0 || played ? 'Best $best' : 'Not played',
+          size: 11,
+          weight: FontWeight.w700,
+          color: best > 0 ? game.accent : LS.dim,
+        ),
+      ],
     );
   }
 }

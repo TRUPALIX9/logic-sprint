@@ -198,8 +198,12 @@ void main() {
 
       // Sprint Score gauge: no score yet, so dim with no rank.
       expect(find.byType(SprintGauge), findsOneWidget);
-      expect(find.text('PLAY MORE GAMES TO GET IT'), findsOneWidget);
-      expect(find.textContaining('%'), findsNothing);
+      // It says how to unlock the score (or that it updates daily).
+      expect(
+        find.textContaining(RegExp('^(PLAY \\d|PLAY 1 MORE|UPDATES DAILY)')),
+        findsOneWidget,
+      );
+      expect(find.textContaining(RegExp(r'\d+%')), findsNothing);
       expect(find.textContaining(_sprintWords), findsNothing);
 
       // Each game's best once, in GameId order (the Home grid's order).
