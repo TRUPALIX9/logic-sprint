@@ -24,9 +24,9 @@ Color _dimColor(SprintBand band) {
 /// Sprint Score as a semicircle of five bands (Top 50–100% pink, 25–50%
 /// purple, 10–25% blue, 5–10% teal, 0–5% gold), lit up to the player's
 /// level, with a tick at their exact place and "TOP 7%" in the middle in
-/// the band's colour. Below Top 20% (or with no runs) every band is drawn
+/// the band's colour. With no score yet every band is drawn
 /// dim, with no fill, no tick, no percentage and "PLAY MORE GAMES TO GET
-/// IT" in the middle.
+/// YOUR SCORE" in the middle.
 ///
 /// With [animate] the fill sweeps in over 700 ms the first time the gauge
 /// is on screen and a gold band shimmers every few seconds; under reduce
@@ -35,7 +35,6 @@ class SprintGauge extends StatefulWidget {
   const SprintGauge({
     super.key,
     required this.top,
-    this.hint = hiddenText,
     this.diameter = 200,
     this.animate = true,
   });
@@ -43,8 +42,6 @@ class SprintGauge extends StatefulWidget {
   /// "Top X percent", or null with no score yet.
   final int? top;
 
-  /// Shown in the middle while the rank is hidden.
-  final String hint;
   final double diameter;
   final bool animate;
 
@@ -53,7 +50,7 @@ class SprintGauge extends StatefulWidget {
   /// One shimmer pass plus the pause before the next.
   static const shimmerPeriod = Duration(milliseconds: 3200);
 
-  static const hiddenText = 'Play more games to get it';
+  static const hiddenText = 'Play more games to get your score';
 
   @override
   State<SprintGauge> createState() => _SprintGaugeState();
@@ -151,7 +148,7 @@ class _SprintGaugeState extends State<SprintGauge>
     return Semantics(
       container: true,
       label: label == null
-          ? widget.hint
+          ? SprintGauge.hiddenText
           : 'Top ${level.top} percent of players',
       child: ExcludeSemantics(
         child: SizedBox(
@@ -177,7 +174,7 @@ class _SprintGaugeState extends State<SprintGauge>
                 bottom: 0,
                 child: label == null
                     ? Text(
-                        widget.hint.toUpperCase(),
+                        SprintGauge.hiddenText.toUpperCase(),
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

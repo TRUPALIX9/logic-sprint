@@ -1,5 +1,5 @@
 /// The Sprint Score gauge's bands, left (dim end) to right (bright end).
-/// Only Top 20% or better is ever filled, but every band is drawn so the
+/// Every band is drawn, lit up to the player's band, so the
 /// player sees the colours they could reach. [upper] is the worst
 /// "top X%" that still falls in the band.
 enum SprintBand {
@@ -31,9 +31,9 @@ enum SprintBand {
 class SprintLevel {
   const SprintLevel(this.top);
 
-  /// The rank is shown only at Top 20% or better (a score of 80+); below
-  /// that the gauge stays dim with "Play more games to get it".
-  static const showTopPercentAtMost = 20;
+  /// The rank is shown in every band, Top 1% to Top 100%. Only a player
+  /// with no score yet sees the dim gauge and "Play more games to get your score".
+  static const showTopPercentAtMost = 100;
 
   /// "Top X percent" (1–100), or null with no score yet (no runs).
   final int? top;

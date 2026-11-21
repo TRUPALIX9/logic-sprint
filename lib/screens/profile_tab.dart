@@ -37,7 +37,7 @@ class ProfileTab extends StatelessWidget {
         const SizedBox(height: 16),
         _NameRow(stats: stats),
         const SizedBox(height: 14),
-        _ScoreTile(top: stats.sprintTop, hint: stats.sprintHint),
+        _ScoreTile(top: stats.sprintTop),
         const SizedBox(height: 22),
         const MonoLabel('Your bests'),
         const SizedBox(height: 10),
@@ -145,10 +145,9 @@ class _NameRow extends StatelessWidget {
 
 /// The Sprint Score gauge on its own full-width panel.
 class _ScoreTile extends StatelessWidget {
-  const _ScoreTile({required this.top, required this.hint});
+  const _ScoreTile({required this.top});
 
   final int? top;
-  final String hint;
 
   @override
   Widget build(BuildContext context) {
@@ -160,7 +159,6 @@ class _ScoreTile extends StatelessWidget {
         builder: (context, constraints) => Center(
           child: SprintGauge(
             top: top,
-            hint: hint,
             diameter: constraints.maxWidth.clamp(0, 220).toDouble(),
           ),
         ),

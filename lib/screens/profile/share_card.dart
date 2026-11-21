@@ -61,7 +61,7 @@ class ShareCard extends StatelessWidget {
 }
 
 /// A small static Sprint Score gauge ("TOP 7%"), or "My bests" while the
-/// rank is hidden (below Top 20%, or no score): no rank on the image then.
+/// rank is hidden (no score yet): no rank on the image then.
 class _Headline extends StatelessWidget {
   const _Headline({required this.top});
 

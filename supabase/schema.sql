@@ -432,25 +432,27 @@ grant select on public.leaderboard_top, public.leaderboard_ranked,
 
 -- ---------------------------------------------------------- sprint score --
 -- One 0–100 rating across games (design/plans/upgrades_plan.html, D).
---   1. Per board with 30+ named players: your percentile,
---      p = 100 × (below + ½ × tied) ÷ players, ordered like the boards
---      (score, then the shorter run for Memory Lane and Quick Math).
+--   1. Per board with 30+ named players scoring above 0 (a 0 is never on
+--      a board, so a pile of zeros can't flatten the curve): your
+--      percentile, p = 100 × (below + ½ × tied) ÷ players, ordered exactly
+--      like the boards: score, then tie_key (the shorter run for Memory
+--      Lane and Quick Math, the earlier best for the rest). Every player
+--      gets their own place, so equal scores don't share one rank.
 --      Easy is capped at 90 and Medium at 97 for the games with levels.
 --   2. Per game (3+ runs in it): your best board.
 --   3. Combined R = (p₁ + … + pₙ + 2 × 50) ÷ (n + 2), so one spike counts
 --      less than steady skill.
 --   4. Rating = your R's percentile among rated players (2+ rated games).
--- my_rating() turns it into "Top X%" (1, 2, 5, 10, 15, 20, 25, never
--- overclaiming) once 50+ players are rated. Rebuilt with the boards at
+-- my_rating() turns it into "Top X%" (1, 2, 5, 10, 15, 20, 25, then tens
+-- to 100, never overclaiming) once 50+ players are rated. Rebuilt with the boards at
 -- 00:00 UTC by pg_cron. lib/models/sprint_rating.dart is the same maths.
 -- Re-runnable: drops and rebuilds the view and its function.
 drop materialized view if exists public.player_ratings cascade;
 create materialized view public.player_ratings as
 with entries as (
-  select l.player_id, l.game_type, l.difficulty, l.score,
-         case when l.game_type in ('memoryLane', 'quickMath')
-              then coalesce(l.duration_ms, 2147483647) else 0 end as tk
+  select l.player_id, l.game_type, l.difficulty, l.score, l.tie_key as tk
   from public.leaderboard_top l
+  where l.score > 0
 ),
 board_pos as (
   select e.*,
@@ -518,14 +520,14 @@ language sql
 immutable
 as $$
   select coalesce(
-    (select b from unnest(array[1, 2, 5, 10, 15, 20, 25]) as b
+    (select b from unnest(array[1, 2, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100]) as b
      where b >= ceil(100 - p_rating) order by b limit 1),
     ceil(100 - p_rating)::integer
   );
 $$;
 
 -- The caller's Sprint Score. top_percent is null until they're rated and
--- 50+ players are; the app shows it only at Top 20% or better.
+-- 50+ players are; the app shows it in every band, 0–5% to 50–100%.
 create or replace function public.my_rating()
 returns table (
   rating numeric,

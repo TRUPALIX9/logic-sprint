@@ -4,7 +4,7 @@ import 'package:logic_sprint/models/sprint_rating.dart';
 
 List<({String player, int score, int tieKey})> _board(int players) => [
   for (var i = 0; i < players; i++)
-    (player: 'p$i', score: (players - i) * 10, tieKey: 0),
+    (player: 'p$i', score: (players - i) * 10, tieKey: i),
 ];
 
 void main() {
@@ -38,6 +38,35 @@ void main() {
       },
     );
 
+    test('scores of 0 are ignored: no board place, not in the count', () {
+      final rows = [
+        ..._board(30),
+        for (var i = 0; i < 70; i++) (player: 'z$i', score: 0, tieKey: 0),
+      ];
+      final p = SprintRating.board(GameId.rocketLaunch, Difficulty.hard, rows);
+      expect(p, hasLength(30));
+      expect(p.keys.any((k) => k.startsWith('z')), isFalse);
+      // The lowest real score is near the bottom, not lifted by the zeros.
+      expect(p['p29'], closeTo(100 / 60, 0.01));
+      expect(
+        SprintRating.board(GameId.rocketLaunch, Difficulty.hard, [
+          ..._board(29),
+          (player: 'z', score: 0, tieKey: 0),
+        ]),
+        isEmpty,
+      );
+    });
+
+    test('equal scores get their own places (earlier best wins)', () {
+      final rows = [
+        for (var i = 0; i < 40; i++)
+          (player: 'p$i', score: 50, tieKey: 1700000000000 + i),
+      ];
+      final p = SprintRating.board(GameId.guessColor, Difficulty.hard, rows);
+      expect(p.values.toSet(), hasLength(40), reason: 'no shared rank');
+      expect(p['p0']! > p['p39']!, isTrue);
+    });
+
     test('a faster run wins a tie, like the boards', () {
       final rows = [
         for (var i = 0; i < 30; i++)
@@ -70,15 +99,20 @@ void main() {
       expect(r['d'], 12.5);
     });
 
-    test('top rounds up to 1, 2, 5, 10, 15, 20, 25 and never overclaims', () {
-      expect(SprintRating.top(100), 1);
-      expect(SprintRating.top(99.4), 1);
-      expect(SprintRating.top(98.5), 2);
-      expect(SprintRating.top(97.9), 5);
-      expect(SprintRating.top(91), 10);
-      expect(SprintRating.top(80), 20);
-      expect(SprintRating.top(76), 25);
-      expect(SprintRating.top(60.2), 40);
-    });
+    test(
+      'top rounds up to 1, 2, 5, 10, 15, 20, 25, then tens, and never overclaims',
+      () {
+        expect(SprintRating.top(100), 1);
+        expect(SprintRating.top(99.4), 1);
+        expect(SprintRating.top(98.5), 2);
+        expect(SprintRating.top(97.9), 5);
+        expect(SprintRating.top(91), 10);
+        expect(SprintRating.top(80), 20);
+        expect(SprintRating.top(76), 25);
+        expect(SprintRating.top(60.2), 40);
+        expect(SprintRating.top(36.5), 70);
+        expect(SprintRating.top(0), 100);
+      },
+    );
   });
 }

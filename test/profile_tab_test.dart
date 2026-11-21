@@ -198,11 +198,7 @@ void main() {
 
       // Sprint Score gauge: no score yet, so dim with no rank.
       expect(find.byType(SprintGauge), findsOneWidget);
-      // It says how to unlock the score (or that it updates daily).
-      expect(
-        find.textContaining(RegExp('^(PLAY \\d|PLAY 1 MORE|UPDATES DAILY)')),
-        findsOneWidget,
-      );
+      expect(find.text('PLAY MORE GAMES TO GET YOUR SCORE'), findsOneWidget);
       expect(find.textContaining(RegExp(r'\d+%')), findsNothing);
       expect(find.textContaining(_sprintWords), findsNothing);
 
@@ -465,8 +461,8 @@ void main() {
       expectAllGames(tester);
     });
 
-    testWidgets('a hidden rank stays off the card', (tester) async {
-      await pumpCard(tester, _stats(sprintTop: 21));
+    testWidgets('no score yet: no gauge on the card', (tester) async {
+      await pumpCard(tester, _stats());
       expect(tester.takeException(), isNull);
       expect(find.byType(SprintGauge), findsNothing);
       expect(find.text('MY BESTS'), findsOneWidget);

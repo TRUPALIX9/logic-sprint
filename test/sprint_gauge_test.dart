@@ -62,13 +62,15 @@ Future<void> _unmount(WidgetTester tester) =>
 
 void main() {
   group('SprintLevel', () {
-    test('shown only at Top 20% or better', () {
-      expect(SprintLevel.showTopPercentAtMost, 20);
+    test('shown in every band; hidden only with no score', () {
       expect(const SprintLevel(20).ranked, isTrue);
-      expect(const SprintLevel(21).ranked, isFalse);
+      expect(const SprintLevel(40).label, 'Top 40%');
+      expect(const SprintLevel(40).band, SprintBand.top50);
+      expect(const SprintLevel(90).label, 'Top 90%');
+      expect(const SprintLevel(90).band, SprintBand.top100);
       expect(const SprintLevel(null).ranked, isFalse);
-      expect(const SprintLevel(21).label, isNull);
-      expect(const SprintLevel(21).position, 0);
+      expect(const SprintLevel(null).label, isNull);
+      expect(const SprintLevel(null).position, 0);
       expect(const SprintLevel(7).label, 'Top 7%');
     });
 
@@ -142,10 +144,10 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets('below Top 20%: dim, no fill, no percentage', (tester) async {
-      for (final top in [21, 40, 70, null]) {
+    testWidgets('no score yet: dim, no fill, no percentage', (tester) async {
+      for (final top in <int?>[null]) {
         await _pumpGauge(tester, top);
-        expect(find.text('PLAY MORE GAMES TO GET IT'), findsOneWidget);
+        expect(find.text('PLAY MORE GAMES TO GET YOUR SCORE'), findsOneWidget);
         expect(find.textContaining('%'), findsNothing, reason: 'top $top');
         final painter = _painter(tester);
         expect(painter.litBands, isEmpty);

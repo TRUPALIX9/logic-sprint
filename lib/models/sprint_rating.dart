@@ -23,7 +23,23 @@ abstract final class SprintRating {
   static const priorGames = 2;
 
   /// "Top X%" steps; rounding up to one of these never overclaims.
-  static const topBuckets = [1, 2, 5, 10, 15, 20, 25];
+  static const topBuckets = [
+    1,
+    2,
+    5,
+    10,
+    15,
+    20,
+    25,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90,
+    100,
+  ];
 
   /// Percentile on one board: 100 × (below + ½ × tied) ÷ players.
   static double percentile({
@@ -47,12 +63,19 @@ abstract final class SprintRating {
 
   /// Percentile of every player on one board, from (player, score, tieKey)
   /// rows: higher score wins, then lower tieKey (the run time for Memory
-  /// Lane and Quick Math, 0 otherwise). Empty below [minBoardPlayers].
+  /// Lane and Quick Math, when the best was set for the rest), so equal
+  /// scores still get their own places. Scores of 0 are left out: they
+  /// aren't on the boards and would only pile up as one big tie. Empty
+  /// below [minBoardPlayers] scoring players.
   static Map<String, double> board(
     GameId game,
     Difficulty difficulty,
-    List<({String player, int score, int tieKey})> rows,
+    List<({String player, int score, int tieKey})> all,
   ) {
+    final rows = [
+      for (final row in all)
+        if (row.score > 0) row,
+    ];
     if (rows.length < minBoardPlayers) {
       return const {};
     }
