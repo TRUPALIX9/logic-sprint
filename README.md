@@ -51,7 +51,7 @@ Every game is an **endless run**: it keeps getting harder until your first mista
 
 ## App structure
 
-Bottom nav: **Ranks · Play · Profile** (Play in the middle, the default). Settings opens from the gear on Play.
+Bottom nav: **Ranks · Play · Profile** (Play in the middle, the default). Settings opens from the gear on Play. Flowcharts of the screens, a run, scoring and the release: [docs/app_flow.md](docs/app_flow.md).
 
 ```text
 lib/
