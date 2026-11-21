@@ -2,11 +2,11 @@
 
 ![LogicSprint feature graphic](assets/brand/store/google_play/feature_graphic_1024x500.png)
 
-**LogicSprint** is a free Flutter brain-training app for Android and iPhone: four quick games, personal bests on the device, and an optional global Top 10 per game. No login. Ad-supported via Google AdMob.
+**LogicSprint** is a free Flutter brain-training app for Android and iPhone: six quick games, personal bests on the device, an optional global Top 10 per game and a Sprint Score across all six. No login. Ad-supported via Google AdMob.
 
 | | |
 |---|---|
-| **Version** | 1.0.3 |
+| **Version** | 1.1.0 |
 | **Platform** | Android (Google Play); iPhone and iPad ([App Store](https://apps.apple.com/us/app/logicsprint-brain-games/id6817549079)) |
 | **Stack** | Flutter 3.x, Dart 3.11+ |
 | **Storage** | `shared_preferences` on the device; Supabase for the leaderboard |
@@ -17,23 +17,20 @@
 
 <table>
   <tr>
-    <td align="center"><img src="assets/brand/store/google_play/screenshots/01_home.png" width="240" alt="Home"><br><sub>Home (Play tab)</sub></td>
-    <td align="center"><img src="assets/brand/store/google_play/screenshots/02_game_sheet.png" width="240" alt="Game sheet"><br><sub>Game sheet (ship picker)</sub></td>
-    <td align="center"><img src="assets/brand/store/google_play/screenshots/03_rocket_launch.png" width="240" alt="Rocket Launch"><br><sub>Rocket Launch</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/01_home.png" width="180" alt="Home"><br><sub>Home (Play tab)</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/02_rocket_launch.png" width="180" alt="Rocket Launch"><br><sub>Rocket Launch</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/03_guess_color.png" width="180" alt="Guess Color"><br><sub>Guess Color</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/04_angle_sense.png" width="180" alt="Angle Sense"><br><sub>Angle Sense</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/brand/store/google_play/screenshots/04_memory_lane.png" width="240" alt="Memory Lane"><br><sub>Memory Lane</sub></td>
-    <td align="center"><img src="assets/brand/store/google_play/screenshots/05_quick_math.png" width="240" alt="Quick Math"><br><sub>Quick Math</sub></td>
-    <td align="center"><img src="assets/brand/store/google_play/screenshots/06_guess_color.png" width="240" alt="Guess Color"><br><sub>Guess Color</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="assets/brand/store/google_play/screenshots/07_result.png" width="240" alt="Result"><br><sub>Result</sub></td>
-    <td align="center"><img src="assets/brand/store/google_play/screenshots/08_ranks.png" width="240" alt="Ranks"><br><sub>Ranks</sub></td>
-    <td align="center"><img src="assets/brand/store/google_play/screenshots/09_profile.png" width="240" alt="Profile"><br><sub>Profile</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/05_line_split.png" width="180" alt="Line Split"><br><sub>Line Split</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/06_quick_math.png" width="180" alt="Quick Math"><br><sub>Quick Math</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/07_ranks.png" width="180" alt="Ranks"><br><sub>Ranks</sub></td>
+    <td align="center"><img src="assets/brand/store/google_play/screenshots/08_profile.png" width="180" alt="Profile"><br><sub>Profile with Sprint Score</sub></td>
   </tr>
 </table>
 
-These are the Google Play screenshots (9:16), rendered from the real screens. See [Store screenshots](#store-screenshots) to regenerate them.
+These are the Google Play screenshots (9:16): real 1.1 screens in the store frames. See [Store screenshots](#store-screenshots) to regenerate them.
 
 ---
 
@@ -47,6 +44,8 @@ Every game is an **endless run**: it keeps getting harder until your first mista
 | **Memory Lane** | Memory | Tiles flash in sequence; tap them back in order, one more tile each level; one wrong tap ends the run | Easy 3×3 · Medium 4×4 · Hard 5×5 |
 | **Quick Math** | Arithmetic | Tap the right answer of four; numbers and operations grow every 10 problems; one wrong answer ends the run | Easy + − · Medium + − × · Hard + − × ÷ |
 | **Guess Color** | Focus | A COLOR \| TEXT switch sets the rule: COLOR = tap the color the word is painted in, TEXT = tap the color the word names. The rule flips, buttons shuffle, their labels stop matching their colors, and the countdown shrinks from 3 s to 1 s | Gets trickier as you go |
+| **Angle Sense** | Spatial | READ: set the degree tape to the angle shown, then Lock. DRAW: drag the arm to the angle named. Close enough keeps you going, within 3° is Sharp, and 2 shields let you miss twice | Easy one arm stays put, no timer · Medium clocks, pies, compass, timer · Hard any angle, any way, fast |
+| **Line Split** | Estimation | Touch the line where the number falls (½, then ⅓, ⅜, 0.43, mixed numbers, longer lines with hidden ticks), slide to adjust, let go. 2 shields | Gets finer as you go |
 
 ---
 
@@ -121,7 +120,7 @@ The "AdMob App ID" build phase writes `ADMOB_APP_ID` into Info.plist, and releas
 
 - An invisible anonymous Supabase account per install; the display name (Result, Ranks or Profile) comes with a 4-digit code, `NEON_FOX#0420`: names can repeat, name + code can't, and the app can find a free code
 - Every finished run is sent automatically (queued while offline): the server keeps each player's best and play count per game and difficulty
-- One Top 10 per game (and per difficulty for Memory Lane and Quick Math) plus your own rank pinned below it; ties go to the faster run in Memory Lane and Quick Math, and to the earlier best elsewhere
+- One Top 10 per game (and per difficulty for Memory Lane, Quick Math and Angle Sense) plus your own rank pinned below it; ties go to the faster run in Memory Lane and Quick Math, and to the earlier best elsewhere
 - Boards update once a day for everyone: the first look after 00:00 UTC fetches every board in one request, and Ranks shows when they were fetched and counts down to the next update. A new personal best moves you on your own board straight away and goes to the server; others see it after the next reset, or sooner with **Refresh ▶** (a rewarded interstitial that pulls everyone's latest scores now, then a 30 min cooldown). Your row shines when it appears. Requests time out after 8 s
 - Run History stays on the device (Profile); fully playable offline
 - Moderation: names with a word from `banned_words` are refused; long-press another player's row on Ranks to report it, and three reports hide the name until its owner picks a new one
@@ -129,6 +128,12 @@ The "AdMob App ID" build phase writes `ADMOB_APP_ID` into Info.plist, and releas
 - `record_run` never turns an implausible score into a best (timed games over 60 points a second, other games over 50 000); the run still counts as a play
 
 Setup: enable **Anonymous sign-ins** (Authentication → Providers), then run [supabase/schema.sql](supabase/schema.sql) in the SQL editor. The publishable key in `lib/core/config.dart` is safe to ship: tables are read-only under RLS, and writes go through `claim_name` / `record_run` / `report_name` / `delete_my_data` (`free_tag` suggests a code), which only touch the caller's own rows. The `player_stats` and `game_stats` views feed the product page.
+
+- **Sprint Score**: one "Top X%" across every game, on Profile. The `player_ratings` view (rebuilt daily at 00:00 UTC by pg_cron) takes your percentile on each board with 30+ players scoring above 0, ordered like the boards so equal scores get their own place; Easy is capped at 90 and Medium at 97. Each game you've played 3+ times counts its best board; R = (sum + 2 × 50) ÷ (games + 2), so steady skill beats one spike; your rating is R's percentile among players rated in 2+ games. `my_rating()` returns it rounded up (1, 2, 5, 10, 15, 20, 25, then tens) once 50+ players are rated. `lib/models/sprint_rating.dart` is the same maths, unit-tested. Before that, Profile says "Play more games to get your score"
+
+## Music
+
+Each game has its own quiet loop in `assets/audio/`, composed for the app by `tool/compose_music.py` (no licence needed): space ambience for Rocket Launch, piano for Memory Lane, marimba for Quick Math, electric-piano bells for Guess Color, a music box for Angle Sense and kalimba for Line Split. It plays only during a live run, fades out on pause, revive offers, ads and game over, mixes with other apps' audio, follows the silent switch, and can be turned off in Settings → Music. See `lib/services/music.dart`.
 
 ---
 
