@@ -33,6 +33,11 @@ class Ads {
   /// Called for every ad shown (main wires it to the on-device ad log).
   void Function(AdKind kind, AdOutcome outcome)? onEvent;
 
+  /// A full-screen ad is about to show, and has closed (or failed to show).
+  /// Used to pause the background music under the ad's own sound.
+  VoidCallback? onFullScreenStarted;
+  VoidCallback? onFullScreenEnded;
+
   /// A banner impression (from [AdBanner]).
   void bannerShown() => onEvent?.call(AdKind.banner, AdOutcome.shown);
 
@@ -131,6 +136,8 @@ class Ads {
     onReward: onReward,
     onDone: onDone,
     onShown: (outcome) => onEvent?.call(kind, outcome),
+    onStart: () => onFullScreenStarted?.call(),
+    onEnd: () => onFullScreenEnded?.call(),
   );
 
   /// Loads the Ranks refresh ad if none is ready (call when Ranks opens).
@@ -148,6 +155,8 @@ class Ads {
     onReward: onReward,
     onDone: onDone,
     onShown: (outcome) => onEvent?.call(AdKind.refresh, outcome),
+    onStart: () => onFullScreenStarted?.call(),
+    onEnd: () => onFullScreenEnded?.call(),
   );
 
   Future<void> _gatherConsent() {
@@ -238,6 +247,8 @@ class _RewardedSlot {
     required VoidCallback onReward,
     required VoidCallback onDone,
     void Function(AdOutcome outcome)? onShown,
+    VoidCallback? onStart,
+    VoidCallback? onEnd,
   }) {
     final ad = _ad;
     if (ad == null) {
@@ -247,7 +258,9 @@ class _RewardedSlot {
     var failedToShow = false;
     _ad = null;
     loaded.value = false;
+    onStart?.call();
     void after(VoidCallback then) {
+      onEnd?.call();
       ad.dispose();
       then();
       load();

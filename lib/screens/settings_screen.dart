@@ -111,6 +111,16 @@ class SettingsScreen extends StatelessWidget {
                         onTap: () => app.setSoundOn(!app.soundOn),
                       ),
                       _Row(
+                        icon: Icons.music_note_outlined,
+                        title: 'Music',
+                        subtitle: 'Calm background music',
+                        trailing: LSToggle(
+                          value: app.musicOn,
+                          onChanged: app.setMusicOn,
+                        ),
+                        onTap: () => app.setMusicOn(!app.musicOn),
+                      ),
+                      _Row(
                         icon: Icons.vibration_rounded,
                         title: 'Vibration',
                         subtitle: 'Haptics on taps and hits',

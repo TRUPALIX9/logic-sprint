@@ -9,6 +9,7 @@ import 'models/device_log.dart';
 import 'services/ads.dart';
 import 'services/leaderboard.dart';
 import 'services/leaderboard_api.dart';
+import 'services/music.dart';
 import 'services/network.dart';
 import 'services/storage.dart';
 import 'state/app_state.dart';
@@ -35,6 +36,12 @@ Future<void> main() async {
       AdEvent(kind: kind, outcome: outcome, at: DateTime.now()),
     );
   final appState = AppState(storage);
+  // Calm background music: follows the Music setting, pauses under ads.
+  final music = Music();
+  appState.addListener(() => music.on = appState.musicOn);
+  ads
+    ..onFullScreenStarted = music.adStarted
+    ..onFullScreenEnded = music.adEnded;
   final network = Network();
   await network.start();
 
@@ -51,5 +58,6 @@ Future<void> main() async {
   // After runApp: neither the consent form nor syncing runs finished offline
   // may block the first frame.
   unawaited(ads.initialize());
+  unawaited(music.start(on: appState.musicOn));
   unawaited(leaderboard.syncPending());
 }

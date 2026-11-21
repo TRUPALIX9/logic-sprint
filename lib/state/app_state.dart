@@ -11,13 +11,18 @@ import '../services/storage.dart';
 class AppState extends ChangeNotifier implements RoundFeedback {
   AppState(this.storage)
     : _soundOn = storage.soundOn,
+      _musicOn = storage.musicOn,
       _vibrationOn = storage.vibrationOn;
 
   final Storage storage;
   bool _soundOn;
+  bool _musicOn;
   bool _vibrationOn;
 
   bool get soundOn => _soundOn;
+
+  /// Calm background music (see Music).
+  bool get musicOn => _musicOn;
   bool get vibrationOn => _vibrationOn;
 
   int best(GameId game, Difficulty difficulty) =>
@@ -81,6 +86,12 @@ class AppState extends ChangeNotifier implements RoundFeedback {
   Future<void> setSoundOn(bool value) async {
     _soundOn = value;
     await storage.setSoundOn(value);
+    notifyListeners();
+  }
+
+  Future<void> setMusicOn(bool value) async {
+    _musicOn = value;
+    await storage.setMusicOn(value);
     notifyListeners();
   }
 

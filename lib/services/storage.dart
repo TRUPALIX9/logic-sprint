@@ -88,6 +88,10 @@ class Storage {
   Future<void> setSoundOn(bool value) =>
       _prefs.setBool('isSoundEnabled', value);
 
+  bool get musicOn => _prefs.getBool('isMusicEnabled') ?? true;
+  Future<void> setMusicOn(bool value) =>
+      _prefs.setBool('isMusicEnabled', value);
+
   bool get vibrationOn => _prefs.getBool('isVibrationEnabled') ?? true;
   Future<void> setVibrationOn(bool value) =>
       _prefs.setBool('isVibrationEnabled', value);
