@@ -60,6 +60,16 @@ class RocketLaunchEngine extends RoundEngine {
   /// Invulnerability after a revive.
   static const reviveShield = Duration(milliseconds: 1500);
 
+  /// After a revive the storm builds back up over this much flight: the
+  /// first rock waits [reviveFirstRock], spawns start twice as far apart and
+  /// ease back to normal, and no rock spawns right above the rocket.
+  static const reviveCalm = Duration(seconds: 3);
+  static const reviveFirstRock = Duration(milliseconds: 900);
+
+  /// While calm, rocks spawn at least this far (in field widths) from the
+  /// rocket's column.
+  static const calmClearance = 0.22;
+
   /// Calm at 0 s, busy by [stormAt] s, then a slow creep to a cap at
   /// [capAt] s: small steps, so a sharp player can push toward 10 000
   /// points (about five minutes of flying).
@@ -86,12 +96,22 @@ class RocketLaunchEngine extends RoundEngine {
   /// the ramp and the scenery (the base [elapsed] is the wall-clock run).
   Duration flightTime = Duration.zero;
   Duration _shieldUntil = Duration.zero;
+  Duration? _calmUntil;
   double _untilSpawn = 0;
 
   double get _seconds =>
       flightTime.inMicroseconds / Duration.microsecondsPerSecond;
 
   bool get invulnerable => flightTime < _shieldUntil;
+
+  /// 1 right after a revive, falling to 0 over [reviveCalm]; 0 otherwise.
+  double get calm {
+    final until = _calmUntil;
+    if (until == null || flightTime >= until) {
+      return 0;
+    }
+    return (until - flightTime).inMicroseconds / reviveCalm.inMicroseconds;
+  }
 
   static double _ramp(double seconds, double calm, double storm, double cap) {
     if (seconds <= stormAt) {
@@ -110,9 +130,11 @@ class RocketLaunchEngine extends RoundEngine {
   /// Which colour theme the score has reached (0 at the start).
   int get themeLevel => score ~/ themeEvery;
 
-  /// Ignored while paused, down or over (allowed before the start).
+  /// Ignored while paused, down or over. Allowed before the start and during
+  /// the get-ready countdown after a revive, so the player can line up; the
+  /// ship only moves once [tick] runs.
   void steerTo(double x) {
-    if (state != RunState.ready && !isPlaying) {
+    if (state != RunState.ready && !isResuming && !isPlaying) {
       return;
     }
     targetX = x.clamp(minX, maxX);
@@ -138,7 +160,7 @@ class RocketLaunchEngine extends RoundEngine {
     _untilSpawn -= seconds;
     while (_untilSpawn <= 0) {
       _spawn();
-      _untilSpawn += spawnInterval;
+      _untilSpawn += spawnInterval * (1 + calm);
     }
 
     for (final rock in [...asteroids]) {
@@ -163,9 +185,19 @@ class RocketLaunchEngine extends RoundEngine {
 
   void _spawn() {
     spawned++;
+    var x = minX + random.nextDouble() * (maxX - minX);
+    // While calm, keep the rocket's column clear (a few tries, then the
+    // far side of the field).
+    for (var tries = 0; calm > 0 && (x - rocketX).abs() < calmClearance;) {
+      if (++tries > 6) {
+        x = rocketX < 0.5 ? maxX - 0.1 : minX + 0.1;
+        break;
+      }
+      x = minX + random.nextDouble() * (maxX - minX);
+    }
     asteroids.add(
       Asteroid(
-        x: minX + random.nextDouble() * (maxX - minX),
+        x: x,
         y: -0.08,
         size: 30 + random.nextDouble() * 26,
         speed: _fallSpeed * speedFactor * (0.85 + random.nextDouble() * 0.3),
@@ -176,12 +208,17 @@ class RocketLaunchEngine extends RoundEngine {
     );
   }
 
-  /// Another life (any number of times): an empty sky, a fresh spawn gap and
-  /// a short shield.
+  /// Another life (any number of times): an empty sky, a short shield and a
+  /// storm that builds back up ([reviveCalm]) instead of resuming at full
+  /// strength.
   @override
   void onRevive() {
     asteroids.clear();
-    _untilSpawn = spawnInterval;
+    _untilSpawn = max(
+      spawnInterval,
+      reviveFirstRock.inMicroseconds / Duration.microsecondsPerSecond,
+    );
     _shieldUntil = flightTime + reviveShield;
+    _calmUntil = flightTime + reviveCalm;
   }
 }

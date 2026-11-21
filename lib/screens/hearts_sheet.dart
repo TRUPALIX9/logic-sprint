@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../core/config.dart';
 import '../core/theme.dart';
+import '../models/device_log.dart';
 import '../services/ads.dart';
 import '../services/network.dart';
 import '../state/app_state.dart';
@@ -51,6 +52,7 @@ class _HeartsSheetState extends State<HeartsSheet> {
     final app = context.read<AppState>();
     setState(() => _watching = true);
     context.read<Ads>().showRewarded(
+      kind: AdKind.heart,
       onReward: () async {
         await app.earnHeart();
         if (mounted) {

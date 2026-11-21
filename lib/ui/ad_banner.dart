@@ -86,6 +86,7 @@ class _AdBannerState extends State<AdBanner> {
       request: const AdRequest(),
       size: size,
       listener: BannerAdListener(
+        onAdImpression: (_) => ads.bannerShown(),
         onAdLoaded: (_) {
           if (mounted) {
             setState(() => _loaded = true);

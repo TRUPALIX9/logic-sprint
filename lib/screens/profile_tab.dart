@@ -1,315 +1,300 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../core/format.dart';
 import '../core/theme.dart';
-import '../models/game.dart';
+import '../models/profile_stats.dart';
 import '../models/run_record.dart';
 import '../services/leaderboard.dart';
+import '../services/stats_share.dart';
 import '../state/app_state.dart';
 import '../ui/chamfer.dart';
 import '../ui/kit.dart';
+import '../ui/sprint_gauge.dart';
+import 'history_screen.dart';
 import 'name_sheet.dart';
+import 'profile/history_row.dart';
+import 'profile/stat_text.dart';
 
-/// Display name, personal bests with play counts, and the local run History.
+/// Profile, top to bottom: name and code, the Sprint Score gauge, each
+/// game's best (once), the latest runs (opens History), then one Share
+/// button at the bottom. No wordmark. Run and play-time totals are hidden
+/// for now (still in [ProfileStats]).
 class ProfileTab extends StatelessWidget {
-  const ProfileTab({super.key});
+  const ProfileTab({super.key, this.sharer = const StatsSharer()});
 
-  /// History rows shown (Storage keeps the last 100).
-  static const _historyShown = 30;
+  /// Renders and shares the stats image (swappable in tests).
+  final StatsSharer sharer;
 
   @override
   Widget build(BuildContext context) {
-    final app = context.watch<AppState>();
+    context.watch<AppState>();
     final leaderboard = context.watch<Leaderboard>();
-    final history = leaderboard.history;
+    final stats = profileStats(context);
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
       children: [
         const DisplayText('Profile', size: 30),
         const SizedBox(height: 16),
-        _NameCard(name: leaderboard.displayName, runs: app.totalPlays),
+        _NameRow(stats: stats),
+        const SizedBox(height: 14),
+        _ScoreTile(top: stats.sprintTop),
         const SizedBox(height: 22),
         const MonoLabel('Your bests'),
         const SizedBox(height: 10),
-        // Timed games first: their cards carry the most detail.
-        for (final game in [
-          ...GameId.values.where((g) => g.tracksTime),
-          ...GameId.values.where((g) => !g.tracksTime),
-        ])
+        for (final game in stats.games)
           Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _BestCard(game: game, app: app),
+            key: ValueKey('best-${game.game.name}'),
+            padding: const EdgeInsets.only(bottom: 6),
+            child: _BestRow(stat: game),
           ),
-        const SizedBox(height: 12),
-        const Row(
+        const SizedBox(height: 22),
+        _HistoryPreview(history: leaderboard.history),
+        const SizedBox(height: 22),
+        _ShareButton(stats: stats, sharer: sharer),
+      ],
+    );
+  }
+}
+
+/// The last few runs and a way into the full History page.
+class _HistoryPreview extends StatelessWidget {
+  const _HistoryPreview({required this.history});
+
+  final List<RunRecord> history;
+
+  /// Runs shown here; History has the rest.
+  static const shown = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
           children: [
-            MonoLabel('History'),
-            Spacer(),
-            MonoLabel('On this device only', size: 10, color: LS.dim),
+            const MonoLabel('History'),
+            const Spacer(),
+            CardAction(
+              label: 'See all',
+              onTap: () => Navigator.of(context).push(HistoryScreen.route()),
+            ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         if (history.isEmpty)
           Text(
             'Finished runs show up here.',
             style: LSText.body(15, color: LS.muted),
           )
         else
-          for (final run in history.take(_historyShown))
+          for (final run in history.take(shown))
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
-              child: _HistoryRow(run: run),
+              child: HistoryRow(run: run),
             ),
       ],
     );
   }
 }
 
-class _NameCard extends StatelessWidget {
-  const _NameCard({required this.name, required this.runs});
+/// The player's stats from local bests, plays, History and cached ranks.
+ProfileStats profileStats(BuildContext context) {
+  final app = context.read<AppState>();
+  final leaderboard = context.read<Leaderboard>();
+  final tag = leaderboard.savedTag;
+  return ProfileStats.from(
+    name: leaderboard.savedName,
+    tag: tag == null ? null : Leaderboard.formatTag(tag),
+    best: app.best,
+    bestTime: app.bestTime,
+    plays: app.plays,
+    rank: leaderboard.cachedRank,
+    history: leaderboard.history,
+  );
+}
 
-  final String? name;
-  final int runs;
+/// NEON_FOX#0420 with an Edit action. No wordmark on Profile.
+class _NameRow extends StatelessWidget {
+  const _NameRow({required this.stats});
+
+  final ProfileStats stats;
 
   @override
   Widget build(BuildContext context) {
-    final name = this.name;
+    final name = stats.name;
+    return Row(
+      children: [
+        Expanded(
+          child: name == null
+              ? Text(
+                  'Set a name to show on the boards',
+                  style: LSText.body(15, color: LS.muted),
+                )
+              : NameWithTag(name: name, tag: stats.tag, size: 28),
+        ),
+        const SizedBox(width: 8),
+        CardAction(
+          label: name == null ? 'Set name' : 'Edit',
+          onTap: () => showNameSheet(context),
+        ),
+      ],
+    );
+  }
+}
+
+/// The Sprint Score gauge on its own full-width panel.
+class _ScoreTile extends StatelessWidget {
+  const _ScoreTile({required this.top});
+
+  final int? top;
+
+  @override
+  Widget build(BuildContext context) {
     return ChamferBox(
-      cut: Cut.lg,
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          const ChamferBox(
-            cut: Cut.sm,
-            width: 48,
-            height: 48,
-            borderColor: null,
-            color: LS.surface2,
-            child: Icon(Icons.person_outline_rounded, color: LS.teal),
+      cut: Cut.sm,
+      borderColor: null,
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
+      child: LayoutBuilder(
+        builder: (context, constraints) => Center(
+          child: SprintGauge(
+            top: top,
+            diameter: constraints.maxWidth.clamp(0, 220).toDouble(),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const MonoLabel('Display name', size: 10, color: LS.dim),
-                const SizedBox(height: 4),
-                if (name == null)
-                  Text('Not set yet', style: LSText.body(15, color: LS.muted))
-                else
-                  DisplayText(name, size: 22, maxLines: 1),
-                const SizedBox(height: 4),
-                MonoLabel(
-                  runs == 1 ? '1 run played' : '$runs runs played',
-                  size: 10,
-                  color: LS.dim,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          CardAction(
-            label: name == null ? 'Set name' : 'Edit',
-            onTap: () => showNameSheet(context),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _BestCard extends StatelessWidget {
-  const _BestCard({required this.game, required this.app});
+/// One game: icon, title, E/M/H bests (when they fit on one line, else the
+/// difficulty and rank of the best) and the best in the game's accent.
+class _BestRow extends StatelessWidget {
+  const _BestRow({required this.stat});
 
-  final GameId game;
-  final AppState app;
+  final GameStat stat;
 
   @override
   Widget build(BuildContext context) {
-    final bests = {for (final d in Difficulty.values) d: app.best(game, d)};
-    final top = bests.values.reduce((a, b) => a > b ? a : b);
-    const ramp = GameId.rampDifficulty;
+    final game = stat.game;
+    final metaStyle = LSText.mono(10, spacing: 0.04);
     return ChamferBox(
-      cut: Cut.lg,
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      cut: Cut.sm,
+      borderColor: null,
+      // Accent edge as a positioned bar: the subtitle's LayoutBuilder rules
+      // out IntrinsicHeight here.
+      child: Stack(
         children: [
-          Row(
-            children: [
-              GameTile(game: game, size: 40),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    DisplayText(game.title, size: 20, maxLines: 1),
-                    const SizedBox(height: 3),
-                    MonoLabel(game.skill, size: 10),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          IntrinsicHeight(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(13, 8, 12, 8),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: game.hasDifficulty
-                  ? [
-                      for (final (i, difficulty)
-                          in Difficulty.values.indexed) ...[
-                        if (i > 0) const SizedBox(width: 8),
-                        Expanded(
-                          child: _Cell(
-                            label: difficulty.label,
-                            value: bests[difficulty]!,
-                            color: bests[difficulty] == top
-                                ? game.accent
-                                : LS.text,
-                            notes: [
-                              if (game.tracksTime && bests[difficulty]! > 0)
-                                if (app.bestTime(game, difficulty)
-                                    case final time?)
-                                  formatDuration(time),
-                              'Played ${app.plays(game, difficulty)}',
-                            ],
-                          ),
-                        ),
-                      ],
-                    ]
-                  : [
-                      Expanded(
-                        child: _Cell(
-                          label: 'Best',
-                          value: bests[ramp]!,
-                          color: game.accent,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _Cell(
-                          label: 'Played',
-                          value: app.plays(game, ramp),
-                          color: LS.text,
-                          showZero: true,
+              children: [
+                GameTile(game: game, size: 34),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DisplayText(game.title, size: 16, maxLines: 1),
+                      const SizedBox(height: 3),
+                      LayoutBuilder(
+                        builder: (context, constraints) => Text(
+                          _subtitle(context, metaStyle, constraints.maxWidth),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: metaStyle,
                         ),
                       ),
                     ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Cell extends StatelessWidget {
-  const _Cell({
-    required this.label,
-    required this.value,
-    required this.color,
-    this.notes = const [],
-    this.showZero = false,
-  });
-
-  final String label;
-  final int value;
-  final Color color;
-  final List<String> notes;
-
-  /// Show "0" instead of "—" (counts rather than scores).
-  final bool showZero;
-
-  @override
-  Widget build(BuildContext context) {
-    final empty = value == 0 && !showZero;
-    return Container(
-      color: LS.surface2,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          MonoLabel(label, size: 10, color: LS.dim),
-          const SizedBox(height: 4),
-          Text(
-            empty ? '—' : '$value',
-            style: LSText.mono(
-              19,
-              weight: FontWeight.w700,
-              spacing: 0,
-              color: empty ? LS.dim : color,
-            ),
-          ),
-          for (final note in notes) ...[
-            const SizedBox(height: 2),
-            MonoLabel(note, size: 10, color: LS.dim),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.run});
-
-  final RunRecord run;
-
-  @override
-  Widget build(BuildContext context) {
-    final game = run.game;
-    return ChamferBox(
-      cut: Cut.sm,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        children: [
-          GameTile(game: game, size: 36),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  game.titleWith(run.difficulty),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: LSText.body(15, weight: FontWeight.w600, height: 1.2),
+                  ),
                 ),
-                const SizedBox(height: 3),
-                MonoLabel(formatAgo(run.playedAt), size: 10, color: LS.dim),
+                const SizedBox(width: 10),
+                BestText(stat: stat, size: 17),
               ],
             ),
           ),
-          if (run.isBest) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              color: LS.blue,
-              child: const MonoLabel(
-                'Best',
-                size: 10,
-                weight: FontWeight.w700,
-                color: LS.bg,
-              ),
-            ),
-            const SizedBox(width: 10),
-          ],
-          if (game.tracksTime) ...[
-            MonoLabel(formatDuration(run.duration), size: 10, color: LS.dim),
-            const SizedBox(width: 10),
-          ],
-          Text(
-            '${run.score}',
-            style: LSText.mono(
-              17,
-              weight: FontWeight.w700,
-              spacing: 0,
-              color: LS.text,
-            ),
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 3,
+            child: ColoredBox(color: game.accent),
           ),
         ],
       ),
     );
   }
+
+  String _subtitle(BuildContext context, TextStyle style, double width) {
+    final breakdown = difficultyBreakdown(stat);
+    if (breakdown != null) {
+      final painter = TextPainter(
+        text: TextSpan(text: breakdown, style: style),
+        maxLines: 1,
+        textDirection: TextDirection.ltr,
+        textScaler: MediaQuery.textScalerOf(context),
+      )..layout();
+      final fits = painter.width <= width;
+      painter.dispose();
+      if (fits) {
+        return breakdown;
+      }
+    }
+    return gameMeta(stat);
+  }
+}
+
+/// One Share button straight to the system share sheet, where the player
+/// picks the app. A note under it says the link is copied too.
+class _ShareButton extends StatefulWidget {
+  const _ShareButton({required this.stats, required this.sharer});
+
+  final ProfileStats stats;
+  final StatsSharer sharer;
+
+  @override
+  State<_ShareButton> createState() => _ShareButtonState();
+}
+
+class _ShareButtonState extends State<_ShareButton> {
+  bool _busy = false;
+
+  Future<void> _share() async {
+    // Anchors the system sheet on iPad.
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = box == null
+        ? null
+        : box.localToGlobal(Offset.zero) & box.size;
+    setState(() => _busy = true);
+    try {
+      await widget.sharer.send(widget.stats, origin: origin);
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          const SnackBar(content: Text("Couldn't share right now. Try again.")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      PrimaryButton(
+        label: _busy ? 'Preparing…' : 'Share',
+        icon: Icons.ios_share_rounded,
+        onPressed: _busy ? null : _share,
+      ),
+      const SizedBox(height: 8),
+      Text(
+        linkCopiedNote,
+        textAlign: TextAlign.center,
+        style: LSText.body(12, color: LS.dim, height: 1.4),
+      ),
+    ],
+  );
 }

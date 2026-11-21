@@ -37,6 +37,7 @@ class RankBoard extends StatefulWidget {
     required this.now,
     this.reduceMotion = false,
     this.haptics = true,
+    this.countUp = false,
     this.onReport,
   });
 
@@ -52,6 +53,11 @@ class RankBoard extends StatefulWidget {
   final DateTime now;
   final bool reduceMotion;
   final bool haptics;
+
+  /// The board was just switched to (another game or difficulty): rows
+  /// arrive one by one and their scores count up from 0, even when the
+  /// load itself hasn't changed.
+  final bool countUp;
 
   /// Long-press on another player's row (report their name).
   final ValueChanged<LeaderboardEntry>? onReport;
@@ -119,6 +125,9 @@ class _RankBoardState extends State<RankBoard> with TickerProviderStateMixin {
   LeaderboardLoad get _load => widget.load;
   bool get _firstView => _load.previous == null;
 
+  /// No movement to show: a first look, or a board just switched to.
+  bool get _fresh => _firstView || (widget.countUp && !_load.changed);
+
   @override
   void initState() {
     super.initState();
@@ -131,7 +140,7 @@ class _RankBoardState extends State<RankBoard> with TickerProviderStateMixin {
           AppConfig.leaderboardRowMove +
           AppConfig.leaderboardRowStagger * math.max(count - 1, 0),
     );
-    if (_load.changed && !widget.reduceMotion) {
+    if ((_load.changed || widget.countUp) && !widget.reduceMotion) {
       _rows.forward();
     } else {
       _rows.value = 1;
@@ -222,16 +231,16 @@ class _RankBoardState extends State<RankBoard> with TickerProviderStateMixin {
   Widget _row(int i) {
     final entry = _load.entries[i];
     final isYou = widget.me != null && entry.playerId == widget.me;
-    final move = _firstView ? null : _moves[entry.playerId];
+    final move = _fresh ? null : _moves[entry.playerId];
     final from = move?.from;
     final dropIn = from == null;
-    final fromScore = from == null ? entry.score : _load.previous![from].score;
+    final fromScore = from != null
+        ? _load.previous![from].score
+        : (widget.countUp && !widget.reduceMotion ? 0 : entry.score);
     final previousMyRank = _load.previousMyRank;
     final fromRank = from != null
         ? from + 1
-        : (isYou && !_firstView && previousMyRank != null
-              ? previousMyRank
-              : i + 1);
+        : (isYou && !_fresh && previousMyRank != null ? previousMyRank : i + 1);
     final total = _rows.duration!.inMilliseconds;
     final start = AppConfig.leaderboardRowStagger.inMilliseconds * i;
     final interval = Interval(

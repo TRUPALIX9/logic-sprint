@@ -142,35 +142,42 @@ class _ButtonLabel extends StatelessWidget {
   }
 }
 
-/// 44px-tall filter chip.
+/// 44px-tall filter chip. With an [accent] (a game's colour) the label is
+/// drawn in it and a selected chip fills with it; otherwise teal.
 class LSChip extends StatelessWidget {
   const LSChip({
     super.key,
     required this.label,
     required this.selected,
     required this.onTap,
+    this.accent,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final Color? accent;
 
   @override
   Widget build(BuildContext context) {
-    return ChamferBox(
-      cut: Cut.sm,
-      height: 44,
-      borderColor: null,
-      color: selected ? LS.teal : LS.surface2,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      onTap: onTap,
-      child: Center(
-        widthFactor: 1,
-        child: MonoLabel(
-          label,
-          size: 12,
-          weight: FontWeight.w700,
-          color: selected ? LS.bg : LS.muted,
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: ChamferBox(
+        cut: Cut.sm,
+        height: 44,
+        borderColor: null,
+        color: selected ? accent ?? LS.teal : LS.surface2,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        onTap: onTap,
+        child: Center(
+          widthFactor: 1,
+          child: MonoLabel(
+            label,
+            size: 12,
+            weight: FontWeight.w700,
+            color: selected ? LS.bg : accent ?? LS.muted,
+          ),
         ),
       ),
     );

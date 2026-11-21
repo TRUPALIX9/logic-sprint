@@ -1,0 +1,528 @@
+<title>True or False Game Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: Logic Sprint "Circuit Noir" again — black, chamfered panels, a playable phone
+   prototype beside the brief, then ladder → fairness → difficulty → screens → generator →
+   build map → playbook. Single dark theme on purpose, like the app. Accent: orange. */
+:root {
+  color-scheme: dark;
+  --bg:#000; --well:#04080C; --surface:#0A1016; --surface2:#111A23; --line:#1E2A36; --trace:#0A131B;
+  --text:#EAF2F7; --muted:#8C9DAD; --dim:#667A8C;
+  --teal:#34C29A; --blue:#3B7BF0; --aqua:#2BB3D6; --violet:#8C8CFF; --gold:#F5C542; --coral:#FF5A6E;
+  --orange:#FF8A3D; --orange-soft:rgba(255,138,61,.14);
+  --display:'Rajdhani','Arial Narrow',sans-serif; --body:'IBM Plex Sans','Helvetica Neue',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding-block:28px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:64px}
+h1,h2,h3{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.03em;line-height:1;margin:0;text-wrap:balance}
+h1{font-size:clamp(44px,7vw,72px)} h2{font-size:34px} h3{font-size:20px}
+p{margin:0;max-width:68ch}
+.mono{font-family:var(--mono);font-weight:500;letter-spacing:.12em;font-size:11px;color:var(--muted);text-transform:uppercase}
+.orange{color:var(--orange)}.teal{color:var(--teal)}.coral{color:var(--coral)}.muted{color:var(--muted)}
+code{font-family:var(--mono);font-size:12.5px;color:var(--aqua);background:var(--surface2);padding:1px 5px;overflow-wrap:anywhere}
+.cut{clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.cut-sm{clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.cut-lg{clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)}
+.sec-head{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.sec-head p{color:var(--muted)}
+.tile{background:var(--line);padding:1px}.tile>.in{background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:10px;height:100%;box-sizing:border-box}
+.tile p{color:var(--muted);font-size:14px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.tbl{border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--surface)}
+td{background:var(--bg)} tr:last-child td{border-bottom:0}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ex{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.02em}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:48px;align-items:start}
+.hero-copy{display:flex;flex-direction:column;gap:20px;padding-top:12px}
+.lede{font-size:17px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;background:var(--surface2);color:var(--muted)}
+.chip.on{background:var(--orange-soft);color:var(--orange)}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.facts div{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.facts b{font-family:var(--mono);font-size:13.5px;font-weight:700}
+
+/* phone */
+.phone{width:100%;max-width:380px;background:var(--line);padding:1px}
+.phone>.screen{background:var(--bg);display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.bar .t{flex:1;display:flex;flex-direction:column;gap:3px}
+.bar .t span:first-child{font-family:var(--display);font-weight:700;font-size:22px;text-transform:uppercase;letter-spacing:.03em;line-height:1}
+.score{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.score b{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--orange);line-height:1;font-variant-numeric:tabular-nums}
+.pz{padding:14px 16px 18px;display:flex;flex-direction:column;gap:12px}
+.status{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.lvl{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);background:var(--orange-soft);padding:4px 8px}
+.card{background:var(--line);padding:1px;position:relative}
+.card>.in{background:var(--well);position:relative}
+.card svg{display:block;width:100%;height:auto}
+.stmt{background:var(--surface);border:1px solid var(--line);padding:14px 16px;min-height:74px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--display);font-weight:700;font-size:23px;line-height:1.15;letter-spacing:.01em}
+.stmt b{color:var(--orange);font-weight:700}
+.tbar{height:4px;background:var(--surface2);position:relative;overflow:hidden}
+.tbar i{position:absolute;inset:0 auto 0 0;width:0;background:var(--orange)}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ans{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.06em;text-transform:uppercase;padding:18px 0;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.ans small{font-family:var(--mono);font-size:10px;letter-spacing:.12em;font-weight:500;opacity:.75}
+.ans.t{background:var(--teal);color:#04120D}
+.ans.f{background:var(--coral);color:#1A0508}
+.ans:disabled{opacity:.35;cursor:default}
+.ans:focus-visible,.btn:focus-visible,.modes button:focus-visible,.jump button:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.why{font-size:13.5px;color:var(--muted);text-align:center;min-height:40px}
+.verdict{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.06em;padding:4px 12px;white-space:nowrap}
+.verdict.ok{color:var(--teal);background:rgba(52,194,154,.15)}
+.verdict.no{color:var(--coral);background:rgba(255,90,110,.15)}
+.over{position:absolute;inset:0;background:rgba(0,0,0,.86);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px}
+.btn{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:16px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer;padding:10px 16px}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.modes button{font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:15px;letter-spacing:.05em;padding:8px 0;border:0;background:var(--surface2);color:var(--muted);cursor:pointer;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.modes button.on{background:var(--orange);color:#000}
+.jump{display:flex;flex-wrap:wrap;gap:6px}
+.jump button{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:6px 8px;background:var(--surface2);color:var(--muted);border:0;cursor:pointer}
+
+/* ladder */
+.ladder{display:flex;flex-direction:column;gap:0;border-left:1px solid var(--line);margin-left:14px}
+.rung{position:relative;padding:0 0 22px 30px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px}
+.rung::before{content:attr(data-n);position:absolute;left:-15px;top:-2px;width:28px;height:28px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--orange);color:var(--orange);font-family:var(--mono);font-size:12px;font-weight:700;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.rung h3{font-size:18px}
+.rung .q{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.08em;margin-top:4px}
+.rung ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.rung li{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.rung li span{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.06em}
+
+/* sheet */
+.sheet{background:var(--surface);border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:10px}
+.sheet .opt{border:1px solid var(--line);padding:12px 14px;display:flex;flex-direction:column;gap:4px;background:var(--bg)}
+.sheet .opt.on{border-color:var(--orange);background:#1F1208}
+.sheet .opt b{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:.04em}
+.sheet .opt span{font-size:13px;color:var(--muted)}
+
+/* states + steps */
+.states{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.state{display:flex;flex-direction:column;gap:10px}
+.state .phone{max-width:none}
+.state p{color:var(--muted);font-size:13.5px}
+.steps{display:flex;flex-direction:column;border-left:1px solid var(--line);margin-left:14px}
+.step{position:relative;padding:0 0 26px 30px;display:flex;flex-direction:column;gap:8px}
+.step::before{content:attr(data-n);position:absolute;left:-15px;top:-2px;width:28px;height:28px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--orange);color:var(--orange);font-family:var(--mono);font-size:12px;font-weight:700;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.step .h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.step ul{margin:0;padding-left:18px;color:var(--muted);display:flex;flex-direction:column;gap:4px;max-width:80ch}
+.step ul b{color:var(--text);font-weight:600}
+.decisions{display:flex;flex-direction:column;gap:10px}
+.decisions div{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;padding:12px 14px;background:var(--surface);border:1px solid var(--line)}
+.decisions b{font-family:var(--display);text-transform:uppercase;font-size:17px;letter-spacing:.03em}
+.decisions span{color:var(--muted);font-size:14px}
+.formula{font-family:var(--mono);font-size:13px;background:var(--well);border:1px solid var(--line);padding:14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}
+
+@media (max-width:900px){.hero{grid-template-columns:minmax(0,1fr)}.phone{margin:0 auto}.grid3,.states{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.grid2,.grid3,.states,.facts{grid-template-columns:minmax(0,1fr)}.rung,.decisions div{grid-template-columns:minmax(0,1fr);gap:4px}h2{font-size:28px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<!-- ======================= HERO ======================= -->
+<section class="hero">
+  <div class="hero-copy">
+    <span class="mono">Logic Sprint · Game 06 · Plan</span>
+    <h1>True <span class="orange">or</span> False</h1>
+    <p class="lede">A few shapes, one sentence about them. Is it true? Tap <b class="teal">TRUE</b> or <b class="coral">FALSE</b>. The sentences climb from plain counting to "all / some / none", NOT, AND/OR and IF…THEN. One wrong call ends the run.</p>
+    <div class="chips">
+      <span class="chip on">Skill · Logic</span>
+      <span class="chip on">Accent · Orange</span>
+      <span class="chip">Easy · Medium · Hard</span>
+      <span class="chip">Ranked by score</span>
+      <span class="chip">Revive ×3</span>
+    </div>
+    <div class="facts">
+      <div><span class="mono">Core loop</span><b>Read → check the shapes → TRUE / FALSE</b></div>
+      <div><span class="mono">Why it's needed</span><b>The only skill LogicSprint is named after</b></div>
+      <div><span class="mono">Ladder</span><b>Count → All/Some/No → NOT → AND/OR → IF</b></div>
+      <div><span class="mono">Fair timer</span><b>Grows with words and shapes on screen</b></div>
+      <div><span class="mono">After each answer</span><b>The shapes that prove it light up</b></div>
+      <div><span class="mono">Fits engine</span><b>RoundEngine subclass, like Guess Color</b></div>
+    </div>
+    <p class="muted">The phone is a working prototype. Every sentence is generated and checked by code, and about half are true. Pick a difficulty, jump to a stage, and after each answer look at which shapes light up: that's the proof.</p>
+  </div>
+
+  <div class="phone cut-lg" id="proto"><div class="screen cut-lg">
+    <div class="bar"><div class="t"><span>True or False</span><span class="mono">Logic</span></div><div class="score"><span class="mono">Score</span><b id="score">0</b></div></div>
+    <div class="pz">
+      <div class="status"><span class="lvl" id="lvl">Facts</span><span class="mono" id="qn">Medium · Q01</span></div>
+      <div class="card cut-lg"><div class="in cut-lg">
+        <svg id="scene" viewBox="0 0 340 250" aria-label="Shapes to check the sentence against"></svg>
+        <div class="verdict" id="verdict" hidden></div>
+        <div class="over" id="over" hidden>
+          <span class="mono">Run over</span>
+          <h2 id="overScore" class="orange">0</h2>
+          <p class="muted" id="overWhy" style="font-size:14px"></p>
+          <button class="btn cut-sm" id="restart">Play again</button>
+        </div>
+      </div></div>
+      <div class="stmt cut" id="stmt" aria-live="polite">…</div>
+      <div class="tbar"><i id="tbar"></i></div>
+      <div class="answers">
+        <button class="ans t cut-sm" id="bT">True<small>✓</small></button>
+        <button class="ans f cut-sm" id="bF">False<small>✕</small></button>
+      </div>
+      <div class="why" id="why"></div>
+      <div class="modes" id="modes"><button data-m="easy">Easy</button><button data-m="medium" class="on">Medium</button><button data-m="hard">Hard</button></div>
+      <div class="jump" id="jump"><button data-n="1">Q01</button><button data-n="9">Q09</button><button data-n="17">Q17</button><button data-n="26">Q26</button><button data-n="36">Q36</button><button data-n="51">Q51</button></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ======================= LADDER ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">01 · The sentence ladder</span>
+    <h2>Six kinds of sentence</h2>
+    <p>Each rung adds one new idea from logic and keeps everything before it. Scenes grow too, from 4 shapes to 10. Shapes vary in three ways: kind (circle, square, triangle), colour (red, blue, yellow, green) and size (big, small).</p>
+  </div>
+  <div class="ladder">
+    <div class="rung" data-n="1"><div><h3>Facts</h3><div class="q">Q1–8 · 4–5 shapes</div></div>
+      <ul><li><span class="ex">There are exactly 3 circles.</span><span>count</span></li><li><span class="ex">There is a red square.</span><span>exists</span></li></ul></div>
+    <div class="rung" data-n="2"><div><h3>All · Some · No</h3><div class="q">Q9–16 · 5–6 shapes</div></div>
+      <ul><li><span class="ex">All circles are red.</span><span>for all</span></li><li><span class="ex">Some squares are big.</span><span>there is at least one</span></li><li><span class="ex">No triangle is blue.</span><span>none</span></li></ul></div>
+    <div class="rung" data-n="3"><div><h3>NOT</h3><div class="q">Q17–25 · 6–7 shapes</div></div>
+      <ul><li><span class="ex">Not every square is yellow.</span><span>not all</span></li><li><span class="ex">Some circles are not small.</span><span>some … not</span></li></ul></div>
+    <div class="rung" data-n="4"><div><h3>AND · OR</h3><div class="q">Q26–35 · 6–8 shapes</div></div>
+      <ul><li><span class="ex">Every square is red or big.</span><span>or</span></li><li><span class="ex">Some circle is blue and small.</span><span>and</span></li></ul></div>
+    <div class="rung" data-n="5"><div><h3>IF · ONLY</h3><div class="q">Q36–50 · 7–9 shapes</div></div>
+      <ul><li><span class="ex">If a shape is red, it is a circle.</span><span>if … then</span></li><li><span class="ex">Only squares are green.</span><span>only (the one people flip)</span></li></ul></div>
+    <div class="rung" data-n="6"><div><h3>Everything, faster</h3><div class="q">Q51+ · 8–10 shapes</div></div>
+      <ul><li><span class="ex">Any sentence above, chosen at random.</span><span>the timer keeps tightening</span></li></ul></div>
+  </div>
+</section>
+
+<!-- ======================= FAIRNESS ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">02 · Fair for humans</span>
+    <h2>Two buttons, so guessing must not work</h2>
+    <p>With only TRUE and FALSE, a guess is right half the time. And because one miss ends the run, even small error rates cut runs short. So the game needs three things: sentences that are about half true, enough time to actually read, and a timer that scales with what's on screen.</p>
+  </div>
+  <div class="grid2">
+    <div class="tile cut"><div class="in cut">
+      <h3>Accuracy per question → how far you get</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Right per question</th><th>Median run</th><th>20 in a row</th></tr></thead>
+        <tbody>
+          <tr><td class="num">99%</td><td class="num">69</td><td class="num">82%</td></tr>
+          <tr><td class="num">98%</td><td class="num">34</td><td class="num">67%</td></tr>
+          <tr><td class="num">97%</td><td class="num">23</td><td class="num">54%</td></tr>
+          <tr><td class="num">95%</td><td class="num">13</td><td class="num">36%</td></tr>
+          <tr><td class="num">90%</td><td class="num">7</td><td class="num">12%</td></tr>
+          <tr><td class="num">50% (guessing)</td><td class="num">1</td><td class="num">0%</td></tr>
+        </tbody>
+      </table></div>
+      <p>Untimed, adults get simple "all / some" sentences about a small picture right nearly every time. Errors come from rushing and from tricky words ("only", "not every"). So the timer is where difficulty lives, and it must never be shorter than reading speed.</p>
+    </div></div>
+    <div class="tile cut"><div class="in cut">
+      <h3>A timer that respects reading</h3>
+<div class="formula">time = (1.2 s + 0.28 s × words + 0.12 s × shapes) × factor
+
+5 words, 4 shapes   → 3.1 s × factor
+9 words, 7 shapes   → 4.6 s × factor
+12 words, 10 shapes → 5.8 s × factor
+
+Medium factor 1.6 at Q26, falling to 1.15 by Q60
+Hard   factor 1.3 at Q1,  falling to 0.95 by Q60
+never under 2.5 s</div>
+      <p>0.28 s a word is a slow silent-reading pace (about 210 words a minute) so non-native readers are covered. 0.12 s a shape covers scanning the picture. A long, tricky sentence about a big scene always gets more time than a short one.</p>
+      <p><b class="orange">Balanced:</b> the generator decides "true" or "false" first (50/50), then builds a scene and sentence that come out that way, so there's no pattern to exploit.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ======================= DIFFICULTY ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">03 · Easy, Medium, Hard</span>
+    <h2>What each difficulty does</h2>
+  </div>
+  <div class="grid2">
+    <div class="sheet cut">
+      <span class="mono">Game sheet · what players read before they start</span>
+      <div class="opt"><b>Easy</b><span>Counting, all / some / none, and NOT, with small scenes. No timer, so take your time.</span></div>
+      <div class="opt on"><b>Medium</b><span>The full ladder up to IF and ONLY. A reading-based timer from question 26.</span></div>
+      <div class="opt"><b>Hard</b><span>Starts at all / some / none, climbs twice as fast, and the timer runs from question 1. Big scenes.</span></div>
+    </div>
+    <div class="tile cut"><div class="in cut">
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>Easy</th><th>Medium</th><th>Hard</th></tr></thead>
+        <tbody>
+          <tr><td><b>Sentences</b></td><td>Rungs 1–3, cycling</td><td>Rungs 1–6</td><td>Rungs 2–6</td></tr>
+          <tr><td><b>Next rung every</b></td><td>8 questions</td><td>8–15 questions</td><td>6 questions</td></tr>
+          <tr><td><b>Scene size</b></td><td>4–6 shapes</td><td>4–10</td><td>6–10</td></tr>
+          <tr><td><b>Timer</b></td><td>none</td><td>from Q26 · ×1.6 → ×1.15</td><td>from Q1 · ×1.3 → ×0.95</td></tr>
+        </tbody>
+      </table></div>
+      <p>Each difficulty gets its own leaderboard, like Memory Lane and Quick Math.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ======================= SCREENS ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">04 · Screen design</span>
+    <h2>Question, right, wrong</h2>
+    <p>Same layout family as Guess Color: game bar, a picture card, then the input. The sentence sits right above the two buttons so the eye goes picture → sentence → thumb. Answer buttons carry ✓ and ✕ as well as colour.</p>
+  </div>
+  <div class="states" id="states"></div>
+</section>
+
+<!-- ======================= GENERATOR ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">05 · Under the hood</span>
+    <h2>Every sentence is checked by code</h2>
+    <p>The risky part of this game is a sentence that's ambiguous or wrongly marked. Players will screenshot it. So sentences are data, not text: each one is a small logic object that can say what it means, check itself against the scene, and list the shapes that prove the answer.</p>
+  </div>
+  <div class="grid2">
+    <div class="tile cut"><div class="in cut">
+      <h3>The model</h3>
+<div class="formula">Shape     { kind, colour, size }
+Property  kind = circle | colour = red | size = big
+Sentence  sealed class:
+  Count(P, n)        Exists(P, Q)
+  All(P, Q)          Some(P, Q)        No(P, Q)
+  NotAll(P, Q)       SomeNot(P, Q)
+  AllOr(P, Q, R)     SomeAnd(P, Q, R)
+  If(P, Q)           Only(P, Q)
+
+sentence.text      → "All circles are red."
+sentence.eval(sc)  → true / false
+sentence.proof(sc) → shapes to light up
+sentence.why(sc)   → "All 3 circles are red."</div>
+    </div></div>
+    <div class="tile cut"><div class="in cut">
+      <h3>Rules that keep it fair</h3>
+      <ul style="margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:6px">
+        <li><b>No empty "all":</b> "All circles are red" is only asked when there's at least one circle. Logic says it's true with no circles; players feel it's false.</li>
+        <li><b>"Some" means at least one,</b> and the rules screen says so once.</li>
+        <li><b>Grammar from templates,</b> never string-glued: "a circle" vs "circles", "red shape" vs "circle".</li>
+        <li><b>Shapes are easy to tell apart:</b> big is 1.6× small and kinds differ in outline. Red and green are close in lightness today, so before building, check the four colours in a colour-blind simulator and adjust one, or add a small pattern per colour.</li>
+        <li><b>50/50 truth:</b> pick the answer first, then regenerate until the scene matches (in practice under 20 tries).</li>
+        <li><b>Tests:</b> every sentence type has a truth-table test, and 10,000 random seeds check that the text, the answer and the proof always agree.</li>
+      </ul>
+    </div></div>
+  </div>
+</section>
+
+<!-- ======================= BUILD MAP ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">06 · Build map</span>
+    <h2>Where it plugs in</h2>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th>Change</th></tr></thead>
+    <tbody>
+      <tr><td><code>lib/games/true_false/sentence.dart</code></td><td><b>New.</b> The sealed <code>Sentence</code> classes with <code>text</code>, <code>eval</code>, <code>proof</code>, <code>why</code>. Pure Dart, no Flutter.</td></tr>
+      <tr><td><code>lib/games/true_false/generator.dart</code></td><td><b>New.</b> Scene + sentence generator per rung and difficulty, seeded <code>Random</code>, 50/50 truth.</td></tr>
+      <tr><td><code>lib/games/true_false/true_false_engine.dart</code></td><td><b>New.</b> <code>TrueFalseEngine extends RoundEngine</code>: question number, rung, reading-based timer (<code>PausableTimer</code>), answer, reveal pause, revive gives a fresh sentence at the same rung.</td></tr>
+      <tr><td><code>lib/games/true_false/true_false_board.dart</code></td><td><b>New.</b> Scene painter, sentence box, TRUE/FALSE buttons, proof highlight, <code>Reveal</code> fade-in for each new question.</td></tr>
+      <tr><td><code>lib/models/game.dart</code>, <code>lib/core/theme.dart</code></td><td>Add <code>GameId.trueFalse</code> (last), skill <i>Logic</i>, new <code>LS.orange</code>, icon <code>Icons.rule</code>, <code>hasDifficulty</code>, game-sheet lines.</td></tr>
+      <tr><td><code>lib/games/games.dart</code>, <code>lib/screens/home_tab.dart</code>, <code>lib/screens/ranks_tab.dart</code></td><td>Route; home grid now has 6 games (an even 3×2, which also fixes the odd fifth card); short title "Logic".</td></tr>
+      <tr><td><code>supabase/</code> migration</td><td>Allow <code>'trueFalse'</code> in <code>game_bests.game_type</code>, deployed before the app.</td></tr>
+      <tr><td><code>test/games/true_false_*_test.dart</code></td><td>Truth tables, 10,000-seed consistency check, 50/50 balance, timer formula, rung boundaries per difficulty.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ======================= PLAYBOOK ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">07 · Playbook</span>
+    <h2>From plan to store</h2>
+  </div>
+  <div class="steps">
+    <div class="step" data-n="1"><div class="h"><h3>Lock the sentences</h3><span class="mono">0.5 day</span></div>
+      <ul><li>Agree on the six rungs and the exact wording of each template.</li><li>Decide the name (see open questions).</li></ul></div>
+    <div class="step" data-n="2"><div class="h"><h3>Logic core with tests</h3><span class="mono">1.5 days</span></div>
+      <ul><li><b>sentence.dart</b> and <b>generator.dart</b> first, with truth-table and 10,000-seed tests.</li><li>Print 200 random sentences with their scenes and read them all. Fix anything that sounds odd.</li></ul></div>
+    <div class="step" data-n="3"><div class="h"><h3>Engine and board</h3><span class="mono">2 days</span></div>
+      <ul><li>Engine on <code>RoundEngine</code> (get-ready countdown and revive come free).</li><li>Board with proof highlight and the reveal line.</li></ul></div>
+    <div class="step" data-n="4"><div class="h"><h3>Wire in and migrate</h3><span class="mono">0.5 day</span></div>
+      <ul><li>Game list, home grid (3×2), ranks, Supabase migration.</li></ul></div>
+    <div class="step" data-n="5"><div class="h"><h3>Playtest the timer</h3><span class="mono">2 days</span></div>
+      <ul><li>Five or more people, including a non-native English reader. Log answer times per sentence type.</li><li>Target: a typical player reaches Q20–25 on Medium; no sentence type gets more than 10% wrong untimed (if it does, reword it).</li></ul></div>
+    <div class="step" data-n="6"><div class="h"><h3>Store and release</h3><span class="mono">1 day</span></div>
+      <ul><li>Screenshot, listing line ("New: True or False. Can you out-think the sentence?"), ship with or right after Angle Sense.</li></ul></div>
+  </div>
+</section>
+
+<!-- ======================= OPEN QUESTIONS ======================= -->
+<section>
+  <div class="sec-head"><span class="mono">08 · Decide before building</span><h2>Open questions</h2></div>
+  <div class="decisions">
+    <div><b>Name</b><span>"True or False" matches trueorfalse.dev and says exactly what you do. It also means the game shares its name with the studio; if that's confusing in the store, "Truth Check" or "Fact Check" are fallbacks.</span></div>
+    <div><b>Languages</b><span>Sentences are English-only at first. Templates are built so other languages can be added later without touching the logic.</span></div>
+    <div><b>Show the reason?</b><span>The reveal line ("All 3 circles are red.") teaches the logic but slows the run by about a second. Show it on every question, or only on a wrong answer?</span></div>
+    <div><b>Sharp bonus</b><span>A "Quick" bonus (+5) for answering within the first third of the timer, like Angle Sense's Sharp, or keep scoring plain?</span></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const COLORS = { red: '#FF5A6E', blue: '#3B7BF0', yellow: '#F5C542', green: '#34C29A' };
+  const KINDS = ['circle', 'square', 'triangle'], CLRS = Object.keys(COLORS), SIZES = ['big', 'small'];
+  let seed = 1; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+  const pick = a => a[Math.floor(rnd() * a.length)];
+
+  /* ---------- properties and grammar ---------- */
+  const prop = (type, v) => ({ type, v });
+  const has = (s, p) => s[p.type] === p.v;
+  const noun = (p, pl) => p.type === 'kind' ? (pl ? p.v + 's' : p.v) : `${p.v} ${pl ? 'shapes' : 'shape'}`;
+  const is = (p, pl) => p.type === 'kind' ? (pl ? p.v + 's' : 'a ' + p.v) : p.v;
+  const randProp = (not = []) => { const t = pick(['kind', 'colour', 'size'].filter(x => !not.includes(x))); return prop(t, pick(t === 'kind' ? KINDS : t === 'colour' ? CLRS : SIZES)); };
+  const n2w = n => ['no', 'one', 'two', 'three', 'four', 'five', 'six'][n] ?? String(n);
+
+  /* ---------- sentences: text, eval, proof, why ---------- */
+  const T = {
+    count(sc) { const P = randProp(['size']); const c = sc.filter(s => has(s, P)).length; const n = Math.max(0, c + pick([0, 0, -1, 1])); const ok = c === n;
+      return { text: n === 1 ? `There is exactly 1 ${noun(P)}.` : `There are exactly ${n} ${noun(P, true)}.`, truth: ok, proof: sc.filter(s => has(s, P)), why: `There ${c === 1 ? 'is' : 'are'} ${c} ${noun(P, c !== 1)}.` }; },
+    exists(sc) { const P = prop('colour', pick(CLRS)), Q = prop('kind', pick(KINDS)); const w = sc.filter(s => has(s, P) && has(s, Q));
+      return { text: `There is a ${P.v} ${Q.v}.`, truth: w.length > 0, proof: w.length ? w : sc.filter(s => has(s, Q)), why: w.length ? `Yes, ${n2w(w.length)} ${P.v} ${Q.v}${w.length > 1 ? 's' : ''}.` : `None of the ${Q.v}s is ${P.v}.` }; },
+    all(sc) { const P = randProp(), Q = randProp([P.type]); const ps = sc.filter(s => has(s, P)); if (!ps.length) return null; const bad = ps.filter(s => !has(s, Q));
+      return { text: `All ${noun(P, true)} are ${is(Q, true)}.`, truth: !bad.length, proof: bad.length ? bad : ps, why: bad.length ? `${cap(n2w(bad.length))} ${noun(P, bad.length > 1)} ${bad.length > 1 ? 'are' : 'is'} not ${is(Q, bad.length > 1)}.` : (ps.length === 1 ? `The only ${noun(P)} is ${is(Q)}.` : `All ${ps.length} ${noun(P, true)} are ${is(Q, true)}.`) }; },
+    some(sc) { const P = randProp(), Q = randProp([P.type]); const ps = sc.filter(s => has(s, P)); if (!ps.length) return null; const w = ps.filter(s => has(s, Q));
+      return { text: `Some ${noun(P, true)} are ${is(Q, true)}.`, truth: w.length > 0, proof: w.length ? w : ps, why: w.length ? `${cap(n2w(w.length))} ${noun(P, w.length > 1)} ${w.length > 1 ? 'are' : 'is'} ${is(Q, w.length > 1)}.` : `None of the ${noun(P, true)} is ${is(Q)}.` }; },
+    no(sc) { const P = randProp(), Q = randProp([P.type]); const ps = sc.filter(s => has(s, P)); if (!ps.length) return null; const w = ps.filter(s => has(s, Q));
+      return { text: `No ${noun(P)} is ${is(Q)}.`, truth: !w.length, proof: w.length ? w : ps, why: w.length ? `${cap(n2w(w.length))} ${noun(P, w.length > 1)} ${w.length > 1 ? 'are' : 'is'} ${is(Q, w.length > 1)}.` : `None of the ${ps.length} ${noun(P, true)} is ${is(Q)}.` }; },
+    notall(sc) { const P = randProp(), Q = randProp([P.type]); const ps = sc.filter(s => has(s, P)); if (!ps.length) return null; const bad = ps.filter(s => !has(s, Q));
+      return { text: `Not every ${noun(P)} is ${is(Q)}.`, truth: bad.length > 0, proof: bad.length ? bad : ps, why: bad.length ? `${cap(n2w(bad.length))} ${noun(P, bad.length > 1)} ${bad.length > 1 ? 'are' : 'is'} not ${is(Q, bad.length > 1)}.` : `Every ${noun(P)} is ${is(Q)}.` }; },
+    somenot(sc) { const P = randProp(), Q = randProp([P.type]); const ps = sc.filter(s => has(s, P)); if (!ps.length) return null; const w = ps.filter(s => !has(s, Q));
+      return { text: `Some ${noun(P, true)} are not ${is(Q, true)}.`, truth: w.length > 0, proof: w.length ? w : ps, why: w.length ? `${cap(n2w(w.length))} ${noun(P, w.length > 1)} ${w.length > 1 ? 'are' : 'is'} not ${is(Q, w.length > 1)}.` : `Every ${noun(P)} is ${is(Q)}.` }; },
+    allor(sc) { const P = randProp(), Q = randProp([P.type]); const R = randProp([P.type, Q.type]); const ps = sc.filter(s => has(s, P)); if (!ps.length) return null; const bad = ps.filter(s => !has(s, Q) && !has(s, R));
+      return { text: `Every ${noun(P)} is ${is(Q)} or ${is(R)}.`, truth: !bad.length, proof: bad.length ? bad : ps, why: bad.length ? `${cap(n2w(bad.length))} ${noun(P, bad.length > 1)} ${bad.length > 1 ? 'are' : 'is'} neither.` : `Each ${noun(P)} is ${is(Q)}, ${is(R)}, or both.` }; },
+    somand(sc) { const P = randProp(), Q = randProp([P.type]); const R = randProp([P.type, Q.type]); const ps = sc.filter(s => has(s, P)); if (!ps.length) return null; const w = ps.filter(s => has(s, Q) && has(s, R));
+      return { text: `Some ${noun(P)} is ${is(Q)} and ${is(R)}.`, truth: w.length > 0, proof: w.length ? w : ps, why: w.length ? `Yes: ${n2w(w.length)} ${noun(P, w.length > 1)} ${w.length > 1 ? 'are' : 'is'} both.` : `No ${noun(P)} is both ${is(Q)} and ${is(R)}.` }; },
+    iff(sc) { const P = randProp(), Q = randProp([P.type]); const ps = sc.filter(s => has(s, P)); if (!ps.length) return null; const bad = ps.filter(s => !has(s, Q));
+      return { text: `If a shape is ${is(P)}, it is ${is(Q)}.`, truth: !bad.length, proof: bad.length ? bad : ps, why: bad.length ? `${cap(n2w(bad.length))} ${noun(P, bad.length > 1)} ${bad.length > 1 ? 'are' : 'is'} not ${is(Q, bad.length > 1)}.` : `Every ${noun(P)} is ${is(Q)}.` }; },
+    only(sc) { const P = prop('kind', pick(KINDS)), Q = randProp(['kind']); const qs = sc.filter(s => has(s, Q)); if (!qs.length) return null; const bad = qs.filter(s => !has(s, P));
+      return { text: `Only ${P.v}s are ${Q.v}.`, truth: !bad.length, proof: bad.length ? bad : qs, why: bad.length ? `${cap(n2w(bad.length))} ${Q.v} shape${bad.length > 1 ? 's are' : ' is'} not a ${P.v}.` : `Every ${Q.v} shape is a ${P.v}.` }; },
+  };
+  const cap = s => s[0].toUpperCase() + s.slice(1);
+  const RUNGS = [
+    { name: 'Facts', t: ['count', 'exists'], shapes: [4, 5] },
+    { name: 'All · Some · No', t: ['all', 'some', 'no'], shapes: [5, 6] },
+    { name: 'NOT', t: ['notall', 'somenot', 'all', 'no'], shapes: [6, 7] },
+    { name: 'AND · OR', t: ['allor', 'somand', 'somenot'], shapes: [6, 8] },
+    { name: 'IF · ONLY', t: ['iff', 'only', 'allor'], shapes: [7, 9] },
+    { name: 'Everything', t: ['all', 'some', 'no', 'notall', 'somenot', 'allor', 'somand', 'iff', 'only'], shapes: [8, 10] },
+  ];
+  const MODE = {
+    easy:   { rung: n => [0, 1, 2][Math.min(2, Math.floor((n - 1) / 8))], timer: () => 0, shapes: r => [Math.min(r.shapes[0], 5), Math.min(r.shapes[1], 6)] },
+    medium: { rung: n => n >= 51 ? 5 : n >= 36 ? 4 : n >= 26 ? 3 : n >= 17 ? 2 : n >= 9 ? 1 : 0, timer: n => n < 26 ? 0 : Math.max(1.15, 1.6 - (n - 26) * 0.013), shapes: r => r.shapes },
+    hard:   { rung: n => Math.min(5, 1 + Math.floor((n - 1) / 6)), timer: n => Math.max(0.95, 1.3 - (n - 1) * 0.006), shapes: r => [Math.max(6, r.shapes[0]), Math.max(6, r.shapes[1])] },
+  };
+
+  function makeScene(count) {
+    const cells = [...Array(15).keys()].sort(() => rnd() - .5).slice(0, count);
+    return cells.map((c, i) => ({ id: i, cell: c, kind: pick(KINDS), colour: pick(CLRS), size: rnd() < .45 ? 'big' : 'small' }));
+  }
+  function question(n, mode) {
+    const r = RUNGS[MODE[mode].rung(n)], [lo, hi] = MODE[mode].shapes(r), want = rnd() < .5;
+    for (let tries = 0; tries < 400; tries++) {
+      const sc = makeScene(ri(lo, hi)), q = T[pick(r.t)](sc);
+      if (q && q.truth === want) return { ...q, sc, rung: r };
+    }
+    const sc = makeScene(lo); return { ...T.count(sc), sc, rung: r };
+  }
+
+  /* ---------- drawing ---------- */
+  function shapeSvg(s, mark) {
+    const col = s.cell % 5, row = Math.floor(s.cell / 5), cx = 38 + col * 66, cy = 42 + row * 80;
+    const r = s.size === 'big' ? 25 : 15.5, c = COLORS[s.colour];
+    let g = '';
+    if (s.kind === 'circle') g = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}"/>`;
+    if (s.kind === 'square') g = `<rect x="${cx - r * .88}" y="${cy - r * .88}" width="${r * 1.76}" height="${r * 1.76}" fill="${c}"/>`;
+    if (s.kind === 'triangle') g = `<polygon points="${cx},${cy - r} ${cx + r * 1.02},${cy + r * .8} ${cx - r * 1.02},${cy + r * .8}" fill="${c}"/>`;
+    const op = mark === 'dim' ? ' opacity="0.22"' : '';
+    const ring = mark === 'ok' ? `<rect x="${cx - 32}" y="${cy - 34}" width="64" height="68" fill="none" stroke="#34C29A" stroke-width="2.5"/>` : mark === 'bad' ? `<rect x="${cx - 32}" y="${cy - 34}" width="64" height="68" fill="none" stroke="#FF5A6E" stroke-width="2.5" stroke-dasharray="6 4"/>` : '';
+    return `<g${op}>${g}</g>${ring}`;
+  }
+  function sceneSvg(q, reveal, correct) {
+    let s = '';
+    for (let x = 0; x <= 340; x += 34) s += `<line x1="${x}" y1="0" x2="${x}" y2="250" stroke="#0A131B"/>`;
+    for (let y = 0; y <= 250; y += 34) s += `<line x1="0" y1="${y}" x2="340" y2="${y}" stroke="#0A131B"/>`;
+    const ids = new Set(q.proof.map(p => p.id));
+    q.sc.forEach(sh => s += shapeSvg(sh, !reveal ? null : ids.has(sh.id) ? (correct ? 'ok' : 'bad') : 'dim'));
+    return s;
+  }
+  const words = t => t.split(/\s+/).length;
+  const fmt = t => '<span>' + t.replace(/\b(All|Some|No|Not every|Every|Only|If|not|or|and|exactly)\b/g, '<b>$1</b>') + '</span>';
+
+  /* ---------- prototype ---------- */
+  const st = { n: 1, score: 0, mode: 'medium', q: null, locked: false, over: false, raf: 0, streak: 0 };
+  function next() {
+    st.q = question(st.n, st.mode); st.locked = false;
+    $('scene').innerHTML = sceneSvg(st.q, false);
+    $('stmt').innerHTML = fmt(st.q.text);
+    $('lvl').textContent = st.q.rung.name;
+    $('qn').textContent = `${cap(st.mode)} · Q${String(st.n).padStart(2, '0')}`;
+    $('why').textContent = ''; $('verdict').hidden = true;
+    $('bT').disabled = $('bF').disabled = false;
+    cancelAnimationFrame(st.raf);
+    const f = MODE[st.mode].timer(st.n);
+    $('tbar').style.width = '0';
+    if (f) { const tl = Math.max(2500, (1.2 + 0.28 * words(st.q.text) + 0.12 * st.q.sc.length) * f * 1000), t0 = performance.now();
+      const tick = now => { const left = tl - (now - t0); $('tbar').style.width = Math.max(0, left / tl) * 100 + '%'; if (st.locked) return; if (left <= 0) return answer(null); st.raf = requestAnimationFrame(tick); };
+      st.raf = requestAnimationFrame(tick); }
+  }
+  function answer(said) {
+    if (st.locked || st.over) return; st.locked = true; cancelAnimationFrame(st.raf);
+    $('bT').disabled = $('bF').disabled = true;
+    const right = said === st.q.truth;
+    $('scene').innerHTML = sceneSvg(st.q, true, right);
+    const v = $('verdict'); v.hidden = false;
+    v.className = 'verdict ' + (right ? 'ok' : 'no');
+    v.textContent = said === null ? 'TIME' : right ? `RIGHT · ${st.q.truth ? 'TRUE' : 'FALSE'}` : `IT WAS ${st.q.truth ? 'TRUE' : 'FALSE'}`;
+    $('why').textContent = st.q.why;
+    if (right) { st.streak++; st.score += 10 + (st.streak % 5 === 0 ? 20 : 0); $('score').textContent = st.score; st.n++; setTimeout(next, 1200); }
+    else setTimeout(() => { st.over = true; $('overScore').textContent = st.score; $('overWhy').textContent = `“${st.q.text}” was ${st.q.truth ? 'true' : 'false'}. ${st.q.why} Reached question ${st.n}.`; $('over').hidden = false; }, 1400);
+  }
+  function start(n) { seed = (Date.now() % 100000) + 7; st.n = n; st.score = 0; st.streak = 0; st.over = false; $('score').textContent = 0; $('over').hidden = true; next(); }
+  $('bT').onclick = () => answer(true); $('bF').onclick = () => answer(false);
+  document.addEventListener('keydown', e => { if (e.target.closest('input,textarea')) return; if (e.key === 't' || e.key === 'ArrowLeft') answer(true); if (e.key === 'f' || e.key === 'ArrowRight') answer(false); });
+  $('restart').onclick = () => start(1);
+  $('jump').onclick = e => { const b = e.target.closest('button'); if (b) start(+b.dataset.n); };
+  $('modes').onclick = e => { const b = e.target.closest('button'); if (!b) return; st.mode = b.dataset.m; document.querySelectorAll('#modes button').forEach(x => x.classList.toggle('on', x === b)); start(1); };
+
+  /* ---------- static screen states (fixed examples) ---------- */
+  function mock(q, reveal, right, said, label, sc) {
+    return `<div class="phone cut-lg"><div class="screen cut-lg">
+      <div class="bar"><div class="t"><span>True or False</span><span class="mono">Logic</span></div><div class="score"><span class="mono">Score</span><b>${sc}</b></div></div>
+      <div class="pz"><div class="status"><span class="lvl">${q.rung.name}</span><span class="mono">${label}</span></div>
+      <div class="card cut-lg"><div class="in cut-lg"><svg viewBox="0 0 340 250">${sceneSvg(q, reveal, right)}</svg>${reveal ? `<div class="verdict ${right ? 'ok' : 'no'}">${right ? 'RIGHT · ' + (q.truth ? 'TRUE' : 'FALSE') : 'IT WAS ' + (q.truth ? 'TRUE' : 'FALSE')}</div>` : ''}</div></div>
+      <div class="stmt cut">${fmt(q.text)}</div>
+      <div class="answers"><button class="ans t cut-sm" ${reveal ? 'disabled' : ''} tabindex="-1">True<small>✓</small></button><button class="ans f cut-sm" ${reveal ? 'disabled' : ''} tabindex="-1">False<small>✕</small></button></div>
+      ${reveal ? `<div class="why">${q.why}</div>` : ''}</div></div></div>`;
+  }
+  const fixed = (sc, key, rung) => { for (let i = 0; i < 500; i++) { const q = T[key](sc); if (q) return { ...q, sc, rung: RUNGS[rung] }; } };
+  seed = 11; const scA = makeScene(6); const qA = fixed(scA, 'all', 1);
+  seed = 23; const scB = makeScene(7); const qB = fixed(scB, 'somenot', 2);
+  seed = 41; const scC = makeScene(8); const qC = fixed(scC, 'iff', 4);
+  $('states').innerHTML = [
+    [mock(qA, false, false, null, 'Medium · Q11', 90), '<b>QUESTION.</b> Picture first, sentence under it, thumbs on TRUE / FALSE. Key words (all, not, or, if) are picked out in orange.'],
+    [mock(qB, true, true, qB.truth, 'Medium · Q19', 190), '<b>RIGHT.</b> The shapes that prove it get a teal frame, the rest dim, and one plain line says why. Next question after 1.2 s.'],
+    [mock(qC, true, false, !qC.truth, 'Medium · Q38', 380), '<b>WRONG.</b> The shapes that break your answer get a dashed coral frame with the reason. Then the revive offer, as in every game.'],
+  ].map(([p, t]) => `<div class="state">${p}<p>${t}</p></div>`).join('');
+
+  start(1);
+})();
+</script>

@@ -20,8 +20,10 @@ import 'name_sheet.dart';
 import 'ranks/rank_board.dart';
 import 'ranks/rank_row.dart';
 
-/// One global Top 10 at a time: pick a game (and a difficulty for games that
-/// have them). Opens on the game you last played. Your own position is
+/// One global Top 10 at a time: step through games with ‹ › (or swipe), and
+/// pick a difficulty underneath for games that have them. Opens on the game
+/// you last played. The picker shows one game at a time, so it fits any
+/// number of games. Your own position is
 /// pinned below the list when you're outside the Top 10.
 ///
 /// Every board updates once a day, for everyone, at 00:00 UTC: the header
@@ -47,12 +49,13 @@ class _RanksTabState extends State<RanksTab> {
   Network? _network;
   Timer? _resetTimer;
 
-  static const _shortTitles = {
-    GameId.rocketLaunch: 'Rocket',
-    GameId.memoryLane: 'Memory',
-    GameId.quickMath: 'Math',
-    GameId.guessColor: 'Color',
-  };
+  /// Which way the last switch went (−1 previous, 1 next, 0 difficulty), so
+  /// the new board slides in from that side.
+  int _direction = 0;
+
+  /// The board on screen was switched to by the player: animate it in and
+  /// count its scores up.
+  bool _switched = false;
 
   Difficulty get _boardDifficulty =>
       _game.hasDifficulty ? _difficulty : GameId.rampDifficulty;
@@ -88,6 +91,7 @@ class _RanksTabState extends State<RanksTab> {
       _game = last.$1;
       _difficulty = last.$2;
     }
+    _switched = false;
     if (_online) {
       context.read<Ads>().preloadRefresh();
     }
@@ -106,13 +110,34 @@ class _RanksTabState extends State<RanksTab> {
     _refresh();
   }
 
-  void _select({GameId? game, Difficulty? difficulty}) {
+  void _select({GameId? game, Difficulty? difficulty, int direction = 0}) {
+    if ((game ?? _game) == _game &&
+        (difficulty ?? _difficulty) == _difficulty) {
+      return;
+    }
     setState(() {
       _game = game ?? _game;
       _difficulty = difficulty ?? _difficulty;
+      _direction = direction;
+      _switched = true;
       _load = null;
     });
     _refresh();
+  }
+
+  /// ‹ or › (or a swipe): the previous or next game, wrapping around.
+  void _step(int delta) {
+    const games = GameId.values;
+    final next = games[(games.indexOf(_game) + delta) % games.length];
+    context.read<AppState>().tap();
+    _select(game: next, direction: delta.sign);
+  }
+
+  void _onSwipe(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    if (velocity.abs() > 250) {
+      _step(velocity < 0 ? 1 : -1);
+    }
   }
 
   Future<void> _refresh({bool now = false}) async {
@@ -183,6 +208,7 @@ class _RanksTabState extends State<RanksTab> {
     if (watch != true || !mounted) {
       return;
     }
+    _switched = false;
     context.read<Ads>().showRefresh(
       onReward: () {
         if (mounted) {
@@ -339,52 +365,74 @@ class _RanksTabState extends State<RanksTab> {
         const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: _Segments<GameId>(
-            options: [
-              for (final game in GameId.values) (game, _shortTitles[game]!),
-            ],
-            selected: _game,
-            accentOf: (game) => game.accent,
-            onSelect: (game) => _select(game: game),
+          child: _GamePicker(
+            game: _game,
+            direction: _direction,
+            reduceMotion: reduceMotion,
+            onStep: _step,
+            onSwipe: _onSwipe,
           ),
         ),
-        if (_game.hasDifficulty) ...[
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _Segments<Difficulty>(
-              options: [for (final d in Difficulty.values) (d, d.label)],
-              selected: _difficulty,
-              accentOf: (_) => _game.accent,
-              onSelect: (d) => _select(difficulty: d),
-            ),
-          ),
-        ],
-        const SizedBox(height: 14),
-        Expanded(
-          child: _loading && load == null
-              ? const Center(
-                  child: CircularProgressIndicator(
-                    color: LS.teal,
-                    strokeWidth: 2,
+        // Difficulty tabs only for games that have them; single-board games
+        // show nothing here, and the board slides up smoothly.
+        AnimatedSize(
+          duration: reduceMotion
+              ? Duration.zero
+              : const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: _game.hasDifficulty
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                  child: _Segments<Difficulty>(
+                    options: [for (final d in Difficulty.values) (d, d.label)],
+                    selected: _difficulty,
+                    accentOf: (_) => _game.accent,
+                    onSelect: (d) => _select(difficulty: d),
                   ),
                 )
-              : entries.isEmpty
-              ? _Empty(game: _game)
-              : RankBoard(
-                  key: ObjectKey(load),
-                  load: load!,
-                  me: me,
-                  timed: timed,
-                  now: now,
-                  reduceMotion: reduceMotion,
-                  haptics: app.vibrationOn,
-                  onReport: _online ? _report : null,
-                ),
+              : const SizedBox(width: double.infinity),
+        ),
+        const SizedBox(height: 14),
+        Expanded(
+          child: GestureDetector(
+            onHorizontalDragEnd: _onSwipe,
+            child: _SlideSwitcher(
+              expand: true,
+              boardKey: ValueKey((_game, _boardDifficulty)),
+              direction: _direction,
+              reduceMotion: reduceMotion,
+              child: _loading && load == null
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: LS.teal,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : entries.isEmpty
+                  ? _Empty(game: _game)
+                  : RankBoard(
+                      key: ObjectKey(load),
+                      load: load!,
+                      me: me,
+                      timed: timed,
+                      now: now,
+                      reduceMotion: reduceMotion,
+                      countUp: _switched,
+                      haptics: app.vibrationOn,
+                      onReport: _online ? _report : null,
+                    ),
+            ),
+          ),
         ),
         if (name == null)
           _JoinBar(onTap: _chooseName)
-        else if (load != null && myRank != null && !inList)
+        // Your own best always sits under the Top 10 when you're not in it,
+        // ranked or not yet ranked (a first or new best outside the Top 10
+        // gets its number at the next daily refresh).
+        else if (load != null &&
+            !inList &&
+            (myRank != null || app.best(_game, _boardDifficulty) > 0))
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
             child: _pinnedRow(
@@ -403,9 +451,10 @@ class _RanksTabState extends State<RanksTab> {
   }
 
   /// Your row under the list; its rank ticks from the old one on a change.
+  /// Without a rank yet it shows "—" and says when the rank arrives.
   Widget _pinnedRow({
     required LeaderboardLoad load,
-    required int myRank,
+    required int? myRank,
     required String name,
     required int best,
     required Duration? time,
@@ -413,6 +462,16 @@ class _RanksTabState extends State<RanksTab> {
     required DateTime now,
     required bool reduceMotion,
   }) {
+    if (myRank == null) {
+      return RankRow(
+        rank: null,
+        name: name,
+        score: best,
+        time: time,
+        isYou: true,
+        detail: 'Your best · ranked after 00:00 UTC',
+      );
+    }
     final from = load.previousMyRank;
     final tick =
         load.changed && load.previous != null && from != null && !reduceMotion;
@@ -431,6 +490,203 @@ class _RanksTabState extends State<RanksTab> {
             ? 'Your best'
             : 'Your best · set ${formatWhen(setAt, now: now)}',
       ),
+    );
+  }
+}
+
+/// ‹ Game ›: one game at a time with its icon, name and colour, arrows on
+/// both sides (44 pt targets), swipe on the name, and a dot per game.
+class _GamePicker extends StatelessWidget {
+  const _GamePicker({
+    required this.game,
+    required this.direction,
+    required this.reduceMotion,
+    required this.onStep,
+    required this.onSwipe,
+  });
+
+  final GameId game;
+  final int direction;
+  final bool reduceMotion;
+  final ValueChanged<int> onStep;
+  final GestureDragEndCallback onSwipe;
+
+  @override
+  Widget build(BuildContext context) {
+    const games = GameId.values;
+    final index = games.indexOf(game);
+    final motion = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 280);
+    return Column(
+      children: [
+        Row(
+          children: [
+            _Arrow(
+              icon: Icons.chevron_left_rounded,
+              label: 'Previous game',
+              onTap: () => onStep(-1),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: GestureDetector(
+                onHorizontalDragEnd: onSwipe,
+                child: Semantics(
+                  liveRegion: true,
+                  label: '${game.title}, ${index + 1} of ${games.length}',
+                  excludeSemantics: true,
+                  child: ChamferBox(
+                    cut: Cut.sm,
+                    height: 52,
+                    borderColor: null,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          height: 3,
+                          child: AnimatedContainer(
+                            duration: motion,
+                            color: game.accent,
+                          ),
+                        ),
+                        Center(
+                          child: _SlideSwitcher(
+                            boardKey: ValueKey(game),
+                            direction: direction,
+                            reduceMotion: reduceMotion,
+                            distance: 0.35,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  GameTile(game: game, size: 28),
+                                  const SizedBox(width: 10),
+                                  Flexible(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: DisplayText(game.title, size: 20),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            _Arrow(
+              icon: Icons.chevron_right_rounded,
+              label: 'Next game',
+              onTap: () => onStep(1),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (final g in games)
+              AnimatedContainer(
+                duration: motion,
+                width: g == game ? 18 : 6,
+                height: 6,
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                color: g == game ? g.accent : LS.line,
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _Arrow extends StatelessWidget {
+  const _Arrow({required this.icon, required this.label, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: Tooltip(
+        message: label,
+        child: ChamferBox(
+          cut: Cut.sm,
+          width: 44,
+          height: 52,
+          color: LS.surface2,
+          borderColor: null,
+          onTap: onTap,
+          child: Icon(icon, color: LS.text, size: 26),
+        ),
+      ),
+    );
+  }
+}
+
+/// Cross-fades to a new [child] whenever [boardKey] changes, sliding the new
+/// one in from the side the player moved toward ([direction] 1 = next,
+/// −1 = previous, 0 = straight fade) and the old one out the other way.
+class _SlideSwitcher extends StatelessWidget {
+  const _SlideSwitcher({
+    required this.boardKey,
+    required this.direction,
+    required this.reduceMotion,
+    required this.child,
+    this.distance = 0.18,
+    this.expand = false,
+  });
+
+  /// Children fill the space (the board) instead of keeping their own size
+  /// (the name strip).
+  final bool expand;
+  final Key boardKey;
+  final int direction;
+  final bool reduceMotion;
+  final double distance;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 280),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        final incoming = child.key == boardKey;
+        final from = Offset(distance * direction * (incoming ? 1 : -1), 0);
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween(begin: from, end: Offset.zero).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      layoutBuilder: (current, previous) => Stack(
+        alignment: Alignment.center,
+        fit: expand ? StackFit.expand : StackFit.loose,
+        children: [...previous, ?current],
+      ),
+      child: KeyedSubtree(key: boardKey, child: child),
     );
   }
 }

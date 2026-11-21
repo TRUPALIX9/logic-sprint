@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logic_sprint/app.dart';
+import 'package:logic_sprint/screens/history_screen.dart';
+import 'package:logic_sprint/screens/profile/history_row.dart';
+import 'package:logic_sprint/screens/profile_tab.dart';
 import 'package:logic_sprint/screens/shell.dart';
 import 'package:logic_sprint/services/ads.dart';
 import 'package:logic_sprint/services/leaderboard.dart';
@@ -55,6 +58,11 @@ Future<void> _loadFonts() async {
   }
 }
 
+/// Profile's own list (Play and Ranks have scrollables too).
+final _profileScrollable = find
+    .descendant(of: find.byType(ProfileTab), matching: find.byType(Scrollable))
+    .first;
+
 void main() {
   setUpAll(_loadFonts);
 
@@ -100,11 +108,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('JUMP BACK IN'), findsOneWidget);
 
-    // The run is in Profile's History.
+    // The run is in Profile's History preview and on the History page.
     await tester.tap(find.text('PROFILE'));
     await tester.pumpAndSettle();
-    expect(find.text('1 RUN PLAYED'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byType(HistoryRow),
+      200,
+      scrollable: _profileScrollable,
+    );
+    expect(find.byType(HistoryRow), findsOneWidget);
+    expect(find.textContaining('Quick Math ·'), findsOneWidget);
     expect(find.textContaining('Finished runs'), findsNothing);
+    await tester.tap(find.text('SEE ALL'));
+    await tester.pumpAndSettle();
+    expect(find.byType(HistoryScreen), findsOneWidget);
+    expect(find.text('1 RUN', findRichText: true), findsOneWidget);
   });
 
   testWidgets('choosing a name from Profile saves it', (tester) async {
@@ -131,6 +149,13 @@ void main() {
     await tester.tap(find.text('PROFILE'));
     await tester.pumpAndSettle();
     expect(find.text('YOUR BESTS'), findsOneWidget);
+    // Share is the last thing on Profile.
+    await tester.scrollUntilVisible(
+      find.text('SHARE'),
+      200,
+      scrollable: _profileScrollable,
+    );
+    expect(find.text('SHARE'), findsOneWidget);
 
     await tester.tap(find.text('RANKS'));
     await tester.pumpAndSettle();

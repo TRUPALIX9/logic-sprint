@@ -22,6 +22,9 @@ class _TestEngine extends RoundEngine {
   void miss() => this.fail();
 }
 
+/// One frame; an animation completes on the first frame past its end.
+const _frame = Duration(milliseconds: 16);
+
 void main() {
   late _TestEngine engine;
   late Network network;
@@ -84,9 +87,73 @@ void main() {
     await tester.tap(text('2 left'));
     await tester.pump();
     await tester.pump();
-    expect(engine.state, RunState.playing);
+    expect(engine.state, RunState.resuming, reason: 'get ready first');
     expect(engine.revives, 1);
     expect(text('left'), findsNothing);
+    expect(text('get ready'), findsOneWidget);
+    await tester.pump(); // the countdown's first frame
+    await tester.pump(GetReady.duration + _frame);
+    expect(engine.state, RunState.playing);
+    await tester.pump();
+    expect(text('get ready'), findsNothing);
+  });
+
+  /// Down, then revived with a heart: the get-ready countdown is showing.
+  Future<void> reviveWithHeart(WidgetTester tester) async {
+    await goDown(tester);
+    await tester.tap(text('2 left'));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(); // the countdown's first frame
+  }
+
+  testWidgets('get ready counts 3 · 2 · 1, then the run goes on', (
+    tester,
+  ) async {
+    await pumpRound(tester);
+    await tester.pump(const Duration(seconds: 1));
+    final before = engine.elapsed;
+    await reviveWithHeart(tester);
+    expect(find.text('3'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1000));
+    expect(find.text('2'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1000));
+    expect(find.text('1'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 990));
+    expect(engine.state, RunState.resuming);
+    expect(engine.elapsed, before, reason: 'the countdown is not run time');
+    await tester.pump(const Duration(milliseconds: 26));
+    expect(engine.state, RunState.playing);
+  });
+
+  testWidgets('leaving the app during get ready restarts it from 3', (
+    tester,
+  ) async {
+    await pumpRound(tester);
+    await reviveWithHeart(tester);
+    await tester.pump(const Duration(seconds: 2));
+    for (final state in [
+      AppLifecycleState.inactive,
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+    ]) {
+      tester.binding.handleAppLifecycleStateChanged(state);
+    }
+    await tester.pump(const Duration(seconds: 30));
+    expect(engine.state, RunState.resuming, reason: 'held while away');
+    for (final state in [
+      AppLifecycleState.hidden,
+      AppLifecycleState.inactive,
+      AppLifecycleState.resumed,
+    ]) {
+      tester.binding.handleAppLifecycleStateChanged(state);
+    }
+    await tester.pump();
+    expect(find.text('3'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 2900));
+    expect(engine.state, RunState.resuming, reason: 'a full 3 s again');
+    await tester.pump(const Duration(milliseconds: 116));
+    expect(engine.state, RunState.playing);
   });
 
   testWidgets('below the minimum score the run just ends', (tester) async {
@@ -216,6 +283,62 @@ void main() {
     expect(roundScreen, findsOneWidget);
   });
 
+  testWidgets('back pauses; back again saves the run and goes home', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1170, 2532)
+      ..devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    SharedPreferences.setMockInitialValues({'hearts': 0});
+    final storage = Storage(await SharedPreferences.getInstance());
+    final app = AppState(storage);
+    await tester.pumpWidget(
+      LogicSprintApp(
+        appState: app,
+        leaderboard: Leaderboard(storage, api: FakeLeaderboardApi()),
+        ads: Ads(),
+        network: Network.fixed(true),
+        version: '1.0.0 (1)',
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => RoundScreen<_TestEngine>(
+                    game: GameId.quickMath,
+                    difficulty: Difficulty.easy,
+                    createEngine: (feedback, best) => engine = _TestEngine(
+                      feedback: feedback,
+                      previousBest: best,
+                    ),
+                    builder: (context, engine) => const SizedBox.expand(),
+                  ),
+                ),
+              ),
+              child: const Text('HOME'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('HOME'));
+    await tester.pumpAndSettle();
+    engine.score = 40;
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(engine.state, RunState.paused);
+    expect(roundScreen, findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(engine.isFinished, isTrue);
+    expect(roundScreen, findsNothing);
+    expect(find.text('HOME'), findsOneWidget, reason: 'home, no Result');
+    expect(app.best(GameId.quickMath, Difficulty.easy), 40);
+  });
+
   testWidgets('the pause button pauses; End run finishes', (tester) async {
     await pumpRound(tester);
     await tester.tap(find.byTooltip('Pause'));
@@ -238,6 +361,9 @@ void main() {
       await tester.pump();
       await tester.pump();
       expect(engine.revives, i + 1);
+      await tester.pump();
+      await tester.pump(GetReady.duration + _frame);
+      expect(engine.state, RunState.playing);
     }
     await goDown(tester);
     expect(engine.canRevive, isFalse);

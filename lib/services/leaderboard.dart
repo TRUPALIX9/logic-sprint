@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
@@ -5,6 +6,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import '../core/config.dart';
+import '../models/device_log.dart';
 import '../models/game.dart';
 import '../models/leaderboard_entry.dart';
 import '../models/round_result.dart';
@@ -124,6 +126,11 @@ class Leaderboard extends ChangeNotifier {
   /// Local run history, newest first.
   List<RunRecord> get history => _storage.history;
 
+  /// The player's last known rank on a board, from the cached boards
+  /// (null until a fetch has placed them on it). No network.
+  int? cachedRank(GameId game, Difficulty difficulty) =>
+      _parse(_cache()[_boardKey(game, difficulty)])?.$1.myRank;
+
   /// The clock used for freshness.
   DateTime now() => _now();
 
@@ -205,6 +212,9 @@ class Leaderboard extends ChangeNotifier {
     }
     await _storage.setPlayerName(trimmed);
     await _storage.setPlayerTag(tag);
+    await _storage.addNameUse(
+      NameUse(name: trimmed, tag: tag, at: clock.now()),
+    );
     await _renameMe();
     // Unnamed players aren't on the server's boards: fetch again on the next
     // look so the new name shows up with its rank (free; not the cooldown).
@@ -247,6 +257,9 @@ class Leaderboard extends ChangeNotifier {
       final tag = await _api.myTag();
       if (tag != null) {
         await _storage.setPlayerTag(tag);
+        await _storage.addNameUse(
+          NameUse(name: savedName!, tag: tag, at: clock.now()),
+        );
         await _renameMe();
         notifyListeners();
       }

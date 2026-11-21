@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -116,7 +117,10 @@ class _RoundScreenState<T extends RoundEngine> extends State<RoundScreen<T>> {
         _offering = false;
         _reviving = false;
         _showResult();
-      case RunState.ready || RunState.playing || RunState.paused:
+      case RunState.ready ||
+          RunState.playing ||
+          RunState.paused ||
+          RunState.resuming:
         _offering = false;
         _reviving = false;
         _endTimer?.cancel();
@@ -144,10 +148,40 @@ class _RoundScreenState<T extends RoundEngine> extends State<RoundScreen<T>> {
     // History + server sync run in the background; Result shows the outcome.
     final synced = context.read<Leaderboard>().recordRun(result);
     await context.read<AppState>().recordRound(result);
-    if (mounted) {
-      Navigator.of(
-        context,
-      ).pushReplacement(resultRoute(result, synced: synced));
+    if (!mounted) {
+      return;
+    }
+    if (_leaveHome) {
+      // Back while paused or down: the run is saved, then straight home.
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      return;
+    }
+    Navigator.of(context).pushReplacement(resultRoute(result, synced: synced));
+  }
+
+  /// Set when the phone's back button ends the run; skips the Result screen.
+  bool _leaveHome = false;
+
+  /// Back while playing pauses (a stray swipe never throws a run away);
+  /// back again, while paused, down or counting in, saves the run and goes
+  /// home.
+  void _onBack() {
+    // A heart or ad revive is settling: ending now could spend the heart
+    // and still end the run.
+    if (_reviving) {
+      return;
+    }
+    switch (_engine.state) {
+      case RunState.playing:
+        _engine.pause();
+      case RunState.paused || RunState.down || RunState.resuming:
+        _leaveHome = true;
+        _endTimer?.cancel();
+        _engine.finish();
+      case RunState.ready:
+        Navigator.of(context).pop();
+      case RunState.over:
+        break;
     }
   }
 
@@ -155,15 +189,20 @@ class _RoundScreenState<T extends RoundEngine> extends State<RoundScreen<T>> {
     _reviving = true;
     final spent = await context.read<AppState>().useHeart();
     if (spent) {
-      _engine.revive();
+      _engine.revive(hold: true);
     } else {
       _engine.finish();
     }
   }
 
+  /// The reward settles after the ad is dismissed (see RewardOutcome), so
+  /// the get-ready countdown starts on the game screen, not behind the ad.
   void _watchAd() {
     _reviving = true;
-    _ads.showRewarded(onReward: _engine.revive, onDone: _engine.finish);
+    _ads.showRewarded(
+      onReward: () => _engine.revive(hold: true),
+      onDone: _engine.finish,
+    );
   }
 
   @override
@@ -180,13 +219,13 @@ class _RoundScreenState<T extends RoundEngine> extends State<RoundScreen<T>> {
   @override
   Widget build(BuildContext context) {
     final hearts = context.select<AppState, int>((app) => app.hearts);
-    // The phone's back button pauses a live run instead of throwing it
-    // away; End run on the paused card is the way out.
+    // Back pauses a live run; back again (paused or down) saves it and goes
+    // home. End run on the paused card still shows the Result screen.
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          _engine.pause();
+          _onBack();
         }
       },
       child: Scaffold(
@@ -209,6 +248,13 @@ class _RoundScreenState<T extends RoundEngine> extends State<RoundScreen<T>> {
                   child: Stack(
                     children: [
                       Positioned.fill(child: widget.builder(context, _engine)),
+                      if (_engine.isResuming)
+                        GetReady(
+                          // A fresh countdown for every revive.
+                          key: ValueKey(_engine.revives),
+                          color: widget.game.accent,
+                          onGo: _engine.go,
+                        ),
                       if (_engine.isPaused)
                         _PausedOverlay(
                           score: _engine.score,
@@ -236,6 +282,145 @@ class _RoundScreenState<T extends RoundEngine> extends State<RoundScreen<T>> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The get-ready countdown after a revive: 3 · 2 · 1 in the game's accent
+/// over a dark scrim that fades out slowly, then [onGo]. Touches pass through
+/// (Rocket Launch can line up the ship). Leaving the app holds it; coming
+/// back starts it again from 3. Reduce motion drops the digit's scale-in but
+/// never shortens the countdown.
+class GetReady extends StatefulWidget {
+  const GetReady({super.key, required this.color, required this.onGo});
+
+  static const duration = Duration(seconds: 3);
+
+  /// Scrim opacity at the start; it fades to 0 by the end.
+  static const startOpacity = 0.85;
+
+  final Color color;
+  final VoidCallback onGo;
+
+  @override
+  State<GetReady> createState() => _GetReadyState();
+}
+
+class _GetReadyState extends State<GetReady>
+    with SingleTickerProviderStateMixin {
+  // Preserve: reduce motion must not skip the countdown.
+  late final _clock =
+      AnimationController(
+          vsync: this,
+          duration: GetReady.duration,
+          animationBehavior: AnimationBehavior.preserve,
+        )
+        ..addListener(_onTick)
+        ..addStatusListener(_onStatus);
+  late final AppLifecycleListener _lifecycle;
+  late final AppState _app = context.read<AppState>();
+  int _shown = 0;
+  bool _done = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(
+      onStateChange: (state) {
+        if (_done) {
+          return;
+        }
+        if (state == AppLifecycleState.resumed) {
+          _clock.forward(from: 0);
+        } else {
+          _clock
+            ..stop()
+            ..value = 0;
+        }
+      },
+    );
+    _clock.forward();
+  }
+
+  /// A haptic tick (and click, if sounds are on) as each number appears.
+  void _onTick() {
+    final digit = _digit(_clock.value);
+    if (digit != _shown) {
+      _shown = digit;
+      _app.tap();
+    }
+  }
+
+  void _onStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed && !_done) {
+      _done = true;
+      widget.onGo();
+    }
+  }
+
+  /// 3, 2, 1 across the countdown.
+  int _digit(double t) => (3 - (t * 3).floor()).clamp(1, 3);
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    _clock.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final calm = MediaQuery.disableAnimationsOf(context);
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: _clock,
+          builder: (context, _) {
+            final t = _clock.value;
+            final digit = _digit(t);
+            // Progress through the current second, 0 → 1.
+            final inSecond = (t * 3) - (t * 3).floor();
+            final pop = Curves.easeOutCubic.transform(
+              (inSecond / 0.3).clamp(0.0, 1.0),
+            );
+            final fade = math.pow(1 - t, 1.6).toDouble();
+            return ColoredBox(
+              color: Colors.black.withValues(
+                alpha: GetReady.startOpacity * fade,
+              ),
+              child: Semantics(
+                liveRegion: true,
+                label: 'Get ready, $digit',
+                excludeSemantics: true,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Opacity(
+                        opacity: calm ? 1 : pop,
+                        child: Transform.scale(
+                          scale: calm ? 1 : 1.5 - 0.5 * pop,
+                          child: Text(
+                            '$digit',
+                            style: LSText.mono(
+                              120,
+                              color: widget.color,
+                              weight: FontWeight.w700,
+                              spacing: 0,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const MonoLabel('Get ready', color: LS.text),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

@@ -1,0 +1,382 @@
+<title>Line Split Game Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: Logic Sprint "Circuit Noir" — black, chamfered panels, playable phone prototype
+   beside the brief, then ladder → scoring → screens → build map → playbook. Dark only,
+   like the app. Accent for this game: pink. */
+:root{
+  color-scheme:dark;
+  --bg:#000;--well:#04080C;--surface:#0A1016;--surface2:#111A23;--line:#1E2A36;--trace:#0A131B;
+  --text:#EAF2F7;--muted:#8C9DAD;--dim:#667A8C;
+  --teal:#34C29A;--blue:#3B7BF0;--aqua:#2BB3D6;--violet:#8C8CFF;--gold:#F5C542;--coral:#FF5A6E;
+  --pink:#F472B6;--pink-soft:rgba(244,114,182,.14);
+  --display:'Rajdhani','Arial Narrow',sans-serif;--body:'IBM Plex Sans','Helvetica Neue',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding-block:28px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:64px}
+h1,h2,h3{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.03em;line-height:1;margin:0;text-wrap:balance}
+h1{font-size:clamp(44px,7vw,72px)}h2{font-size:34px}h3{font-size:20px}
+p{margin:0;max-width:68ch}
+.mono{font-family:var(--mono);font-weight:500;letter-spacing:.12em;font-size:11px;color:var(--muted);text-transform:uppercase}
+.pink{color:var(--pink)}.teal{color:var(--teal)}.coral{color:var(--coral)}.muted{color:var(--muted)}
+code{font-family:var(--mono);font-size:12.5px;color:var(--aqua);background:var(--surface2);padding:1px 5px;overflow-wrap:anywhere}
+.cut{clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.cut-sm{clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.cut-lg{clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)}
+.sec-head{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.sec-head p{color:var(--muted)}
+.tile{background:var(--line);padding:1px}.tile>.in{background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:10px;height:100%;box-sizing:border-box}
+.tile p{color:var(--muted);font-size:14px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.tbl{border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--surface)}
+td{background:var(--bg)}tr:last-child td{border-bottom:0}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tol{font-family:var(--mono);font-weight:700;color:var(--pink);white-space:nowrap}
+.formula{font-family:var(--mono);font-size:13px;background:var(--well);border:1px solid var(--line);padding:14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}
+
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:48px;align-items:start}
+.hero-copy{display:flex;flex-direction:column;gap:20px;padding-top:12px}
+.lede{font-size:17px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;background:var(--surface2);color:var(--muted)}
+.chip.on{background:var(--pink-soft);color:var(--pink)}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.facts div{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.facts b{font-family:var(--mono);font-size:13.5px;font-weight:700}
+
+.phone{width:100%;max-width:380px;background:var(--line);padding:1px}
+.phone>.screen{background:var(--bg);display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.bar .t{flex:1;display:flex;flex-direction:column;gap:3px}
+.bar .t span:first-child{font-family:var(--display);font-weight:700;font-size:22px;text-transform:uppercase;letter-spacing:.03em;line-height:1}
+.score{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.score b{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--pink);line-height:1;font-variant-numeric:tabular-nums}
+.pz{padding:14px 16px 18px;display:flex;flex-direction:column;gap:12px}
+.status{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.strikes{display:flex;gap:5px}
+.strikes i{width:12px;height:12px;background:var(--pink);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);transition:opacity .3s,transform .3s}
+.strikes i.gone{opacity:.18;transform:scale(.7) rotate(25deg)}
+.target{display:flex;align-items:baseline;justify-content:center;gap:10px;min-height:58px}
+.target b{font-family:var(--mono);font-weight:700;font-size:46px;line-height:1;color:var(--pink);font-variant-numeric:tabular-nums}
+.target span{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.frac{display:inline-flex;flex-direction:column;align-items:center;line-height:.95;color:var(--pink);font-family:var(--mono);font-weight:700}
+.frac i{font-style:normal;font-size:30px}
+.frac hr{width:100%;border:0;border-top:3px solid var(--pink);margin:2px 0}
+.card{background:var(--line);padding:1px;position:relative}
+.card>.in{background:var(--well);position:relative;touch-action:none;cursor:crosshair}
+.card svg{display:block;width:100%;height:auto}
+.tbar{height:4px;background:var(--surface2);position:relative;overflow:hidden}
+.tbar i{position:absolute;inset:0 auto 0 0;width:0;background:var(--pink)}
+.hint{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;letter-spacing:.08em;text-transform:uppercase}
+.verdict{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.06em;padding:4px 12px;white-space:nowrap;pointer-events:none}
+.verdict.hit{color:var(--teal);background:rgba(52,194,154,.15)}
+.verdict.top{color:var(--pink);background:var(--pink-soft)}
+.verdict.miss{color:var(--coral);background:rgba(255,90,110,.15)}
+.over{position:absolute;inset:0;background:rgba(0,0,0,.86);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px}
+.btn{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:16px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer;padding:10px 16px}
+.jump{display:flex;flex-wrap:wrap;gap:6px}
+.jump button{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:6px 8px;background:var(--surface2);color:var(--muted);border:0;cursor:pointer}
+.jump button:focus-visible,.btn:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+
+.ladder{display:flex;flex-direction:column;border-left:1px solid var(--line);margin-left:14px}
+.rung{position:relative;padding:0 0 22px 30px;display:grid;grid-template-columns:210px minmax(0,1fr);gap:16px}
+.rung::before{content:attr(data-n);position:absolute;left:-15px;top:-2px;width:28px;height:28px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--pink);color:var(--pink);font-family:var(--mono);font-size:12px;font-weight:700;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.rung h3{font-size:18px}
+.rung .q{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.08em;margin-top:4px}
+.rung p{color:var(--muted);font-size:14px}
+.rung .ex{font-family:var(--mono);font-weight:700;color:var(--pink);letter-spacing:.04em}
+
+.states{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.state{display:flex;flex-direction:column;gap:10px}
+.state .phone{max-width:none}
+.state p{color:var(--muted);font-size:13.5px}
+.steps{display:flex;flex-direction:column;border-left:1px solid var(--line);margin-left:14px}
+.step{position:relative;padding:0 0 26px 30px;display:flex;flex-direction:column;gap:8px}
+.step::before{content:attr(data-n);position:absolute;left:-15px;top:-2px;width:28px;height:28px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--pink);color:var(--pink);font-family:var(--mono);font-size:12px;font-weight:700;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.step .h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.step ul{margin:0;padding-left:18px;color:var(--muted);display:flex;flex-direction:column;gap:4px;max-width:80ch}
+.step ul b{color:var(--text);font-weight:600}
+.decisions{display:flex;flex-direction:column;gap:10px}
+.decisions div{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;padding:12px 14px;background:var(--surface);border:1px solid var(--line)}
+.decisions b{font-family:var(--display);text-transform:uppercase;font-size:17px;letter-spacing:.03em}
+.decisions span{color:var(--muted);font-size:14px}
+
+@media (max-width:900px){.hero{grid-template-columns:minmax(0,1fr)}.phone{margin:0 auto}.states{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.grid2,.states,.facts{grid-template-columns:minmax(0,1fr)}.rung,.decisions div{grid-template-columns:minmax(0,1fr);gap:4px}h2{font-size:28px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<section class="hero">
+  <div class="hero-copy">
+    <span class="mono">Logic Sprint · Game 06 · Plan</span>
+    <h1>Line <span class="pink">Split</span></h1>
+    <p class="lede">A line, and a number: <b class="pink">½</b>. Touch the line where half is. Then thirds and quarters, then <b class="pink">⅜</b>, then <b class="pink">0.43</b> and <b class="pink">37%</b>, on lines that turn, shrink and lie to you with fake tick marks. Three strikes and the run is over.</p>
+    <div class="chips">
+      <span class="chip on">Skill · Estimation</span>
+      <span class="chip on">Accent · Pink</span>
+      <span class="chip">One mode that ramps up</span>
+      <span class="chip">3 strikes</span>
+      <span class="chip">Revive ×3</span>
+    </div>
+    <div class="facts">
+      <div><span class="mono">Core loop</span><b>See target → touch, slide, lift</b></div>
+      <div><span class="mono">Window</span><b>±5% of the line, ±6% for decimals</b></div>
+      <div><span class="mono">Ladder</span><b>½ → ⅓ ¼ → ⅜ ⅖ → 0.43 37% → tricks</b></div>
+      <div><span class="mono">Points</span><b>10 hit · +5 Sharp ≤2% · +10 Bullseye ≤1%</b></div>
+      <div><span class="mono">Typical run</span><b>About 24 questions, about 320 points</b></div>
+      <div><span class="mono">Fits engine</span><b>RoundEngine subclass, reuses Angle Sense's reveal</b></div>
+    </div>
+    <p class="muted">The phone is a working prototype. Press on the card, slide along the line and let go to answer (or click). The pink mark then shows where the target really was. Use the buttons to jump to later stages.</p>
+  </div>
+
+  <div class="phone cut-lg" id="proto"><div class="screen cut-lg">
+    <div class="bar"><div class="t"><span>Line Split</span><span class="mono">Estimation</span></div><div class="score"><span class="mono">Score</span><b id="score">0</b></div></div>
+    <div class="pz">
+      <div class="status"><span class="mono" id="stageLbl">Halves · Q01</span><span class="strikes" id="strikes" aria-label="3 strikes left"><i></i><i></i><i></i></span><span class="mono">Window <b class="pink" id="winLbl">±5%</b></span></div>
+      <div class="target" id="target" aria-live="polite"></div>
+      <div class="card cut-lg"><div class="in cut-lg" id="cardIn">
+        <svg id="scene" viewBox="0 0 340 300" aria-label="The line to split"></svg>
+        <div class="verdict" id="verdict" hidden></div>
+        <div class="over" id="over" hidden>
+          <span class="mono">Run over</span>
+          <h2 id="overScore" class="pink">0</h2>
+          <p class="muted" id="overWhy" style="font-size:14px"></p>
+          <button class="btn cut-sm" id="restart">Play again</button>
+        </div>
+      </div></div>
+      <div class="tbar"><i id="tbar"></i></div>
+      <div class="hint" id="hint">Press, slide along the line, let go</div>
+      <div class="jump" id="jump"><button data-n="1">Q01 ½</button><button data-n="7">Q07 ⅓ ¼</button><button data-n="15">Q15 ⅜ ⅖</button><button data-n="25">Q25 0.43</button><button data-n="37">Q37 tricks</button><button data-n="51">Q51</button></div>
+    </div>
+  </div></div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="mono">01 · One mode that ramps up</span>
+    <h2>From ½ to 0.43</h2>
+    <p>No Easy/Medium/Hard: like Rocket Launch and Guess Color, the run itself gets harder, so there's one leaderboard. Each stage adds one new kind of target and keeps the old ones. Lines also start turning ("different ways"): flat, upright, then any slope, always labelled 0 and 1 so the direction is clear.</p>
+  </div>
+  <div class="ladder">
+    <div class="rung" data-n="1"><div><h3>Halves</h3><div class="q">Q1–6 · flat lines · ±5%</div></div><p><span class="ex">½</span>. A long flat line. It teaches the gesture; almost everyone gets these.</p></div>
+    <div class="rung" data-n="2"><div><h3>Thirds and quarters</h3><div class="q">Q7–14 · any direction · ±5%</div></div><p><span class="ex">⅓ ⅔ ¼ ¾</span>. Lines turn upright and diagonal and get shorter. Thirds are where people start to drift.</p></div>
+    <div class="rung" data-n="3"><div><h3>Eighths and fifths</h3><div class="q">Q15–24 · ±5.5%</div></div><p><span class="ex">⅜ ⅝ ⅛ ⅞ ⅖ ⅗</span>. You have to halve a half, or picture fifths with nothing to anchor them.</p></div>
+    <div class="rung" data-n="4"><div><h3>Decimals and percents</h3><div class="q">Q25–36 · ±6% · timer 5 s</div></div><p><span class="ex">0.43 · 0.68 · 37%</span>. Numbers that aren't nice fractions. The timer starts here, and the targets avoid easy fractions.</p></div>
+    <div class="rung" data-n="5"><div><h3>Tricks</h3><div class="q">Q37–50 · ±6% · timer 4 s</div></div><p><span class="ex">0.3 from the right</span> (count from the other end), and lines with <span class="ex">fake tick marks</span> in the wrong places to pull your eye.</p></div>
+    <div class="rung" data-n="6"><div><h3>Everything, faster</h3><div class="q">Q51+ · ±5.5% · timer 3.5 s</div></div><p>Any of the above, shorter lines, less time.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="mono">02 · Scoring and fairness</span>
+    <h2>How it's scored</h2>
+    <p>Error is measured as a share of the line's length, so a short line and a long line are judged the same. The window never drops below the size of a fingertip.</p>
+  </div>
+  <div class="grid2">
+    <div class="tile cut"><div class="in cut">
+      <h3>Per question</h3>
+<div class="formula">error = |where you let go − target| ÷ line length
+
+inside the window   → HIT       +10
+error ≤ 2%          → SHARP     +5 extra
+error ≤ 1%          → BULLSEYE  +10 extra
+outside the window  → a strike (3rd strike ends the run)
+time runs out       → a strike
+every 5 hits in a row → +20 (the app's streak bonus)</div>
+      <p><b class="pink">Why strikes:</b> estimation isn't right-or-wrong like Guess Color. Being 7% off is "a bit off", so, like Angle Sense, you get three strikes. Revives work on top, as in every game.</p>
+    </div></div>
+    <div class="tile cut"><div class="in cut">
+      <h3>Why these windows</h3>
+      <p>Typical adult error (one standard deviation, as % of the line): halving about 1.8%, thirds and quarters about 3%, eighths and fifths about 4%, arbitrary decimals about 4.5%, counting from the other end about 5%. Add fingertip error, about 4 points, which is 1.3% on a 300-point line and 2.5% on a short one.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Target</th><th>Window</th><th>Typical hit chance</th></tr></thead>
+        <tbody>
+          <tr><td>½</td><td class="tol">±5%</td><td class="num">97%</td></tr>
+          <tr><td>⅓ ¼</td><td class="tol">±5%</td><td class="num">86%</td></tr>
+          <tr><td>⅜ ⅖</td><td class="tol">±5.5%</td><td class="num">82%</td></tr>
+          <tr><td>0.43 · 37%</td><td class="tol">±6%</td><td class="num">79%</td></tr>
+          <tr><td>from the right</td><td class="tol">±6%</td><td class="num">75%</td></tr>
+        </tbody>
+      </table></div>
+    </div></div>
+  </div>
+  <div class="tile cut" style="margin-top:14px"><div class="in cut">
+    <h3>Simulated runs (4,000 each, 3 strikes)</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Player</th><th>Median question</th><th>Median score</th><th>Sharp + Bullseye per run</th></tr></thead>
+      <tbody>
+        <tr><td>New (error ×1.3)</td><td class="num">17</td><td class="num">210</td><td class="num">8</td></tr>
+        <tr><td>Typical</td><td class="num">24</td><td class="num">320</td><td class="num">12</td></tr>
+        <tr><td>Sharp (×0.75)</td><td class="num">35</td><td class="num">470</td><td class="num">19</td></tr>
+        <tr><td>Expert (×0.55)</td><td class="num">54</td><td class="num">750</td><td class="num">31</td></tr>
+      </tbody>
+    </table></div>
+    <p>Precision bonuses make up about a third of a good player's score, so careful play beats rushing, but staying alive still matters most. Re-check against real play logs after launch and tune the constants only.</p>
+  </div></div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="mono">03 · Screen design</span>
+    <h2>Target, line, reveal</h2>
+    <p>The target sits big above the card (a real stacked fraction, not "3/8" text). The line is the only thing on the card. On reveal, a pink mark shows the true point, a dashed teal mark shows yours, and the gap between them is drawn so the error is obvious.</p>
+  </div>
+  <div class="states" id="states"></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="mono">04 · Build map</span><h2>Where it plugs in</h2></div>
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th>Change</th></tr></thead>
+    <tbody>
+      <tr><td><code>lib/games/line_split/line_split_engine.dart</code></td><td><b>New.</b> <code>LineSplitEngine extends RoundEngine</code>: stage by question number, target generator (fractions, decimals that avoid easy fractions, percents, from-the-right, decoy ticks), line geometry (length, angle, centre), window, timer, strikes, scoring. Pure Dart with seeded <code>Random</code>.</td></tr>
+      <tr><td><code>lib/games/line_split/line_split_board.dart</code></td><td><b>New.</b> Target label (stacked fraction widget), line painter, press-slide-lift gesture that projects the finger onto the line, reveal painter, strikes row.</td></tr>
+      <tr><td><code>lib/models/game.dart</code>, <code>lib/core/theme.dart</code></td><td><code>GameId.lineSplit</code> (added last), skill <i>Estimation</i>, new <code>LS.pink</code>, icon <code>Icons.straighten</code>, rampNote "Gets finer as you go". No difficulty levels.</td></tr>
+      <tr><td><code>lib/games/games.dart</code>, home grid, ranks</td><td>Route, 6th tile (the home grid becomes an even 3×2), Top 10 switcher entry (see the Top 10 design in the upgrades plan).</td></tr>
+      <tr><td><code>supabase/</code> migration</td><td>Allow <code>'lineSplit'</code>; deployed before the app.</td></tr>
+      <tr><td><code>test/games/line_split_*_test.dart</code></td><td>Stage boundaries, error maths on rotated lines, "from the right" mapping, strike flow, timer pause/resume, bonus thresholds, generator never repeats the same target twice in a row.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="mono">05 · Playbook</span><h2>From plan to store</h2></div>
+  <div class="steps">
+    <div class="step" data-n="1"><div class="h"><h3>Engine with tests</h3><span class="mono">1 day</span></div><ul><li>Generator, geometry, scoring and strikes in pure Dart; tests first.</li></ul></div>
+    <div class="step" data-n="2"><div class="h"><h3>Board and gesture</h3><span class="mono">1.5 days</span></div><ul><li>Press, slide, lift on the line; a live marker under the finger, offset above the fingertip so it isn't hidden.</li><li>Reveal painter shared with Angle Sense where possible.</li></ul></div>
+    <div class="step" data-n="3"><div class="h"><h3>Wire in</h3><span class="mono">0.5 day</span></div><ul><li>Game list, 3×2 home grid, Top 10 switcher, migration.</li></ul></div>
+    <div class="step" data-n="4"><div class="h"><h3>Playtest the windows</h3><span class="mono">1–2 days</span></div><ul><li>Log every error by target type and line length.</li><li>Targets: typical player reaches Q20–25; no stage loses more than 30% of runs.</li></ul></div>
+    <div class="step" data-n="5"><div class="h"><h3>Store and release</h3><span class="mono">1 day</span></div><ul><li>Screenshot, listing line ("New: Line Split. Can you find 0.43 by eye?").</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="mono">06 · Decide before building</span><h2>Open questions</h2></div>
+  <div class="decisions">
+    <div><b>Order</b><span>Line Split is game 6 here, True or False game 7. Line Split is smaller to build (no sentence generator), so it can ship first.</span></div>
+    <div><b>Lift or Lock</b><span>Answer on lift (fast, one gesture, used in the prototype) or place-then-Lock (slower, fewer accidental answers). Lift with a 0.2 s "hold still" is a middle way.</span></div>
+    <div><b>Curved lines</b><span>Later stages could split an arc or a zig-zag by length. Fun and hard, but much harder to judge fairly; keep for an update.</span></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const PINK = '#F472B6', TEAL = '#34C29A', TEXT = '#EAF2F7', DIM = '#667A8C', LINE = '#1E2A36', CORAL = '#FF5A6E';
+  let seed = 3; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const pick = a => a[Math.floor(rnd() * a.length)];
+  const STAGES = [
+    { from: 1,  name: 'Halves', win: 5,   kinds: ['half'], len: [260, 300], turn: false, timer: 0 },
+    { from: 7,  name: 'Thirds · quarters', win: 5, kinds: ['third', 'quarter', 'half'], len: [220, 300], turn: true, timer: 0 },
+    { from: 15, name: 'Eighths · fifths', win: 5.5, kinds: ['eighth', 'fifth', 'third', 'quarter'], len: [190, 300], turn: true, timer: 0 },
+    { from: 25, name: 'Decimals', win: 6, kinds: ['decimal', 'percent', 'eighth', 'fifth'], len: [190, 300], turn: true, timer: 5 },
+    { from: 37, name: 'Tricks', win: 6, kinds: ['decimal', 'percent', 'fromright', 'ticks'], len: [170, 300], turn: true, timer: 4 },
+    { from: 51, name: 'Everything', win: 5.5, kinds: ['decimal', 'percent', 'fromright', 'ticks', 'eighth'], len: [160, 290], turn: true, timer: 3.5 },
+  ];
+  const stageOf = n => [...STAGES].reverse().find(s => n >= s.from);
+  const FR = { half: [[1,2]], third: [[1,3],[2,3]], quarter: [[1,4],[3,4]], eighth: [[1,8],[3,8],[5,8],[7,8]], fifth: [[1,5],[2,5],[3,5],[4,5]] };
+  const niceFracs = [1/2,1/3,2/3,1/4,3/4,1/5,2/5,3/5,4/5,1/8,3/8,5/8,7/8];
+  function decimal() { let v; do { v = Math.round((0.06 + rnd() * 0.88) * 100) / 100; } while (niceFracs.some(f => Math.abs(f - v) < 0.025)); return v; }
+  const fracHTML = (a, b) => `<span class="frac"><i>${a}</i><hr><i>${b}</i></span>`;
+
+  function makeQ(n) {
+    const S = stageOf(n), kind = pick(S.kinds);
+    let t, label, sub = 'from the 0 end', fromRight = false, ticks = null;
+    if (FR[kind]) { const [a, b] = pick(FR[kind]); t = a / b; label = fracHTML(a, b); }
+    else if (kind === 'decimal') { t = decimal(); label = `<b>${t.toFixed(2)}</b>`; }
+    else if (kind === 'percent') { t = decimal(); label = `<b>${Math.round(t * 100)}%</b>`; }
+    else if (kind === 'fromright') { const v = decimal(); t = 1 - v; label = `<b>${v.toFixed(2)}</b>`; sub = 'from the 1 end'; fromRight = true; }
+    else if (kind === 'ticks') { t = decimal(); label = `<b>${t.toFixed(2)}</b>`; sub = 'ignore the ticks'; ticks = [0.2, 0.4, 0.6, 0.8].map(x => x + (rnd() - .5) * 0.12); }
+    const L = S.len[0] + rnd() * (S.len[1] - S.len[0]);
+    const ang = !S.turn ? 0 : pick([0, 90, 30, -30, 60, -60, 15, -15]) * Math.PI / 180;
+    const cx = 170, cy = 150, dx = Math.cos(ang) * L / 2, dy = -Math.sin(ang) * L / 2;
+    const A = [cx - dx, cy - dy], B = [cx + dx, cy + dy];
+    return { S, kind, t, label, sub, fromRight, ticks, A, B, L };
+  }
+  const at = (q, u) => [q.A[0] + (q.B[0] - q.A[0]) * u, q.A[1] + (q.B[1] - q.A[1]) * u];
+  const project = (q, x, y) => { const vx = q.B[0] - q.A[0], vy = q.B[1] - q.A[1]; return Math.max(0, Math.min(1, ((x - q.A[0]) * vx + (y - q.A[1]) * vy) / (vx * vx + vy * vy))); };
+  function tickAt(q, u, len, col, w = 2, dash = '') { const [x, y] = at(q, u), nx = -(q.B[1] - q.A[1]) / q.L, ny = (q.B[0] - q.A[0]) / q.L; return `<line x1="${x - nx * len}" y1="${y - ny * len}" x2="${x + nx * len}" y2="${y + ny * len}" stroke="${col}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`; }
+  function drawQ(q, guess = null, reveal = false) {
+    let s = '';
+    for (let x = 0; x <= 340; x += 34) s += `<line x1="${x}" y1="0" x2="${x}" y2="300" stroke="#0A131B"/>`;
+    for (let y = 0; y <= 300; y += 34) s += `<line x1="0" y1="${y}" x2="340" y2="${y}" stroke="#0A131B"/>`;
+    s += `<line x1="${q.A[0]}" y1="${q.A[1]}" x2="${q.B[0]}" y2="${q.B[1]}" stroke="${TEXT}" stroke-width="4" stroke-linecap="butt"/>`;
+    s += tickAt(q, 0, 12, TEXT, 4) + tickAt(q, 1, 12, TEXT, 4);
+    if (q.ticks) q.ticks.forEach(u => s += tickAt(q, u, 7, DIM, 2));
+    const lab = (u, txt) => { const [x, y] = at(q, u), off = 26, nx = -(q.B[1] - q.A[1]) / q.L, ny = (q.B[0] - q.A[0]) / q.L; return `<text x="${x + nx * off}" y="${y + ny * off + 5}" text-anchor="middle" fill="${q.fromRight && txt === '1' ? PINK : DIM}" font-family="JetBrains Mono, monospace" font-size="14" font-weight="700">${txt}</text>`; };
+    s += lab(0, '0') + lab(1, '1');
+    if (guess != null && reveal) {
+      const [g1, g2] = [Math.min(guess, q.t), Math.max(guess, q.t)], [ax, ay] = at(q, g1), [bx, by] = at(q, g2);
+      s += `<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${CORAL}" stroke-width="8" stroke-opacity=".55"/>`;
+      s += tickAt(q, q.t, 20, PINK, 4);
+    }
+    if (guess != null) s += tickAt(q, guess, reveal ? 17 : 22, TEAL, 3, reveal ? '5 4' : '');
+    return s;
+  }
+
+  const st = { n: 1, score: 0, strikes: 0, streak: 0, q: null, locked: false, over: false, raf: 0, guess: null };
+  const drawStrikes = () => { [...$('strikes').children].forEach((d, i) => d.classList.toggle('gone', i >= 3 - st.strikes)); };
+  function next() {
+    st.q = makeQ(st.n); st.locked = false; st.guess = null;
+    $('scene').innerHTML = drawQ(st.q);
+    $('target').innerHTML = st.q.label + `<span>${st.q.sub}</span>`;
+    $('stageLbl').textContent = `${st.q.S.name} · Q${String(st.n).padStart(2, '0')}`;
+    $('winLbl').textContent = `±${st.q.S.win}%`;
+    $('verdict').hidden = true;
+    cancelAnimationFrame(st.raf); $('tbar').style.width = '0';
+    if (st.q.S.timer) { const tl = st.q.S.timer * 1000, t0 = performance.now();
+      const tick = now => { const left = tl - (now - t0); $('tbar').style.width = Math.max(0, left / tl) * 100 + '%'; if (st.locked) return; if (left <= 0) return answer(null); st.raf = requestAnimationFrame(tick); };
+      st.raf = requestAnimationFrame(tick); }
+  }
+  function answer(u) {
+    if (st.locked || st.over) return; st.locked = true; cancelAnimationFrame(st.raf);
+    const q = st.q, err = u == null ? Infinity : Math.abs(u - q.t) * 100, signed = u == null ? 0 : (u - q.t) * 100;
+    const hit = err <= q.S.win, bull = hit && err <= 1, sharp = hit && err <= 2;
+    $('scene').innerHTML = drawQ(q, u ?? q.t, true);
+    const v = $('verdict'); v.hidden = false;
+    v.className = 'verdict ' + (!hit ? 'miss' : sharp ? 'top' : 'hit');
+    v.textContent = u == null ? 'TIME' : `${bull ? 'BULLSEYE' : sharp ? 'SHARP' : hit ? 'HIT' : 'MISS'} ${signed >= 0 ? '+' : ''}${signed.toFixed(1)}%`;
+    if (hit) { st.streak++; st.score += 10 + (bull ? 10 : sharp ? 5 : 0) + (st.streak % 5 === 0 ? 20 : 0); $('score').textContent = st.score; st.n++; setTimeout(next, 900); }
+    else { st.streak = 0; st.strikes++; drawStrikes();
+      if (st.strikes < 3) { st.n++; setTimeout(next, 1200); }
+      else setTimeout(() => { st.over = true; $('overScore').textContent = st.score; $('overWhy').textContent = `Third strike on question ${st.n}. The target was ${(q.t * 100).toFixed(0)}% along the line.`; $('over').hidden = false; }, 1200); }
+  }
+  // press, slide, lift
+  const card = $('cardIn'); let pressing = false;
+  const toLocal = e => { const r = card.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * 340, (e.clientY - r.top) / r.height * 300]; };
+  card.addEventListener('pointerdown', e => { if (st.locked || st.over) return; pressing = true; card.setPointerCapture(e.pointerId); const [x, y] = toLocal(e); st.guess = project(st.q, x, y); $('scene').innerHTML = drawQ(st.q, st.guess); });
+  card.addEventListener('pointermove', e => { if (!pressing) return; const [x, y] = toLocal(e); st.guess = project(st.q, x, y); $('scene').innerHTML = drawQ(st.q, st.guess); });
+  card.addEventListener('pointerup', () => { if (!pressing) return; pressing = false; answer(st.guess); });
+  card.addEventListener('pointercancel', () => { pressing = false; });
+  function start(n) { seed = (Date.now() % 9973) + 5; st.n = n; st.score = 0; st.strikes = 0; st.streak = 0; st.over = false; $('score').textContent = 0; $('over').hidden = true; drawStrikes(); next(); }
+  $('restart').onclick = () => start(1);
+  $('jump').onclick = e => { const b = e.target.closest('button'); if (b) start(+b.dataset.n); };
+
+  // static states
+  function mock(q, guess, reveal, verdict, cls, label, score) {
+    return `<div class="phone cut-lg"><div class="screen cut-lg">
+      <div class="bar"><div class="t"><span>Line Split</span><span class="mono">Estimation</span></div><div class="score"><span class="mono">Score</span><b>${score}</b></div></div>
+      <div class="pz"><div class="status"><span class="mono">${label}</span><span class="strikes"><i></i><i></i><i${cls === 'miss' ? ' class="gone"' : ''}></i></span><span class="mono">Window <b class="pink">±${q.S.win}%</b></span></div>
+      <div class="target">${q.label}<span>${q.sub}</span></div>
+      <div class="card cut-lg"><div class="in cut-lg"><svg viewBox="0 0 340 300">${drawQ(q, guess, reveal)}</svg>${verdict ? `<div class="verdict ${cls}">${verdict}</div>` : ''}</div></div></div></div></div>`;
+  }
+  seed = 17; const m1 = makeQ(16); seed = 29; const m2 = makeQ(9); seed = 61; const m3 = makeQ(40);
+  $('states').innerHTML = [
+    [mock(m1, null, false, '', '', `${m1.S.name} · Q16`, 160), '<b>TARGET.</b> The number is big and stacked as a real fraction. The line is the only thing on the card, labelled 0 and 1.'],
+    [mock(m2, m2.t + 0.008, true, 'BULLSEYE +0.8%', 'top', `${m2.S.name} · Q09`, 90), '<b>RIGHT.</b> The pink mark is the true point and your dashed teal mark sits next to it. Within 1% is a Bullseye (+10 extra).'],
+    [mock(m3, Math.min(1, m3.t + 0.09), true, 'MISS +9.0%', 'miss', `${m3.S.name} · Q40`, 410), '<b>MISS.</b> The gap is painted coral so you see how far off you were, and one strike cracks. The run goes on until the third.'],
+  ].map(([p, t]) => `<div class="state">${p}<p>${t}</p></div>`).join('');
+
+  start(1);
+})();
+</script>

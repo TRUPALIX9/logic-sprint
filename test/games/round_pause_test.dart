@@ -359,6 +359,148 @@ void main() {
     });
   });
 
+  group('revive(hold: true): the get-ready hold', () {
+    test('Quick Math: waits in resuming with the clock stopped until go', () {
+      fakeAsync((async) {
+        final e = _math()..start();
+        async.elapse(const Duration(seconds: 2));
+        e.answer(_wrongAnswer(e));
+        final elapsed = e.elapsed;
+        final number = e.number;
+        e.revive(hold: true);
+        expect(e.state, RunState.resuming);
+        expect(e.isResuming, isTrue);
+        expect(e.isPlaying, isFalse);
+        expect(e.revives, 1);
+        expect(e.number, number + 1, reason: 'the fresh problem is ready');
+        e.answer(e.problem.answer);
+        expect(e.correct, 0, reason: 'no answers until go');
+        e.pause();
+        expect(e.state, RunState.resuming, reason: 'pause is for live runs');
+        async.elapse(const Duration(seconds: 3));
+        expect(e.elapsed, elapsed, reason: 'the countdown is not run time');
+        e.go();
+        expect(e.state, RunState.playing);
+        async.elapse(const Duration(seconds: 1));
+        expect(e.elapsed, elapsed + const Duration(seconds: 1));
+        e.go();
+        expect(e.state, RunState.playing, reason: 'go only from resuming');
+        e.dispose();
+      });
+    });
+
+    test('Guess Color: the word countdown is frozen until go', () {
+      fakeAsync((async) {
+        final e = _guess()..start();
+        _advanceTo(e, async, 14);
+        e.pick(_wrongColor(e));
+        async.elapse(const Duration(seconds: 3));
+        e.revive(hold: true);
+        expect(e.state, RunState.resuming);
+        expect(e.number, 14);
+        expect(e.picked, isNull);
+        async.elapse(const Duration(seconds: 10));
+        expect(e.state, RunState.resuming, reason: 'no timeout while held');
+        expect(e.timeLeft, e.timeLimit);
+        e.go();
+        async.elapse(const Duration(milliseconds: 500));
+        expect(e.timeLeft, e.timeLimit! - const Duration(milliseconds: 500));
+        e.pick(e.item.target);
+        expect(e.correct, 14);
+        e.dispose();
+      });
+    });
+
+    test('Memory Lane: the pattern plays only after go', () {
+      fakeAsync((async) {
+        final e = _memory()..start();
+        async.elapse(_playback(3));
+        final pattern = e.sequence;
+        e.tap((e.sequence[e.stepsDone] + 1) % e.tileCount);
+        e.revive(hold: true);
+        expect(e.state, RunState.resuming);
+        async.elapse(const Duration(seconds: 5));
+        expect(e.litTile, isNull, reason: 'nothing lights while held');
+        expect(e.canTap, isFalse);
+        e.go();
+        expect(e.phase, MemoryPhase.watch);
+        async.elapse(_playback(3));
+        expect(e.canTap, isTrue);
+        expect(e.sequence, pattern);
+        e.sequence.forEach(e.tap);
+        expect(e.level, 2);
+        e.dispose();
+      });
+    });
+
+    test('Rocket Launch: rocks cleared, field frozen, steering allowed', () {
+      final e = _rocket()..start();
+      _crash(e);
+      e.revive(hold: true);
+      expect(e.state, RunState.resuming);
+      expect(e.asteroids, isEmpty);
+      final flight = e.flightTime;
+      final x = e.rocketX;
+      e.steerTo(RocketLaunchEngine.minX);
+      for (var i = 0; i < 60; i++) {
+        e.tick(_frame);
+      }
+      expect(e.flightTime, flight, reason: 'tick is a no-op while held');
+      expect(e.rocketX, x, reason: 'the ship moves only after go');
+      e.go();
+      e.tick(_frame);
+      expect(e.invulnerable, isTrue, reason: 'the shield starts at go');
+      expect(e.rocketX, lessThan(x), reason: 'heads for where it was aimed');
+      e.dispose();
+    });
+
+    test('Rocket Launch: the storm builds back up after a revive', () {
+      final e = _rocket()..start();
+      // Fly into the busy part of the run first.
+      for (var t = Duration.zero; t < const Duration(seconds: 100);) {
+        e
+          ..asteroids.clear()
+          ..tick(const Duration(milliseconds: 50));
+        t += const Duration(milliseconds: 50);
+      }
+      _crash(e);
+      e
+        ..revive(hold: true)
+        ..go();
+      expect(e.calm, 1);
+      final spawnedAtGo = e.spawned;
+      var firstRockAfter = Duration.zero;
+      final xs = <double>[];
+      for (var t = Duration.zero; t < RocketLaunchEngine.reviveCalm;) {
+        final before = e.spawned;
+        e.tick(_frame);
+        t += _frame;
+        if (e.spawned > before) {
+          if (firstRockAfter == Duration.zero) {
+            firstRockAfter = t;
+          }
+          xs.add(e.asteroids.last.x);
+        }
+        // Keep the run alive: drop rocks before they reach the rocket.
+        e.asteroids.removeWhere((rock) => rock.y > 0.6);
+      }
+      expect(
+        firstRockAfter,
+        greaterThanOrEqualTo(RocketLaunchEngine.reviveFirstRock),
+      );
+      for (final x in xs) {
+        expect(
+          (x - e.rocketX).abs(),
+          greaterThanOrEqualTo(RocketLaunchEngine.calmClearance - 0.1),
+          reason: 'no rock spawns over the rocket while calm',
+        );
+      }
+      expect(e.calm, 0);
+      expect(e.spawned - spawnedAtGo, lessThan(3 / e.spawnInterval));
+      e.dispose();
+    });
+  });
+
   group('offersRevive', () {
     /// A Quick Math run that went down with [points] points.
     QuickMathEngine downAt(int points) {

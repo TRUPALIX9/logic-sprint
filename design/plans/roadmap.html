@@ -1,0 +1,318 @@
+<title>Logic Sprint Roadmap</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: the hub for every Logic Sprint plan. Status first, then the release train as a
+   timeline, the game lineup, workstreams, decisions, dependencies, process and ideas.
+   Circuit Noir, dark only like the app; chamfered panels; each game keeps its accent. */
+:root{
+  color-scheme:dark;
+  --bg:#000;--well:#04080C;--surface:#0A1016;--surface2:#111A23;--line:#1E2A36;
+  --text:#EAF2F7;--muted:#8C9DAD;--dim:#667A8C;
+  --teal:#34C29A;--blue:#3B7BF0;--aqua:#2BB3D6;--violet:#8C8CFF;--gold:#F5C542;--coral:#FF5A6E;--orange:#FF8A3D;--pink:#F472B6;
+  --display:'Rajdhani','Arial Narrow',sans-serif;--body:'IBM Plex Sans','Helvetica Neue',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding-block:28px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:60px}
+h1,h2,h3{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.03em;line-height:1;margin:0;text-wrap:balance}
+h1{font-size:clamp(44px,7vw,72px)}h2{font-size:34px}h3{font-size:19px}
+p{margin:0;max-width:70ch}
+a{color:var(--teal)}a:hover{color:#7FE3C4}
+.mono{font-family:var(--mono);font-weight:500;letter-spacing:.12em;font-size:11px;color:var(--muted);text-transform:uppercase}
+.muted{color:var(--muted)}
+code{font-family:var(--mono);font-size:12.5px;color:var(--aqua);background:var(--surface2);padding:1px 5px;overflow-wrap:anywhere}
+.cut{clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.cut-sm{clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.sec-head{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.sec-head p{color:var(--muted)}
+.lede{font-size:17px}
+.tile{background:var(--line);padding:1px}.tile>.in{background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:10px;height:100%;box-sizing:border-box}
+.tile p,.tile li{color:var(--muted);font-size:14px}
+.tile ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.tile ul b{color:var(--text);font-weight:600}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.tbl{border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--surface)}
+td{background:var(--bg)}tr:last-child td{border-bottom:0}
+td code{word-break:break-word}
+
+/* status pills: state shown by text + shape, not colour alone */
+.st{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;white-space:nowrap;display:inline-block}
+.st.done{background:rgba(52,194,154,.14);color:var(--teal)}
+.st.done::before{content:"✓ "}
+.st.branch{background:rgba(59,123,240,.16);color:#8DB4FF}
+.st.branch::before{content:"⎇ "}
+.st.plan{background:rgba(245,197,66,.13);color:var(--gold)}
+.st.plan::before{content:"◇ "}
+.st.idea{background:var(--surface2);color:var(--muted)}
+.st.idea::before{content:"○ "}
+
+/* snapshot */
+.snap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.snap div{background:var(--surface);padding:14px;display:flex;flex-direction:column;gap:6px}
+.snap b{font-family:var(--mono);font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.snap span{font-size:13px;color:var(--muted)}
+
+/* release train */
+.train{display:flex;flex-direction:column;border-left:2px solid var(--line);margin-left:12px}
+.stop{position:relative;padding:0 0 30px 30px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:18px}
+.stop::before{content:"";position:absolute;left:-9px;top:2px;width:16px;height:16px;background:var(--bg);border:2px solid var(--k,var(--teal));clip-path:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)}
+.stop.now::before{background:var(--k,var(--teal))}
+.stop .v{display:flex;flex-direction:column;gap:6px}
+.stop .v b{font-family:var(--display);font-size:28px;font-weight:700;color:var(--k,var(--teal));line-height:1}
+.stop .v span{font-size:13px;color:var(--muted)}
+.stop ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.stop li{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;align-items:baseline;font-size:14px}
+.stop li > span:last-child{color:var(--muted)}
+.stop li > span:last-child b{color:var(--text);font-weight:600}
+
+/* games */
+.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.game{background:var(--surface);border-top:3px solid var(--k);padding:14px;display:flex;flex-direction:column;gap:8px;clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%)}
+.game .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.game h3{color:var(--text)}
+.game .sk{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--k)}
+.game p{font-size:13.5px;color:var(--muted)}
+.game .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.game .meta span{font-family:var(--mono);font-size:10px;letter-spacing:.06em;padding:3px 6px;background:var(--surface2);color:var(--muted)}
+
+.decisions{display:flex;flex-direction:column;gap:8px}
+.decisions div{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;padding:12px 14px;background:var(--surface);border:1px solid var(--line)}
+.decisions b{font-family:var(--display);text-transform:uppercase;font-size:16px;letter-spacing:.03em}
+.decisions span{color:var(--muted);font-size:14px}
+.warn{border:1px solid var(--coral);background:rgba(255,90,110,.08);padding:12px 14px;font-size:14px}
+.warn b{color:var(--coral)}
+
+@media (max-width:900px){.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.snap{grid-template-columns:repeat(2,minmax(0,1fr))}.stop{grid-template-columns:minmax(0,1fr);gap:10px}}
+@media (max-width:600px){table,thead,tbody,tr,th,td{display:block;width:auto}thead{display:none}tr{border-bottom:1px solid var(--line);padding:6px 0;background:var(--bg)}tr:last-child{border-bottom:0}td{border-bottom:0;padding:4px 12px}td:first-child{padding-top:8px}.st{white-space:normal}.grid3,.grid2{grid-template-columns:minmax(0,1fr)}.decisions div{grid-template-columns:minmax(0,1fr);gap:4px}.stop li{grid-template-columns:minmax(0,1fr);gap:2px}h2{font-size:28px}}
+</style>
+
+<div class="wrap">
+
+<section style="display:flex;flex-direction:column;gap:18px">
+  <span class="mono">Logic Sprint · end-to-end plan · as of 20 Nov 2026</span>
+  <h1>The <span style="color:var(--teal)">road</span>map</h1>
+  <p class="lede">Every plan, branch and idea in one place, now including music: what's done, what's waiting on a branch, what ships in which release, which decisions are made and which are still yours, and what comes after.</p>
+  <div class="snap">
+    <div><b>1.0.3</b><span>live today (iOS 1.0.2 (6) live; 1.0.3 built)</span></div>
+    <div><b>4 → 7</b><span>games today → planned, one per skill</span></div>
+    <div><b>2</b><span>working branches with new code</span></div>
+    <div><b>5</b><span>published plan pages, plus the ideas backlog</span></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Plan page</th><th>What's in it</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://claude.ai/artifact/AYjgJgRPVSFr7B7CSrUKYN">Upgrades plan</a></td><td>Revive countdown, privacy at a glance, History, Sprint Score, Profile + share, motion, loading screen, heart → continue, clean screenshots, Top 10 switcher.</td></tr>
+      <tr><td><a href="https://claude.ai/artifact/CSHWg6pniZVry5wddh4BMo">Angle Sense</a></td><td>Game 5 (Spatial). Easy / Medium / Hard worlds, ±8° → ±5°, 3 strikes, phone-compass round.</td></tr>
+      <tr><td><a href="https://claude.ai/artifact/QwLRemtP3drR8YfCYytmuA">Line Split</a></td><td>Game 6 (Estimation). One ramping mode, ½ → ⅜ → 0.43, 3 strikes, precision bonuses.</td></tr>
+      <tr><td><a href="https://claude.ai/artifact/XuGB3L6c5XtsSCEVcZ5vKj">True or False</a></td><td>Moved to ideas (Logic). Six-rung sentence ladder, reading-based timer, checked generator. Kept for after 1.2.</td></tr>
+      <tr><td><code>docs/ideas.md</code></td><td>Saved game ideas, including Maze Run, with skill, size and notes.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===================== WHERE THINGS STAND ===================== -->
+<section>
+  <div class="sec-head"><span class="mono">01 · Where things stand</span><h2>Done, on a branch, planned</h2>
+  <p>The labels mean: <span class="st done">done</span> built and checked (tests pass, seen in the simulator); <span class="st branch">branch</span> code exists but isn't merged; <span class="st plan">plan</span> designed with a prototype, not built; <span class="st idea">idea</span> saved for later.</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Piece</th><th>State</th><th>Where</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><b>Revive comeback countdown</b> (3 · 2 · 1 after ad or heart)</td><td><span class="st done">done</span></td><td><code>feat/revive-countdown</code> (uncommitted)</td><td>Seen in the simulator after a real test ad.</td></tr>
+      <tr><td><b>After-revive fairness</b> (Rocket calm 3 s, hidden word until go, fade-ins)</td><td><span class="st done">done</span></td><td>same branch</td><td>Each game's reset covered by tests.</td></tr>
+      <tr><td><b>Guess Color timing and motion</b> (floor 1.6 s, cleaner swaps, softer shake)</td><td><span class="st done">done</span></td><td>same branch</td><td>Website still says "3 s to 1 s".</td></tr>
+      <tr><td><b>Your score pinned under the Top 10</b></td><td><span class="st done">done</span></td><td>same branch</td><td>Shows "—" until the daily refresh ranks it.</td></tr>
+      <tr><td><b>Top 10 ‹ game › switcher</b></td><td><span class="st done">done</span></td><td>same branch</td><td>Dots, fixed difficulty row, slide + count-up.</td></tr>
+      <tr><td><b>Profile stats + one "Share stats" button</b></td><td><span class="st branch">branch</span></td><td><code>refs/heads/feat/profile-share</code> (2 commits)</td><td>Committed, 176 tests pass, seen in simulator. Sprint Score shows "—" until the backend exists.</td></tr>
+      <tr><td><b>Privacy at a glance</b></td><td><span class="st plan">plan</span></td><td>Upgrades plan · B</td><td>Cards per place your data goes + Full policy switch.</td></tr>
+      <tr><td><b>History page</b> (search, swipe filters, sort)</td><td><span class="st plan">plan</span></td><td>Upgrades plan · C</td><td>Needs <code>RunRecord</code> to store revives and keep 1,000 runs.</td></tr>
+      <tr><td><b>Sprint Score</b> (0–100, "Top X%")</td><td><span class="st plan">plan</span></td><td>Upgrades plan · D</td><td>Needs a Supabase view + RPC; hidden until 50 rated players.</td></tr>
+      <tr><td><b>Loading screen</b> (rocket tows LOGICSPRINT on a 0/1 rope)</td><td><span class="st plan">plan</span></td><td>Upgrades plan · G</td><td>Bar fills with real start-up steps.</td></tr>
+      <tr><td><b>Motion pass</b></td><td><span class="st plan">plan</span></td><td>Upgrades plan · F</td><td>Result count-up, new-best burst, tab fade-through.</td></tr>
+      <tr><td><b>Heart → continue the run</b></td><td><span class="st plan">plan</span></td><td>Upgrades plan · H</td><td>Keeps the finished run alive behind Result.</td></tr>
+      <tr><td><b>Clean screenshots</b></td><td><span class="st plan">plan</span></td><td>Upgrades plan · I</td><td>OS screenshots can't be changed; offer a clean re-render instead.</td></tr>
+      <tr><td><b>Rocket Launch 2</b> (fly the lower half, altitude bonus, layered space)</td><td><span class="st plan">plan</span></td><td><a href="https://claude.ai/artifact/NCmXiF9tyPFZYFshxgeXNB">Rocket plan</a></td><td>Playable today-vs-new prototype.</td></tr>
+      <tr><td><b>Music</b> (menu theme, one loop per game, reacts to the run)</td><td><span class="st plan">plan</span></td><td>This page · 04</td><td>Today the app has click sounds only, behind one "Sound" switch.</td></tr>
+      <tr><td><b>Angle Sense · Line Split</b></td><td><span class="st branch">building</span></td><td>Their own plan pages</td><td>Both open flat → upright → crossed, then ramp.</td></tr>
+      <tr><td><b>True or False</b></td><td><span class="st idea">idea</span></td><td><a href="https://claude.ai/artifact/XuGB3L6c5XtsSCEVcZ5vKj">Plan page</a> · <code>docs/ideas.md</code></td><td>Prototype kept; moved to ideas.</td></tr>
+      <tr><td><b>Maze Run</b> and 14 more</td><td><span class="st idea">idea</span></td><td><code>docs/ideas.md</code></td><td></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===================== RELEASE TRAIN ===================== -->
+<section>
+  <div class="sec-head"><span class="mono">02 · Release train</span><h2>What ships when</h2>
+  <p>Small, frequent releases. Each one has a theme, can ship on its own, and doesn't wait for the next. Suggested order; dates depend on review times.</p></div>
+  <div class="train">
+    <div class="stop now" style="--k:var(--teal)"><div class="v"><b>1.0.4</b><span>"Fairer comebacks"</span><span class="st done">code mostly done</span></div>
+      <ul>
+        <li><span class="st done">done</span><span><b>Revive countdown</b> and calm restart in every game</span></li>
+        <li><span class="st done">done</span><span><b>Guess Color</b> human-speed timer and smoother motion</span></li>
+        <li><span class="st done">done</span><span><b>Top 10 switcher</b> and your pinned score</span></li>
+        <li><span class="st plan">plan</span><span><b>Loading screen</b> and <b>privacy at a glance</b> (small, client-only)</span></li>
+        <li><span class="st plan">todo</span><span>Commit, release notes, update the website's Guess Color copy</span></li>
+      </ul></div>
+    <div class="stop" style="--k:var(--blue)"><div class="v"><b>1.1.0</b><span>"Your stats"</span><span class="st branch">half built</span></div>
+      <ul>
+        <li><span class="st branch">branch</span><span><b>Profile stats + Share stats</b> (Story, Post, Snap, More, link copied for Instagram)</span></li>
+        <li><span class="st plan">plan</span><span><b>History page</b> with search, swipe filters and sort</span></li>
+        <li><span class="st plan">plan</span><span><b>Sprint Score</b> backend (view + RPC), shown once 50 players are rated</span></li>
+        <li><span class="st plan">plan</span><span><b>Motion pass</b> (result count-up, new-best burst)</span></li>
+        <li><span class="st plan">plan</span><span><b>Music</b>: menu theme and the four current games' loops, Music and Sounds as separate switches</span></li>
+      </ul></div>
+    <div class="stop" style="--k:var(--gold)"><div class="v"><b>1.2.0</b><span>"New games"</span><span class="st plan">planned</span></div>
+      <ul>
+        <li><span class="st plan">plan</span><span><b>Angle Sense</b> (game 5) with the phone-compass round</span></li>
+        <li><span class="st plan">plan</span><span><b>Line Split</b> (game 6), so the home grid becomes an even 3×2</span></li>
+        <li><span class="st plan">plan</span><span>Supabase migration allowing both names, deployed first</span></li>
+        <li><span class="st plan">plan</span><span>Music loops for both new games</span></li>
+        <li><span class="st plan">plan</span><span><b>Rocket Launch 2</b>: lower-half flight and a deeper background</span></li>
+      </ul></div>
+    <div class="stop" style="--k:var(--orange)"><div class="v"><b>1.3.0</b><span>"Polish"</span><span class="st plan">planned</span></div>
+      <ul>
+        <li><span class="st plan">plan</span><span><b>Heart → continue</b> and <b>clean screenshots</b></span></li>
+        <li><span class="st plan">plan</span><span>New store listing cards and promo video with all six games</span></li>
+      </ul></div>
+    <div class="stop" style="--k:var(--dim)"><div class="v"><b>Later</b><span>"Backlog"</span><span class="st idea">ideas</span></div>
+      <ul>
+        <li><span class="st idea">idea</span><span><b>True or False</b> (Logic): shapes and one sentence, prototype ready</span></li>
+        <li><span class="st idea">idea</span><span><b>Maze Run</b>: follow a rover through a maze, then point home</span></li>
+        <li><span class="st idea">idea</span><span>Direct Instagram Story / Snapchat buttons (Meta app ID, Snap Kit review)</span></li>
+        <li><span class="st idea">idea</span><span>More games from <code>docs/ideas.md</code>: Time Sense, Dot Count, Next in Line…</span></li>
+      </ul></div>
+  </div>
+</section>
+
+<!-- ===================== GAMES ===================== -->
+<section>
+  <div class="sec-head"><span class="mono">03 · The lineup</span><h2>Six games, six skills</h2>
+  <p>Every game trains one skill and owns one colour. Right-or-wrong games end on the first mistake; estimation games give three strikes, because a near miss there isn't a wrong answer.</p></div>
+  <div class="games">
+    <div class="game" style="--k:var(--blue)"><div class="top"><h3>Rocket Launch</h3><span class="st done">live</span></div><span class="sk">Reflex</span><p>Steer through an asteroid storm. Now restarts calmly after a revive.</p><div class="meta"><span>one board</span><span>one miss</span></div></div>
+    <div class="game" style="--k:var(--aqua)"><div class="top"><h3>Memory Lane</h3><span class="st done">live</span></div><span class="sk">Memory</span><p>Repeat the tile sequence. Replays the pattern after a revive.</p><div class="meta"><span>easy · med · hard</span><span>one miss</span></div></div>
+    <div class="game" style="--k:var(--teal)"><div class="top"><h3>Quick Math</h3><span class="st done">live</span></div><span class="sk">Arithmetic</span><p>Solve problems against the clock.</p><div class="meta"><span>easy · med · hard</span><span>one miss</span></div></div>
+    <div class="game" style="--k:var(--violet)"><div class="top"><h3>Guess Color</h3><span class="st done">live</span></div><span class="sk">Focus</span><p>Stroop test. Timer floor raised to 1.6 s on the branch.</p><div class="meta"><span>one board</span><span>one miss</span></div></div>
+    <div class="game" style="--k:var(--gold)"><div class="top"><h3>Angle Sense</h3><span class="st branch">building</span></div><span class="sk">Spatial</span><p>Call or draw the angle. Fixed base, fixed reference or anything goes.</p><div class="meta"><span>easy · med · hard</span><span>3 strikes</span></div></div>
+    <div class="game" style="--k:var(--pink)"><div class="top"><h3>Line Split</h3><span class="st branch">building</span></div><span class="sk">Estimation</span><p>Touch ½, ⅜, 0.43 on lines that turn and lie.</p><div class="meta"><span>one board</span><span>3 strikes</span></div></div>
+    <div class="game" style="--k:var(--orange)"><div class="top"><h3>True or False</h3><span class="st idea">idea</span></div><span class="sk">Logic</span><p>Shapes and one sentence: true or false? Saved in ideas.</p><div class="meta"><span>easy · med · hard</span><span>one miss</span></div></div>
+  </div>
+</section>
+
+<!-- ===================== MUSIC ===================== -->
+<section>
+  <div class="sec-head"><span class="mono">04 · Music</span><h2>A soundtrack that plays along</h2>
+  <p>Today Logic Sprint is silent apart from tap clicks. Music should make a run feel like it's building, never get in the way of thinking, and never fight the player's own music or the ads.</p></div>
+  <div class="grid3">
+    <div class="tile cut"><div class="in cut"><h3>What plays where</h3><ul>
+      <li><b>Menus</b> (Play, Ranks, Profile): one calm theme, low and steady.</li>
+      <li><b>Each game</b> gets its own loop that matches its skill: a driving synth for Rocket Launch, soft arpeggios for Memory Lane, a ticking pulse for Quick Math, a playful bounce for Guess Color, later Angle Sense and Line Split.</li>
+      <li><b>Loading screen:</b> a short rising sting as the rocket lifts LOGICSPRINT.</li>
+      <li><b>Moments:</b> a short sting for a new best, a soft drop when the run goes down, a lift on the 3 · 2 · 1 comeback.</li>
+    </ul></div></div>
+    <div class="tile cut"><div class="in cut"><h3>It reacts to the run</h3><ul>
+      <li>Each loop is made of 2–3 layers (stems) that fade in as the run gets harder: bass first, then drums, then the lead. Same tempo, so it never skips.</li>
+      <li>When a timer runs low, a quiet ticking layer joins.</li>
+      <li>On a miss or "Game over" the music drops to a filtered, quieter version; on revive it comes back up through the countdown.</li>
+      <li>Paused or in the background: music pauses and resumes where it was.</li>
+    </ul></div></div>
+    <div class="tile cut"><div class="in cut"><h3>Plays nice</h3><ul>
+      <li><b>Two switches</b> in Settings: Music and Sounds (today's switch becomes Sounds), plus a music volume slider.</li>
+      <li><b>Your own music wins:</b> if Spotify or Apple Music is already playing, the game's music stays off and only sounds play (iOS "ambient" audio, Android audio focus).</li>
+      <li><b>Silent switch:</b> on iPhone, the ring/silent switch mutes the game's music, like most games.</li>
+      <li><b>Ads:</b> music fades out before an ad and back in after; it never plays over an ad.</li>
+      <li><b>Accessibility:</b> nothing in play depends on hearing it.</li>
+    </ul></div></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="tile cut"><div class="in cut"><h3>How it's built</h3><ul>
+      <li><b>Packages:</b> <code>just_audio</code> (gapless loops, several players at once) and <code>audio_session</code> (ambient mode, ducking, interruptions). Both are widely used; run the <code>vet-third-party</code> checklist before adding.</li>
+      <li><b>A small <code>MusicDirector</code> service</b> next to <code>AppState</code>: knows the current screen and game, listens to the run (<code>RoundEngine</code> state, question number, timer) and sets layer volumes with short fades.</li>
+      <li><b>Files:</b> loops as AAC/M4A, 30–60 s each, about 0.5–1 MB per layer; whole soundtrack under about 10 MB so the app stays small.</li>
+      <li><b>Tests:</b> the director's decisions (which track, which layers, when to fade) are pure Dart and tested with fake time; actual playback is checked by ear on a device.</li>
+    </ul></div></div>
+    <div class="tile cut"><div class="in cut"><h3>Where the music comes from</h3><ul>
+      <li><b>Option 1 · Commission</b> a composer for a small set of stems in the Circuit Noir feel. Best fit and fully owned; costs money and a few weeks.</li>
+      <li><b>Option 2 · Licensed royalty-free</b> tracks that come with stems. Fast and cheap; check the licence allows in-app use without credit screens or per-download fees.</li>
+      <li><b>Option 3 · AI-generated</b> music. Only from a tool whose terms grant commercial use, and keep the licence on file.</li>
+      <li>Whatever the source, keep the licence files in <code>assets/audio/LICENSES.md</code>. The privacy policy doesn't change; nothing is uploaded.</li>
+    </ul></div></div>
+  </div>
+</section>
+
+<!-- ===================== DECISIONS ===================== -->
+<section>
+  <div class="sec-head"><span class="mono">05 · Decisions</span><h2>Made, and still yours</h2></div>
+  <div class="grid2">
+    <div class="tile cut"><div class="in cut"><h3>Already decided</h3><ul>
+      <li><b>Revive:</b> 5 s offer stays; 3 s get-ready after the ad or heart.</li>
+      <li><b>Estimation games get 3 strikes</b>; right-or-wrong games keep one miss.</li>
+      <li><b>Angle Sense windows</b> ±8° → ±5° (Hard ±9° → ±6°); ±3° is a Sharp bonus.</li>
+      <li><b>Line Split</b> is one ramping mode; game 6.</li>
+      <li><b>True or False</b> moved to ideas; both new games open flat → upright → crossed.</li>
+      <li><b>"Sprint Score"</b>, shown as "Top X%" only (no number), hidden below the top 25%.</li>
+      <li><b>Profile:</b> no wordmark, 2×3 grid with Sprint Score, one "Share stats" button at the bottom.</li>
+      <li><b>Top 10:</b> ‹ game › switcher with dots; difficulty row never moves.</li>
+      <li><b>Instagram links:</b> copied for the user to paste into a link sticker; Snapchat can attach the link itself (phase 2).</li>
+      <li><b>State management</b> stays on Provider.</li>
+    </ul></div></div>
+    <div class="tile cut"><div class="in cut"><h3>Still open</h3><ul>
+      <li><b>Line Split input:</b> answer on lift (fast) or place-then-Lock (fewer slips)?</li>
+      <li><b>Sprint Score strength:</b> shrinkage k = 2 (one game worth at most 66) or softer?</li>
+      <li><b>Direct share buttons:</b> worth a Meta app ID and Snap review?</li>
+      <li><b>Music source:</b> commission a composer, license royalty-free stems, or use an AI tool with commercial rights?</li>
+      <li><b>Music by default:</b> on at first launch (at a low volume) or off until switched on?</li>
+    </ul></div></div>
+  </div>
+</section>
+
+<!-- ===================== DEPENDENCIES ===================== -->
+<section>
+  <div class="sec-head"><span class="mono">06 · Order that matters</span><h2>Dependencies</h2></div>
+  <div class="grid3">
+    <div class="tile cut"><div class="in cut"><h3>Merge first</h3><p><code>feat/revive-countdown</code> changes <code>RoundEngine</code> (the new <code>resuming</code> state). Every new game builds on it, so it lands before Angle Sense and Line Split ship.</p></div></div>
+    <div class="tile cut"><div class="in cut"><h3>Backend before app</h3><p>Each new game name must be allowed in <code>game_bests.game_type</code> before the app ships, or those scores are silently lost. Use one dated migration file per change; Sprint Score's view + RPC also deploy first.</p></div></div>
+    <div class="tile cut"><div class="in cut"><h3>Branches</h3><p><code>feat/profile-share</code> also touches <code>leaderboard.dart</code> and the Profile tab; merge it after the countdown branch and run <code>make check</code> on the result before any release build.</p></div></div>
+  </div>
+  <div class="warn" style="margin-top:14px"><b>Right now:</b> the 1.0.4 work is uncommitted on <code>feat/revive-countdown</code>. Commit it (or split it into a few commits) before starting anything else, so nothing gets lost or mixed with the next feature.</div>
+</section>
+
+<!-- ===================== PROCESS ===================== -->
+<section>
+  <div class="sec-head"><span class="mono">07 · How each piece gets built</span><h2>Same path every time</h2></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Step</th><th>What happens</th><th>Done when</th></tr></thead>
+    <tbody>
+      <tr><td><b>1 · Plan</b></td><td>A page in <code>design/plans/</code> with a working prototype and the maths behind any timer or window.</td><td>You've approved it.</td></tr>
+      <tr><td><b>2 · Branch</b></td><td>One branch per feature off the current release branch; never commit straight to <code>production</code>.</td><td>Branch exists.</td></tr>
+      <tr><td><b>3 · Engine first</b></td><td>Pure Dart logic with <code>fake_async</code> tests before any UI.</td><td>Tests pass.</td></tr>
+      <tr><td><b>4 · UI</b></td><td>Circuit Noir look, chamfered corners, reduce-motion respected, play-critical timers never shortened.</td><td><code>make check</code> clean.</td></tr>
+      <tr><td><b>5 · See it</b></td><td>Simulator build, play it for real, screenshots of every new state.</td><td>Checked on device or simulator.</td></tr>
+      <tr><td><b>6 · Ship</b></td><td>Migration first, release notes, store screenshots, website copy, then the build.</td><td>Live in both stores.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted" style="margin-top:12px">Project helpers installed from skills.trueorfalse.dev: <code>dart-flutter-patterns</code>, <code>motion</code>, <code>accessibility</code>, <code>ui-hig</code>, <code>vet-third-party</code> and the <code>flutter-expert</code> agent; rules live in <code>CLAUDE.md</code>.</p>
+</section>
+
+<!-- ===================== IDEAS ===================== -->
+<section>
+  <div class="sec-head"><span class="mono">08 · After that</span><h2>Ideas backlog</h2><p>Saved in <code>docs/ideas.md</code>. Skills not covered yet come first.</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Idea</th><th>Skill</th><th>In one line</th><th>Size</th></tr></thead>
+    <tbody>
+      <tr><td><b>Maze Run</b></td><td>Spatial memory</td><td>Follow a rover through a maze; when it goes dark, say where it is or point home.</td><td>M</td></tr>
+      <tr><td><b>Time Sense</b></td><td>Timing</td><td>Release when you think 3.00 s has passed.</td><td>S</td></tr>
+      <tr><td><b>Word Flash</b></td><td>Language</td><td>Unscramble a word that flashes.</td><td>M</td></tr>
+      <tr><td><b>Odd Shade</b></td><td>Perception</td><td>Find the one tile that's slightly different.</td><td>S</td></tr>
+      <tr><td><b>Dot Count</b></td><td>Estimation</td><td>Call the number of dots in a half-second flash.</td><td>S</td></tr>
+      <tr><td><b>Next in Line</b></td><td>Logic</td><td>Pick what comes next in a sequence.</td><td>M</td></tr>
+      <tr><td colspan="4" class="muted">…and Odd One Out, Balance, Missing Letter, Rhythm Tap, Bigger Area, Mirror or Turn, Spot the Change, Path Recall.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+</div>

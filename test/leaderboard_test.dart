@@ -73,12 +73,30 @@ void main() {
       expect(storage.pendingRuns, isEmpty);
     });
 
-    test('History keeps only the most recent runs', () async {
-      for (var i = 0; i < Storage.historyLimit + 5; i++) {
+    test('History keeps every run, newest first', () async {
+      for (var i = 0; i < 150; i++) {
         await leaderboard.recordRun(_result(score: i + 1));
       }
-      expect(leaderboard.history, hasLength(Storage.historyLimit));
-      expect(leaderboard.history.first.score, Storage.historyLimit + 5);
+      expect(leaderboard.history, hasLength(150));
+      expect(leaderboard.history.first.score, 150);
+      expect(leaderboard.history.last.score, 1);
+    });
+
+    test('History survives a reload in its compact form', () async {
+      await leaderboard.recordRun(_result(score: 42));
+      final reopened = Storage(await SharedPreferences.getInstance());
+      expect(reopened.history.single.score, 42);
+    });
+
+    test('an older map-per-run History still reads', () async {
+      SharedPreferences.setMockInitialValues({
+        'runHistory':
+            '[{"game":"quickMath","difficulty":"easy","score":9,'
+            '"durationMs":1000,"at":0,"best":true}]',
+      });
+      final old = Storage(await SharedPreferences.getInstance());
+      expect(old.history.single.score, 9);
+      expect(old.history.single.isBest, isTrue);
     });
   });
 
@@ -88,6 +106,20 @@ void main() {
       expect((api.name, api.tag), ('NEON_FOX', 420));
       expect(leaderboard.savedName, 'NEON_FOX');
       expect(leaderboard.displayName, 'NEON_FOX#0420');
+    });
+
+    test('every name taken is kept in an on-device log', () async {
+      await leaderboard.claimName('NEON_FOX', 420);
+      api.online = false;
+      await leaderboard.claimName('FAILS', 1); // offline: not taken
+      api.online = true;
+      await leaderboard.claimName('AXON', 7);
+      await leaderboard.deleteMyData();
+      expect(
+        [for (final n in storage.nameLog) (n.name, n.tag)],
+        [('NEON_FOX', 420), ('AXON', 7)],
+        reason: 'only names the server accepted; kept after deleting data',
+      );
     });
 
     test('rejects invalid, taken, and offline attempts', () async {

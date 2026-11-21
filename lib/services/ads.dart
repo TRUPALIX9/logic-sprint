@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../models/device_log.dart';
+
 /// AdMob banner + rewarded ads ("extra life" revive) + a rewarded
 /// interstitial (the Ranks "Refresh ▶"), gated behind Google UMP consent.
 ///
@@ -27,6 +29,12 @@ class Ads {
       'ca-app-pub-3940256099942544/5354046379';
   static const iosTestRewardedInterstitial =
       'ca-app-pub-3940256099942544/6978759866';
+
+  /// Called for every ad shown (main wires it to the on-device ad log).
+  void Function(AdKind kind, AdOutcome outcome)? onEvent;
+
+  /// A banner impression (from [AdBanner]).
+  void bannerShown() => onEvent?.call(AdKind.banner, AdOutcome.shown);
 
   /// True once consent allows ad requests and the SDK is initialized.
   final ValueNotifier<bool> ready = ValueNotifier(false);
@@ -118,7 +126,12 @@ class Ads {
   void showRewarded({
     required VoidCallback onReward,
     required VoidCallback onDone,
-  }) => _revive.show(onReward: onReward, onDone: onDone);
+    AdKind kind = AdKind.revive,
+  }) => _revive.show(
+    onReward: onReward,
+    onDone: onDone,
+    onShown: (outcome) => onEvent?.call(kind, outcome),
+  );
 
   /// Loads the Ranks refresh ad if none is ready (call when Ranks opens).
   void preloadRefresh() {
@@ -131,7 +144,11 @@ class Ads {
   void showRefresh({
     required VoidCallback onReward,
     required VoidCallback onDone,
-  }) => _refresh.show(onReward: onReward, onDone: onDone);
+  }) => _refresh.show(
+    onReward: onReward,
+    onDone: onDone,
+    onShown: (outcome) => onEvent?.call(AdKind.refresh, outcome),
+  );
 
   Future<void> _gatherConsent() {
     final done = Completer<void>();
@@ -215,12 +232,19 @@ class _RewardedSlot {
     }
   }
 
-  void show({required VoidCallback onReward, required VoidCallback onDone}) {
+  /// [onShown] reports only an ad that actually appeared: rewarded, or
+  /// closed without the reward. Not loaded or failed to show: not called.
+  void show({
+    required VoidCallback onReward,
+    required VoidCallback onDone,
+    void Function(AdOutcome outcome)? onShown,
+  }) {
     final ad = _ad;
     if (ad == null) {
       onDone();
       return;
     }
+    var failedToShow = false;
     _ad = null;
     loaded.value = false;
     void after(VoidCallback then) {
@@ -230,26 +254,39 @@ class _RewardedSlot {
     }
 
     final outcome = RewardOutcome(
-      onReward: () => after(onReward),
-      onDone: () => after(onDone),
+      onReward: () {
+        onShown?.call(AdOutcome.rewarded);
+        after(onReward);
+      },
+      onDone: () {
+        if (!failedToShow) {
+          onShown?.call(AdOutcome.noReward);
+        }
+        after(onDone);
+      },
     );
+    void failed() {
+      failedToShow = true;
+      outcome.failed();
+    }
+
     switch (ad) {
       case RewardedInterstitialAd():
         ad
           ..fullScreenContentCallback = FullScreenContentCallback(
             onAdDismissedFullScreenContent: (_) => outcome.dismissed(),
-            onAdFailedToShowFullScreenContent: (_, _) => outcome.failed(),
+            onAdFailedToShowFullScreenContent: (_, _) => failed(),
           )
           ..show(onUserEarnedReward: (_, _) => outcome.rewarded());
       case RewardedAd():
         ad
           ..fullScreenContentCallback = FullScreenContentCallback(
             onAdDismissedFullScreenContent: (_) => outcome.dismissed(),
-            onAdFailedToShowFullScreenContent: (_, _) => outcome.failed(),
+            onAdFailedToShowFullScreenContent: (_, _) => failed(),
           )
           ..show(onUserEarnedReward: (_, _) => outcome.rewarded());
       default:
-        outcome.failed();
+        failed();
     }
   }
 }

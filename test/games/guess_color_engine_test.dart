@@ -99,7 +99,7 @@ void main() {
       expect(reordered, isNotEmpty);
     });
 
-    test('countdown starts at 3.0 s on word 13 and floors at 1.0 s', () {
+    test('countdown starts at 3.0 s on word 13 and floors at 1.6 s', () {
       expect(GuessColorEngine.timeLimitFor(12), isNull);
       expect(
         GuessColorEngine.timeLimitFor(13),
@@ -107,10 +107,21 @@ void main() {
       );
       expect(
         GuessColorEngine.timeLimitFor(14),
-        const Duration(milliseconds: 2950),
+        const Duration(milliseconds: 2975),
       );
-      expect(GuessColorEngine.timeLimitFor(53), const Duration(seconds: 1));
-      expect(GuessColorEngine.timeLimitFor(400), const Duration(seconds: 1));
+      // Around a 700-point run there is still about 2 s per word.
+      expect(
+        GuessColorEngine.timeLimitFor(50),
+        const Duration(milliseconds: 2075),
+      );
+      expect(
+        GuessColorEngine.timeLimitFor(69),
+        const Duration(milliseconds: 1600),
+      );
+      expect(
+        GuessColorEngine.timeLimitFor(400),
+        const Duration(milliseconds: 1600),
+      );
     });
 
     test('rule is COLOR before word 21', () {

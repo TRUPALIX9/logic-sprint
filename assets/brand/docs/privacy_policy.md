@@ -6,7 +6,7 @@ This policy explains how LogicSprint: Brain Games ("LogicSprint", "the app") han
 
 ## Information stored on your device
 
-Your high scores and their run times, your run history, your settings (sound, vibration), your display name, and a cached copy of the leaderboard are stored on your device. Your run history never leaves your device, and uninstalling the app deletes all of this. You can clear your high scores at any time in **Settings → Reset High Scores**.
+Your high scores and their run times, your run history, your settings (sound, vibration), your display name, a list of the display names you have used, a count of which ads you have seen in the app (banner, extra life, hearts, leaderboard refresh) and whether you watched them through, and a cached copy of the leaderboard are stored on your device. Your run history, the list of names and the ad counts never leave your device, and uninstalling the app deletes all of this. You can clear your high scores at any time in **Settings → Reset High Scores**.
 
 ## Your player profile and the global leaderboard
 

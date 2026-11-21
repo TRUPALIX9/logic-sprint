@@ -1,0 +1,962 @@
+<title>Logic Sprint Upgrades Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: same Circuit Noir system as the app and the Angle Sense plan. Index of seven
+   workstreams up top, then one section per stream: problem found → requirement → how,
+   each with a working demo where motion or maths is the point. Dark only, like the app. */
+:root {
+  color-scheme: dark;
+  --bg:#000; --well:#04080C; --surface:#0A1016; --surface2:#111A23; --line:#1E2A36; --trace:#0A131B;
+  --text:#EAF2F7; --muted:#8C9DAD; --dim:#667A8C;
+  --teal:#34C29A; --blue:#3B7BF0; --aqua:#2BB3D6; --violet:#8C8CFF; --gold:#F5C542; --coral:#FF5A6E;
+  --display:'Rajdhani','Arial Narrow',sans-serif; --body:'IBM Plex Sans','Helvetica Neue',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding-block:28px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:72px}
+h1,h2,h3{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.03em;line-height:1;margin:0;text-wrap:balance}
+h1{font-size:clamp(40px,6.5vw,66px)} h2{font-size:34px} h3{font-size:20px}
+p{margin:0;max-width:68ch}
+.mono{font-family:var(--mono);font-weight:500;letter-spacing:.12em;font-size:11px;color:var(--muted);text-transform:uppercase}
+.teal{color:var(--teal)}.gold{color:var(--gold)}.coral{color:var(--coral)}.muted{color:var(--muted)}.aqua{color:var(--aqua)}.violet{color:var(--violet)}
+code{font-family:var(--mono);font-size:12.5px;color:var(--aqua);background:var(--surface2);padding:1px 5px;overflow-wrap:anywhere}
+.cut{clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.cut-sm{clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.cut-lg{clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)}
+.box{background:var(--line);padding:1px}.box>.in{background:var(--surface);padding:18px;display:flex;flex-direction:column;gap:12px;height:100%;box-sizing:border-box}
+.lede{font-size:17px}
+.sec{display:flex;flex-direction:column;gap:22px}
+.sec-head{display:flex;flex-direction:column;gap:10px}
+.sec-head p{color:var(--muted)}
+.tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;background:var(--surface2);color:var(--muted);white-space:nowrap}
+.pfh{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pfh .in h3{font-size:15px;letter-spacing:.08em}
+.pfh .k1 h3{color:var(--coral)} .pfh .k2 h3{color:var(--gold)} .pfh .k3 h3{color:var(--teal)}
+.pfh ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:6px}
+.pfh ul b{color:var(--text);font-weight:600}
+.split{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
+.tbl{border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td code{word-break:break-word}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--surface)}
+td{background:var(--bg)} tr:last-child td{border-bottom:0}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+a.jump{color:var(--text);text-decoration:none;font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:17px;letter-spacing:.03em}
+a.jump:hover{color:var(--teal)}
+.btn{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:16px;border:0;cursor:pointer;padding:10px 16px;color:#000;background:var(--teal)}
+.btn.alt{background:var(--surface2);color:var(--text)}
+.btn:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* phone */
+.phone{width:100%;max-width:340px;background:var(--line);padding:1px;margin:0 auto}
+.phone>.screen{background:var(--bg);position:relative;overflow:hidden;display:flex;flex-direction:column}
+.pbar{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.pbar .t{flex:1;font-family:var(--display);font-weight:700;font-size:20px;text-transform:uppercase}
+
+/* A: revive */
+.stage{height:420px;position:relative;background:var(--well);overflow:hidden}
+.ship{position:absolute;left:50%;bottom:60px;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:34px solid var(--blue);transform:translateX(-50%)}
+.rock{position:absolute;width:26px;height:26px;background:#3A4652;clip-path:polygon(30% 0,80% 8%,100% 50%,78% 95%,25% 100%,0 55%)}
+.scrim{position:absolute;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none}
+.digit{font-family:var(--mono);font-weight:700;font-size:120px;line-height:1;color:var(--teal)}
+.digit.pop{animation:pop 1s cubic-bezier(.2,.8,.2,1) both}
+@keyframes pop{0%{transform:scale(1.6);opacity:0}25%{transform:scale(1);opacity:1}80%{opacity:1}100%{opacity:.15;transform:scale(.9)}}
+.offer{position:absolute;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.ring{width:96px;height:96px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cmp button.on{background:var(--teal);color:#000}
+
+/* B: privacy */
+.pv-list{display:flex;flex-direction:column;gap:10px}
+.pv-card{background:var(--surface);padding:12px 12px 12px 14px;display:flex;flex-direction:column;gap:8px;position:relative;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.pv-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--k)}
+.pv-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.pv-head h4{margin:0;font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:17px;letter-spacing:.04em;color:var(--k)}
+.pv-head b{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:500}
+.pv-note{font-size:12.5px;color:var(--muted);line-height:1.4}
+.pv-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:26px}
+.chip{font-family:var(--mono);font-size:11px;padding:5px 8px;background:var(--surface2);color:var(--text);animation:land .45s cubic-bezier(.2,.8,.2,1) both}
+.pv-card.k-never .chip{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--coral)}
+@keyframes land{from{transform:translateY(-10px);opacity:0}to{transform:none;opacity:1}}
+.pv-sum{display:flex;flex-direction:column;gap:4px}
+.pv-sum h4{margin:0;font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:22px;letter-spacing:.03em}
+.pv-sum p{font-size:13px;color:var(--muted)}
+.pv-full{display:flex;flex-direction:column;gap:12px;font-size:13px;color:var(--muted)}
+.pv-full h4{margin:0 0 2px;font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:16px;color:var(--teal);letter-spacing:.04em}
+.seg span{cursor:pointer}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--line);padding:1px}
+.seg>div{display:grid;grid-template-columns:1fr 1fr;background:var(--surface)}
+.seg span{font-family:var(--display);font-weight:700;text-transform:uppercase;text-align:center;padding:8px 0;color:var(--dim);font-size:15px}
+.seg span.on{color:var(--teal);outline:1px solid var(--teal);outline-offset:-2px;background:#0B1F1A}
+
+/* C: history */
+.hist{display:flex;flex-direction:column;gap:10px;padding:12px 14px}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);padding:8px 10px}
+.search input{flex:1;background:transparent;border:0;color:var(--text);font-family:var(--mono);font-size:13px;min-width:0}
+.search input:focus{outline:none}
+.fchips{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;cursor:grab;touch-action:pan-x;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent);margin-right:-14px;padding-right:28px}
+.fchips::-webkit-scrollbar{display:none}
+.fchips.dragging{cursor:grabbing}
+.fchips button{flex:0 0 auto}
+.fchips button{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:8px 10px;border:0;background:var(--surface2);color:var(--muted);cursor:pointer;white-space:nowrap;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.fchips button.on{background:var(--teal);color:#000}
+.hsort{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:0 12px;border:0;background:var(--surface2);color:var(--teal);cursor:pointer;white-space:nowrap;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.hstats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.hstats div{background:var(--surface);padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.hstats b{font-family:var(--mono);font-size:16px;font-variant-numeric:tabular-nums}
+.hrows{display:flex;flex-direction:column;gap:8px;max-height:330px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.hrows::-webkit-scrollbar{display:none}
+.hrow{display:grid;grid-template-columns:36px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 12px;background:var(--surface);clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.hrow .gt{width:36px;height:36px;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:16px;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.hrow .n{font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .hrow .d{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:3px}
+.hrow .best{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;background:var(--blue);color:#000;padding:1px 5px}
+.hrow .s{font-family:var(--mono);font-weight:700;font-size:17px;font-variant-numeric:tabular-nums;text-align:right}
+.empty{color:var(--muted);font-size:13px;padding:20px 0;text-align:center}
+
+/* D: rating */
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+.sl{display:grid;grid-template-columns:110px minmax(0,1fr) 48px;gap:10px;align-items:center}
+.sl label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sl input{width:100%;accent-color:var(--teal)}
+.sl output{font-family:var(--mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets button{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:6px 9px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}
+.res{display:flex;flex-direction:column;gap:12px}
+.big{font-family:var(--mono);font-weight:700;font-size:56px;line-height:1;font-variant-numeric:tabular-nums}
+.badge{font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:22px;letter-spacing:.04em;padding:8px 12px;display:inline-block}
+.dist{width:100%;height:auto;display:block;background:var(--well)}
+.formula{font-family:var(--mono);font-size:13px;background:var(--well);border:1px solid var(--line);padding:14px;color:var(--text);line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* E: share */
+.share{display:grid;grid-template-columns:340px minmax(0,1fr);gap:28px;align-items:start}
+.share .phone{margin:0}
+.pcard{display:flex;flex-direction:column;gap:10px}
+.pc-name{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:.03em;line-height:1}
+.pc-name span{color:var(--dim)}
+.pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pc-tile{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:4px;border-left:3px solid var(--c,var(--line));min-width:0}
+.pc-tile .mono{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-tile b{font-family:var(--mono);font-size:20px;color:var(--c,var(--text));font-variant-numeric:tabular-nums;line-height:1.1}
+.pc-score{--c:var(--teal);background:rgba(52,194,154,.1)}
+.pc-score b{font-family:var(--display);font-size:24px;text-transform:uppercase}
+.t10{display:flex;flex-direction:column;gap:10px;padding:14px}
+.gsw{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:6px}
+.gsw button.arr{height:52px;border:0;background:var(--surface2);color:var(--text);font-family:var(--mono);font-size:20px;cursor:pointer;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.gsw button.arr:focus-visible,.dtabs button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.gname{height:52px;display:flex;align-items:center;justify-content:center;gap:10px;overflow:hidden;position:relative;background:var(--surface);border-bottom:3px solid var(--acc,var(--teal))}
+.gname .in{display:flex;align-items:center;gap:10px;transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s}
+.gname .ic{width:28px;height:28px;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:15px;clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
+.gname b{font-family:var(--display);font-weight:700;font-size:20px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.gdots{display:flex;justify-content:center;gap:6px}
+.gdots i{width:6px;height:6px;background:var(--line);transition:background .2s,width .2s}
+.gdots i.on{width:18px;background:var(--acc,var(--teal))}
+.dtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.dtabs button{background:var(--surface);border:0;color:var(--dim);font-family:var(--display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.05em;padding:9px 0;cursor:pointer}
+.dtabs button.on{color:#000;background:var(--acc,var(--teal))}
+.dtabs.one{grid-template-columns:1fr}.dtabs.one button{color:var(--muted);cursor:default}
+.t10rows{display:flex;flex-direction:column;gap:5px;min-height:420px}
+.t10row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--surface);padding:9px 12px;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);animation:t10in .42s cubic-bezier(.2,.8,.2,1) both}
+.t10row .rk{font-family:var(--mono);font-weight:700;font-size:14px;color:var(--muted)}
+.t10row.first .rk{color:var(--acc)}
+.t10row .nm{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t10row .nm span{color:var(--dim);font-family:var(--mono);font-size:11px;font-weight:500}
+.t10row .sc{font-family:var(--mono);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;text-align:right}
+.t10row .sc small{display:block;font-size:10px;color:var(--dim);font-weight:500}
+.t10row.me{outline:1px solid var(--teal);outline-offset:-1px;background:rgba(52,194,154,.08)}
+@keyframes t10in{from{opacity:0;transform:translateX(var(--from,24px))}to{opacity:1;transform:none}}
+.pstats{display:flex;flex-direction:column;gap:8px}
+.ptot{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.ptot div{background:var(--surface);padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.ptot b{font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums}
+.pg{display:grid;grid-template-columns:3px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--surface);padding:8px 10px 8px 0}
+.pg i{align-self:stretch}
+.pg .n{font-family:var(--display);font-weight:700;font-size:15px;text-transform:uppercase;line-height:1.1}
+.pg .m{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.04em;margin-top:2px}
+.pg .r{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.pg .r b{display:block;font-size:16px}
+.pg .r span{font-size:10px;color:var(--teal);letter-spacing:.04em}
+#pgames{display:flex;flex-direction:column;gap:6px}
+.shrow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.shrow button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 2px;background:var(--surface2);border:0;color:var(--text);cursor:pointer;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.shrow button b{font-family:var(--display);font-size:15px;text-transform:uppercase;letter-spacing:.04em}
+.shrow button span{font-family:var(--mono);font-size:8.5px;color:var(--muted);letter-spacing:.04em;white-space:nowrap}
+.shrow button.on{background:var(--teal);color:#000}.shrow button.on span{color:#0A1016}
+.sendhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sendrow{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;align-items:start}
+.story{width:100%;max-width:260px;aspect-ratio:9/16;background:#000;position:relative;overflow:hidden;border:1px solid var(--line);display:flex;flex-direction:column;padding:18px 16px;box-sizing:border-box;gap:8px}
+.story .grid-bg{position:absolute;inset:0;background-image:linear-gradient(var(--trace) 1px,transparent 1px),linear-gradient(90deg,var(--trace) 1px,transparent 1px);background-size:22px 22px;pointer-events:none}
+.story>*{position:relative}
+.story .wm{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.06em}
+.story .top{font-family:var(--display);font-weight:700;font-size:40px;line-height:.95;text-transform:uppercase}
+.story .games{display:flex;flex-direction:column;gap:4px}
+.story.sq .games{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.story.sq{padding:12px 12px;gap:4px}
+.story.sq .top{font-size:22px}
+.story.sq .nm{font-size:15px!important}
+.story.sq .wm{font-size:15px}
+.story.sq .mono{font-size:9px}
+.story.sq .gp{display:none}
+.story.sq .gcard .gn{white-space:normal;font-size:12px}
+.story.sq .gcard{padding:6px 6px 6px 0}
+.story.sq .foot{flex-direction:row;justify-content:space-between}
+.story .gcard{display:grid;grid-template-columns:3px minmax(0,1fr) auto;gap:7px;align-items:center;background:var(--surface);padding:5px 7px 5px 0}
+.story .gcard i{align-self:stretch}
+.story .gcard .gn{font-family:var(--display);font-weight:700;font-size:13px;text-transform:uppercase;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.story .gcard .gp{font-family:var(--mono);font-size:8.5px;color:var(--muted);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.story .gcard b{font-family:var(--mono);font-size:14px}
+.story .foot{margin-top:auto;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;display:flex;flex-direction:column;gap:3px}
+.opts{display:flex;flex-direction:column;gap:12px}
+.toggle{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+.toggle input{accent-color:var(--teal);width:18px;height:18px}
+
+/* G: splash */
+.splash2{height:450px;background:#000;position:relative;overflow:hidden}
+.splash2 canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.sp-top{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:6px}
+.sp-bot{position:absolute;left:0;right:0;bottom:26px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.splash2 .word span{opacity:0;transform:translateY(12px)}
+.splash2.run .word span{animation:rise .5s cubic-bezier(.2,.8,.2,1) forwards}
+.splash2 .pbar2 div{transition:width .35s cubic-bezier(.4,0,.2,1)}
+.splash{height:420px;background:#000;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;overflow:hidden}
+.splash svg.traces{position:absolute;inset:0;width:100%;height:100%}
+.traces path{fill:none;stroke:var(--line);stroke-width:1.5;stroke-dasharray:400;stroke-dashoffset:400}
+.traces path.lit{stroke:var(--teal)}
+.run .traces path{animation:draw 1.1s ease-out forwards}
+.run .traces path:nth-child(2n){animation-delay:.15s}.run .traces path:nth-child(3n){animation-delay:.3s}
+@keyframes draw{to{stroke-dashoffset:0}}
+.word{font-family:var(--display);font-weight:700;font-size:44px;letter-spacing:.04em;display:flex;position:relative}
+.word span{opacity:0;transform:translateY(12px)}
+.run .word span{animation:rise .5s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.icons{display:flex;gap:12px;position:relative}
+.icons i{width:26px;height:26px;opacity:0;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.run .icons i{animation:rise .4s ease-out forwards}
+.pbar2{width:160px;height:3px;background:var(--surface2);position:relative;overflow:hidden}
+.pbar2 div{position:absolute;inset:0 auto 0 0;width:0;background:var(--teal)}
+.run .pbar2 div{animation:fill 1.6s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes fill{60%{width:70%}to{width:100%}}
+.ldtxt{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--dim);height:12px;position:relative}
+
+/* lanes */
+.lanes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.lane .in h3{font-size:17px}
+.lane ol{margin:0;padding-left:18px;color:var(--muted);font-size:13.5px;display:flex;flex-direction:column;gap:5px}
+.lane .hd{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.warn{border:1px solid var(--coral);background:rgba(255,90,110,.1);padding:12px 14px;font-size:14px}
+.warn b{color:var(--coral)}
+.decisions{display:flex;flex-direction:column;gap:8px}
+.decisions div{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;padding:12px 14px;background:var(--surface);border:1px solid var(--line)}
+.decisions b{font-family:var(--display);text-transform:uppercase;font-size:16px;letter-spacing:.03em}
+.decisions span{color:var(--muted);font-size:14px}
+
+@media (max-width:900px){.split,.calc,.share{grid-template-columns:minmax(0,1fr)}.share .phone{margin:0 auto}.lanes{grid-template-columns:repeat(2,minmax(0,1fr))}.pfh{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:560px){.sendrow{grid-template-columns:minmax(0,1fr)}.sendrow .story{margin:0 auto}.lanes{grid-template-columns:minmax(0,1fr)}.decisions div{grid-template-columns:minmax(0,1fr);gap:4px}h2{font-size:28px}.sl{grid-template-columns:90px minmax(0,1fr) 40px}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<section class="sec">
+  <span class="mono">Logic Sprint · next release · plan</span>
+  <h1>Ten <span class="teal">upgrades</span></h1>
+  <p class="lede">A fairer comeback after a revive, an in-app privacy page that shows rather than tells, a real History page, a 0–100 rating that one lucky game can't inflate, a shareable score card for Stories, a motion pass, and a loading screen with something to watch. Each section below gives what's wrong today, what we need and how to build it. Demos are working prototypes with example data.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Stream</th><th>Problem found today</th><th>Size</th><th>Backend?</th><th>Touches Angle Sense files?</th></tr></thead>
+    <tbody>
+      <tr><td><a class="jump" href="#revive">A · Revive comeback</a></td><td>After the ad or heart, play restarts that same frame. Your thumb isn't on the screen yet.</td><td class="num">S</td><td>No</td><td><code>round_engine.dart</code> (shared base class)</td></tr>
+      <tr><td><a class="jump" href="#privacy">B · Privacy at a glance</a></td><td>In-app policy is a wall of text; the website has the "where your data lives" view.</td><td class="num">S–M</td><td>No</td><td>No</td></tr>
+      <tr><td><a class="jump" href="#history">C · History page</a></td><td>100 runs stored, 30 shown inside Profile, no filters, revives not recorded.</td><td class="num">M</td><td>No</td><td>No</td></tr>
+      <tr><td><a class="jump" href="#rating">D · Sprint Score</a></td><td>Only a Top 10 per board. Most players never see where they stand.</td><td class="num">M–L</td><td>Yes (view + RPC)</td><td><code>schema.sql</code>, <code>ranks_tab.dart</code></td></tr>
+      <tr><td><a class="jump" href="#share">E · Trophy case + share card</a></td><td>No way to share anything. No share package in the app.</td><td class="num">M</td><td>No</td><td><code>home_tab</code>/<code>profile_tab</code> entry points</td></tr>
+      <tr><td><a class="jump" href="#motion">F · Motion pass</a></td><td>Results, bests and tab changes jump without transitions.</td><td class="num">S–M</td><td>No</td><td><code>result_screen.dart</code></td></tr>
+      <tr><td><a class="jump" href="#flow">H · Heart → continue</a></td><td>A heart earned on the Result screen can't save the run you just lost.</td><td class="num">M</td><td>No</td><td><code>round_engine.dart</code></td></tr>
+      <tr><td><a class="jump" href="#flow">I · Clean screenshots</a></td><td>Screenshots show the ad banner and not who you are.</td><td class="num">S</td><td>No</td><td>No</td></tr>
+      <tr><td><a class="jump" href="#top10">J · Top 10 that scales</a></td><td>The game picker is one row of equal segments; with 6–7 games the names stop fitting.</td><td class="num">M</td><td>No</td><td><code>ranks_tab.dart</code></td></tr>
+      <tr><td><a class="jump" href="#splash">G · Loading screen</a></td><td>Static logo plus a progress bar that doesn't measure anything.</td><td class="num">S</td><td>No</td><td>No</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===================== A ===================== -->
+<section class="sec" id="revive">
+  <div class="sec-head"><span class="mono">A · Revive comeback</span><h2>Three seconds to get ready</h2></div>
+  <div class="split">
+    <div class="pfh" style="grid-template-columns:minmax(0,1fr)">
+      <div class="box cut k1"><div class="in cut"><h3>Problem found</h3><ul>
+        <li><code>_watchAd()</code> passes <code>onReward: _engine.revive</code>, so the run is <b>live the moment the ad closes</b>. In Rocket Launch the storm is already moving before you've found the ship.</li>
+        <li>Heart revives do the same.</li>
+        <li>The 5 s offer ring is fine, but there's no breathing room on the other side of it.</li></ul></div></div>
+      <div class="box cut k2"><div class="in cut"><h3>Requirement</h3><ul>
+        <li>After any revive: a <b>3-second "get ready" countdown</b>. A dark scrim fades out slowly while <b>3 · 2 · 1</b> pops in the middle, then play resumes.</li>
+        <li>The run clock stays stopped during it (it doesn't count toward time-based games).</li>
+        <li>Pause or leaving the app during the countdown restarts it from 3. Reduced motion: digits only, no scale.</li>
+        <li>A light haptic tick on each number, a stronger one on "go".</li></ul></div></div>
+      <div class="box cut k3"><div class="in cut"><h3>How</h3><ul>
+        <li><code>RoundEngine.revive()</code> moves to a new <code>RunState.resuming</code> instead of <code>playing</code>; stopwatch stays stopped. New <code>engine.go()</code> starts it.</li>
+        <li><code>RoundScreen</code> shows a <code>GetReady</code> overlay on <code>resuming</code>: one 3 s <code>AnimationController</code> drives scrim opacity 0.85 → 0 (ease-out) and swaps the digit every second; on complete calls <code>go()</code>.</li>
+        <li>Games need no change: <code>onRevive()</code> already clears danger; <code>onResume()</code> work moves to <code>go()</code>.</li>
+        <li>Tests with <code>fake_async</code>: elapsed time unchanged across the countdown; pause at 1.5 s restarts at 3.</li></ul></div></div>
+    </div>
+    <div>
+      <div class="phone cut-lg"><div class="screen cut-lg">
+        <div class="pbar"><span class="t">Rocket Launch</span><span class="mono">Score <b class="teal">740</b></span></div>
+        <div class="stage" id="stage">
+          <div class="ship" id="ship"></div>
+          <div class="offer" id="offer"><span class="mono">Come back?</span>
+            <svg class="ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="#1E2A36" stroke-width="6"/><circle id="ringArc" cx="50" cy="50" r="44" fill="none" stroke="#34C29A" stroke-width="6" stroke-dasharray="276.5" stroke-dashoffset="0" transform="rotate(-90 50 50)"/><text x="50" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-weight="700" font-size="28" fill="#EAF2F7">5</text></svg>
+            <button class="btn cut-sm" id="watch">▶ Watch ad</button></div>
+          <div class="scrim" id="scrim" hidden><div class="digit" id="digit">3</div><span class="mono" id="rdy">Get ready</span></div>
+        </div>
+      </div></div>
+      <div class="cmp" style="max-width:340px;margin:12px auto 0">
+        <button class="btn alt cut-sm on" id="modeNew">With countdown</button>
+        <button class="btn alt cut-sm" id="modeOld">Today</button>
+      </div>
+      <p class="muted" style="font-size:13px;text-align:center;margin:8px auto 0">Tap Watch ad (the ad is skipped here) and compare.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== B ===================== -->
+<section class="sec" id="privacy">
+  <div class="sec-head"><span class="mono">B · Privacy at a glance</span><h2>Bring the website's data map into the app</h2>
+  <p>The site's <code>/privacy</code> page opens with "Where your data lives": every piece of data as a chip that sorts itself into Your phone, Leaderboard, Ads or Never collected as you scroll. The app's Privacy screen only renders the markdown. Put the same map in the app with a switch between the two views.</p></div>
+  <div class="split">
+    <div class="pfh" style="grid-template-columns:minmax(0,1fr)">
+      <div class="box cut k2"><div class="in cut"><h3>Requirement</h3><ul>
+        <li>Privacy opens on <b>At a glance</b>; a segmented switch swaps to <b>Full policy</b> (today's text, unchanged).</li>
+        <li>Layout: a one-line summary, then one card per place (Your phone, Leaderboard, Ads, Never collected), each with an item count, a one-line note and its items. Items land one by one when the page opens; Never collected items are struck through.</li>
+        <li>Same buckets and wording as the website so the two never disagree. Settings → Delete my data linked from the Leaderboard bucket.</li></ul></div></div>
+      <div class="box cut k3"><div class="in cut"><h3>How</h3><ul>
+        <li>New <code>assets/brand/docs/privacy_map.json</code>: buckets and chips with icons. Both the website and the app read it, so it's written once.</li>
+        <li><code>PrivacyScreen</code> gets a <code>SegmentedControl</code> and a <code>DataMap</code> widget; chips use <code>AnimatedSlide</code> + <code>AnimatedOpacity</code> with a 60 ms stagger (same as rank rows).</li>
+        <li>Golden test for both tabs.</li></ul></div></div>
+    </div>
+    <div class="phone cut-lg"><div class="screen cut-lg">
+      <div class="pbar"><span class="t">Privacy</span></div>
+      <div class="hist">
+        <div class="seg cut"><div class="cut"><span class="on cut" id="pvTabA" role="button" tabindex="0">At a glance</span><span class="cut" id="pvTabF" role="button" tabindex="0">Full policy</span></div></div>
+        <div id="pvGlance" style="display:flex;flex-direction:column;gap:12px">
+          <div class="pv-sum"><span class="mono">Where your data lives</span><h4>Most of it stays on your phone</h4><p>Two things go to the leaderboard and one to ads. The rest is never collected.</p></div>
+          <div class="pv-list" id="pvB"></div>
+          <button class="btn alt cut-sm" id="pvSort">Replay</button>
+        </div>
+        <div class="pv-full" id="pvFull" hidden>
+          <span class="mono">Example layout · text comes from privacy_policy.md</span>
+          <div><h4>What we collect</h4>No account. An anonymous player profile is made the first time the app talks to the leaderboard.</div>
+          <div><h4>The leaderboard</h4>Your display name, its 4-digit code and your best score per game. Delete them any time in Settings.</div>
+          <div><h4>Ads</h4>Google AdMob shows banners and optional videos, and asks for consent where the law requires it.</div>
+          <div><h4>On your phone</h4>Scores, history, hearts and settings. Uninstalling the app removes them.</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ===================== C ===================== -->
+<section class="sec" id="history">
+  <div class="sec-head"><span class="mono">C · History page</span><h2>Every run, findable</h2></div>
+  <div class="split">
+    <div class="pfh" style="grid-template-columns:minmax(0,1fr)">
+      <div class="box cut k1"><div class="in cut"><h3>Problem found</h3><ul>
+        <li><code>Storage.historyLimit = 100</code>; <code>ProfileTab</code> shows <b>30</b> at the bottom of a long scroll.</li>
+        <li><code>RunRecord</code> has no revive count and no "how far" (level, question) so you can't filter or compare those.</li>
+        <li>No search, filter or sort.</li></ul></div></div>
+      <div class="box cut k2"><div class="in cut"><h3>Requirement</h3><ul>
+        <li>A <b>separate History screen</b> (Profile shows the last 5 and "See all").</li>
+        <li>Search box: game name, a score ("&gt;500"), or a date ("Nov", "today").</li>
+        <li>Filter chips: game, difficulty, period (Today · 7 days · 30 days · All), Bests only, No revives. Each set is one line you swipe sideways, with no scroll bar and a fade at the edge to show there's more.</li>
+        <li>A sort button beside the search (Newest · Highest · Oldest · Lowest, plus Longest for timed games). The run count for the current filters sits at the top right.</li>
+        <li>Tap a run to share it as a card (stream E).</li></ul></div></div>
+      <div class="box cut k3"><div class="in cut"><h3>How</h3><ul>
+        <li>Raise <code>historyLimit</code> to <b>1000</b> (about 100 KB in prefs) and add <code>revives</code> and <code>reached</code> to <code>RunRecord</code>; old records read as 0 / null.</li>
+        <li><code>HistoryQuery</code> (pure Dart) parses search text and applies filters; unit-tested apart from the UI.</li>
+        <li><code>ListView.builder</code> grouped by day with sticky headers.</li></ul></div></div>
+    </div>
+    <div class="phone cut-lg"><div class="screen cut-lg">
+      <div class="pbar"><span class="t">History</span><span class="mono"><b id="hs1" style="color:var(--text);font-size:13px">0</b> runs</span></div>
+      <div class="hist">
+        <div style="display:flex;gap:8px">
+          <label class="search" style="flex:1;min-width:0"><span class="mono" aria-hidden="true">⌕</span><input id="hq" placeholder="Search: math, >500, today" aria-label="Search runs"></label>
+          <button class="hsort" id="hsort" aria-label="Change sort order">↓ Newest</button>
+        </div>
+        <div class="fchips" id="hgame"></div>
+        <div class="fchips" id="hper"></div>
+        <div class="hrows" id="hrows"></div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ===================== D ===================== -->
+<section class="sec" id="rating">
+  <div class="sec-head"><span class="mono">D · Sprint Score</span><h2>A 0–100 rating that one game can't game</h2>
+  <p>You asked for "you're a top 2% player" with a 0–100 score, hidden below 75, and fair across games. The trick is to never add raw scores across games (a Rocket Launch score is ten times a Guess Color score) and to make one spike count for less than steady skill.</p></div>
+
+  <div class="box cut"><div class="in cut">
+    <h3>The maths, in four steps</h3>
+<div class="formula">1. Per board (game × difficulty), your percentile among everyone on it:
+     p = 100 × (players below you + ½ × players tied with you) ÷ players on board
+   Mid-rank for ties, so a shared top score is never "100". Ordered exactly like the boards
+   (score, then time for Memory Lane and Quick Math).
+
+2. Per game: your best board for that game. Easy boards are capped at 90, Medium at 97,
+   so Hard is the only way to the very top. A game counts once you have ≥ 3 runs in it.
+
+3. Combine with shrinkage toward the middle (k = 2 imaginary games at 50):
+     R = (p₁ + p₂ + … + pₙ + 2 × 50) ÷ (n + 2)
+   One game at 99 → R = 66. Four games at 90 → R = 83. Spikes count, consistency counts more.
+
+4. Sprint Score = your R's percentile among all rated players (0–100).
+   "Top X%" = 100 − rating, rounded UP to 1, 2, 5, 10, 15, 20 or 25 so it never overclaims.
+   Shown only when rating ≥ 75, you have ≥ 2 rated games and ≥ 50 players are rated.</div>
+  </div></div>
+
+  <div class="calc">
+    <div class="box cut"><div class="in cut">
+      <h3>Try it</h3>
+      <p class="muted" style="font-size:13.5px">Set your percentile on each game (0 = not played). The population behind the rank is 2,000 simulated players, for illustration only.</p>
+      <div class="presets"><button data-p="99,0,0,0,0">One-game star</button><button data-p="88,84,90,86,0">All-rounder</button><button data-p="97,95,93,96,92">Elite</button><button data-p="60,55,70,0,0">Casual</button></div>
+      <div id="sliders" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div></div>
+    <div class="box cut"><div class="in cut res">
+      <div style="display:flex;gap:24px;align-items:flex-end;flex-wrap:wrap">
+        <div><span class="mono">Combined R</span><div class="big" id="rR">50</div></div>
+        <div><span class="mono">Sprint Score</span><div class="big teal" id="rS">50</div></div>
+      </div>
+      <div id="rBadge"></div>
+      <svg class="dist" id="dist" viewBox="0 0 400 130" aria-label="Distribution of combined R across simulated players"></svg>
+      <p class="muted" style="font-size:13px" id="rNote"></p>
+    </div></div>
+  </div>
+
+  <div class="pfh">
+    <div class="box cut k1"><div class="in cut"><h3>Problems to handle</h3><ul>
+      <li><b>46 players today</b> (site stats). "Top 2%" of 46 is one person, so the ≥ 50 rated-players gate keeps it hidden until it means something.</li>
+      <li>Boards with few players give jumpy percentiles: a board counts only with ≥ 30 players.</li>
+      <li>Impossible scores are already zeroed by <code>record_run</code>, so they can't push anyone's percentile.</li></ul></div></div>
+    <div class="box cut k2"><div class="in cut"><h3>Requirement</h3><ul>
+      <li>Rating and per-game percentiles on the Trophy case and the share card.</li>
+      <li>Below 75 or not enough data: show progress ("Rate 1 more game to get a rating") instead of a number.</li>
+      <li>Updates with the boards, once a day at 00:00 UTC.</li></ul></div></div>
+    <div class="box cut k3"><div class="in cut"><h3>How</h3><ul>
+      <li>Materialized view <code>player_ratings</code> using <code>count()</code> windows per board, refreshed by <code>pg_cron</code> at 00:00 UTC.</li>
+      <li>RPC <code>my_rating()</code> → rating, top %, per-game p, rated players. Fetched with the daily boards fetch.</li>
+      <li>Same formula in Dart for a unit test that cross-checks the SQL on fixtures.</li></ul></div></div>
+  </div>
+</section>
+
+<!-- ===================== E ===================== -->
+<section class="sec" id="share">
+  <div class="sec-head"><span class="mono">E · Profile stats + share</span><h2>Your stats live on Profile, one tap to share</h2>
+  <p>The stats card sits at the top of the Profile tab, so you see it every time: your name and code, Sprint Score and your best in every game. Under it comes the full breakdown: total runs, time played and revives, then each game's best with its board rank, top %, runs and best time. At the bottom sits one <b>Share stats</b> button. It opens a sheet where you pick how to share: Instagram Story, Instagram post, Snapchat or anything else, with a preview of the exact image.</p></div>
+  <div class="share">
+    <div class="phone cut-lg"><div class="screen cut-lg">
+      <div class="pbar"><span class="t">Profile</span><span class="mono">Settings</span></div>
+      <div class="hist" style="gap:12px">
+        <div class="pcard" id="pcard"></div>
+        <div class="pstats">
+          <div class="ptot"><div><span class="mono">Runs</span><b>120</b></div><div><span class="mono">Played</span><b>3h 12m</b></div><div><span class="mono">Revives</span><b>14</b></div></div>
+          <span class="mono">Every game</span>
+          <div id="pgames"></div>
+        </div>
+        <button class="btn cut-sm" id="shareOne" style="width:100%;font-size:18px;padding:14px 0">Share stats</button>
+        <span class="mono" style="color:var(--dim)">History ↓</span>
+      </div>
+    </div></div>
+    <div class="opts">
+      <div class="box cut"><div class="in cut">
+        <span class="mono">Tap “Share stats” on Profile → this sheet opens</span>
+        <div class="shrow" id="shrow">
+          <button data-to="story" class="on"><b>Story</b><span>Instagram</span></button>
+          <button data-to="post"><b>Post</b><span>Instagram</span></button>
+          <button data-to="snap"><b>Snap</b><span>Snapchat</span></button>
+          <button data-to="more"><b>More</b><span>WhatsApp, save…</span></button>
+        </div>
+        <div class="sendhead"><h3 id="sendTitle">Instagram Story</h3><span class="mono" id="sendSize">1080 × 1920</span></div>
+        <div class="sendrow">
+          <div class="story" id="story"><div class="grid-bg"></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+            <span class="mono">What goes on it</span>
+            <div id="shareOpts" style="display:flex;flex-direction:column;gap:9px"></div>
+          </div>
+        </div>
+        <p class="muted" style="font-size:13px" id="sendNote"></p>
+        <p class="muted" style="font-size:13px">With every share goes one line of text: <span class="mono" style="color:var(--text);letter-spacing:.04em;text-transform:none">Can you beat my LogicSprint score? logicsprint.trueorfalse.dev</span>. The same link is printed on the card, so it survives apps that drop the text.</p>
+      </div></div>
+      <div class="pfh" style="grid-template-columns:minmax(0,1fr)">
+        <div class="box cut k3"><div class="in cut"><h3>How</h3><ul>
+          <li>The Profile card and the shared image are the same Flutter widget. For sharing it's drawn off-screen in a <code>RepaintBoundary</code> at the target size and saved as a PNG with <code>toImage(pixelRatio:)</code>. No ads are ever in it.</li>
+          <li>One <b>Share stats</b> button on Profile opens a bottom sheet with the four choices and a live preview. <b>Story</b> and <b>Snap</b> use 1080 × 1920, <b>Post</b> 1080 × 1080 (games in two columns), <b>More</b> 1080 × 1920 through the system share sheet.</li>
+          <li><b>Phase 1:</b> all four buttons open the system share sheet (<code>share_plus</code>) with the right image, so it works now with no extra keys. Instagram and Snapchat appear in that sheet.</li>
+          <li><b>Phase 2:</b> Story jumps straight into Instagram Stories (needs a Meta app ID) and Snap straight into Snapchat's camera (Snap Kit Creative Kit, needs Snap's review). Each button falls back to the sheet if that app isn't installed.</li>
+          <li>Made on the phone, nothing uploaded, so the privacy policy doesn't change. The same Share row also appears on the Result screen and on History rows.</li></ul></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== F ===================== -->
+<section class="sec" id="motion">
+  <div class="sec-head"><span class="mono">F · Motion pass</span><h2>Where movement earns its place</h2>
+  <p>A short list, so the app doesn't turn busy. Every item respects reduce motion (<code>MediaQuery.disableAnimations</code>) the way the revive ring already does.</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Where</th><th>Now</th><th>Change</th><th>Duration</th></tr></thead>
+    <tbody>
+      <tr><td>Result screen score</td><td>Appears at once</td><td>Counts up from 0 with tabular digits; "New best" chip slides in when it passes the old best</td><td class="num">700 ms</td></tr>
+      <tr><td>New personal best</td><td>Text label</td><td>Reuse <code>ranks/confetti.dart</code> burst in the game's accent</td><td class="num">1.2 s</td></tr>
+      <tr><td>Home game cards</td><td>Static</td><td>Stagger in on first open of the day (60 ms apart); a press scales to 0.97</td><td class="num">300 ms</td></tr>
+      <tr><td>Tab switches</td><td>Cut</td><td>Fade-through (out 90 ms, in 210 ms)</td><td class="num">300 ms</td></tr>
+      <tr><td>Revive offer → game</td><td>Instant</td><td>Stream A countdown</td><td class="num">3 s</td></tr>
+      <tr><td>Sprint Score</td><td>New</td><td>Ring fills to the rating, number counts up, badge flips in</td><td class="num">900 ms</td></tr>
+      <tr><td>Privacy data map</td><td>New</td><td>Chips drop into buckets (stream B)</td><td class="num">≈1.5 s total</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===================== G ===================== -->
+<section class="sec" id="splash">
+  <div class="sec-head"><span class="mono">G · Loading screen</span><h2>Launch into the games</h2></div>
+  <div class="split">
+    <div class="pfh" style="grid-template-columns:minmax(0,1fr)">
+      <div class="box cut k1"><div class="in cut"><h3>Problem found</h3><ul>
+        <li><code>SplashScreen</code> shows the logo and an indeterminate bar for a fixed 900 ms timer. The bar measures nothing.</li>
+        <li>Real start-up work (<code>Storage.open</code>, <code>PackageInfo</code>, Supabase init, network check) runs in <code>main()</code> <b>before</b> <code>runApp</code>, behind the native launch screen.</li>
+        <li>If the native launch screen and the first Flutter frame don't line up, the logo visibly jumps.</li></ul></div></div>
+      <div class="box cut k3"><div class="in cut"><h3>How</h3><ul>
+        <li>LOGICSPRINT sits in the centre. From it, one circuit line per game runs out to that game's corner in the game's own colour, with a light pulse travelling along it (like the <code>CircuitBackground</code> traces, now alive).</li>
+        <li>Each corner shows a quiet hint of its game: a Memory Lane grid, a Quick Math sum, a Guess Color word in the wrong ink, an Angle Sense angle. It lights up when its line reaches it. </li>
+        <li>Above it all, the Rocket Launch ship (same painter as the game, <code>rocket_look.dart</code>) hovers and tows the LOGICSPRINT wordmark up on a rope made of 0s and 1s. The rope starts slack, pulls taut as the wordmark rises into place with a small overshoot, then both sway gently together while the bits flow up the rope toward the rocket.</li>
+        <li>Faint stars twinkle slowly behind; nothing else moves.</li>
+        <li>The bar becomes real: move Supabase init and the network check into the splash, and fill the bar as each step finishes. Keep a 900 ms minimum and a 2.5 s cap.</li>
+        <li>Match the native launch screen (iOS <code>LaunchScreen.storyboard</code>, Android 12 splash) to the first frame: black with the logo at the same spot.</li>
+        <li>The fly-by takes 2.4 s and the bar fills with real loading steps; reduce motion shows the finished frame with all four hints.</li></ul></div></div>
+    </div>
+    <div>
+      <div class="phone cut-lg"><div class="screen cut-lg">
+        <div class="splash2" id="splashEl">
+          <canvas id="spc" width="680" height="900" aria-label="Loading animation: a rocket tows the LogicSprint wordmark up on a binary rope while coloured lines run to each game"></canvas>
+          <div class="sp-top"><div class="word" id="word"></div><span class="mono" style="color:var(--aqua);font-size:10px">Brain games</span></div>
+          <div class="sp-bot"><div class="pbar2"><div id="spBar"></div></div><div class="ldtxt" id="ldtxt">LOADING</div></div>
+        </div>
+      </div></div>
+      <div style="text-align:center;margin-top:12px"><button class="btn alt cut-sm" id="replay">Replay</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== H + I ===================== -->
+<section class="sec" id="flow">
+  <div class="sec-head"><span class="mono">H · I · Newer asks</span><h2>Heart straight to continue, clean screenshots</h2></div>
+  <div class="pfh" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+    <div class="box cut k3"><div class="in cut"><h3>H · Earned a heart? Continue the run</h3><ul>
+      <li><b>Problem found:</b> on the Result screen "Earn a heart · Watch ad" adds a heart and leaves you on Result. The run is already over, so the heart can only be used next time.</li>
+      <li><b>Requirement:</b> if the run could still be revived (revives left, score ≥ 50, online), earning the heart goes straight back into that run: heart spent, 3 · 2 · 1 get-ready, play on.</li>
+      <li><b>How:</b> keep the finished engine alive behind Result for a short window instead of disposing it. Result gets a <code>continueRun</code> callback; after the reward it pops back to <code>RoundScreen</code> and calls <code>engine.reviveFromOver()</code> (a new path from <code>over</code> → <code>resuming</code> that also removes the run from History and holds the score submit until the run really ends).</li>
+      <li><b>Watch out:</b> a run must not be submitted twice to the leaderboard, so submit moves to when Result is left.</li></ul></div></div>
+    <div class="box cut k2"><div class="in cut"><h3>I · Screenshots without ads, with your name</h3><ul>
+      <li><b>Platform limit:</b> neither iOS nor Android lets an app change the screen <i>before</i> a system screenshot is taken. iOS only tells the app afterwards (<code>userDidTakeScreenshotNotification</code>), Android 14 the same (<code>ScreenCaptureCallback</code>). So the system screenshot will always include the banner.</li>
+      <li><b>What we can do:</b> when the app sees a screenshot, show a small "Share a clean version" chip. It renders the same screen again, in-app, with the banner replaced by your name and code (NEON_FOX#0420), and opens the share sheet.</li>
+      <li><b>Also:</b> the Share button (stream E) and Result screen always produce ad-free images, so most sharing never needs the system screenshot.</li>
+      <li><b>How:</b> a <code>RepaintBoundary</code> around the page body; the banner slot swaps to a <code>PlayerTag</code> widget while capturing; Android needs no extra permission, iOS none either.</li></ul></div></div>
+  </div>
+</section>
+
+<!-- ===================== J ===================== -->
+<section class="sec" id="top10">
+  <div class="sec-head"><span class="mono">J · Top 10 that scales</span><h2>‹ Game › on top, difficulty underneath</h2>
+  <p>Today the Ranks tab picks a game from one row of equal segments ("Rocket · Memory · Math · Color"). With Angle Sense, Line Split and True or False that row needs 7 slots and the names stop fitting. The new picker shows one game at a time, big, with arrows (and swipe) to move through them. Dots show how many games there are, so 7 or 17 work the same. Easy / Medium / Hard tabs sit right under it, only for games that have them.</p></div>
+  <div class="split">
+    <div class="pfh" style="grid-template-columns:minmax(0,1fr)">
+      <div class="box cut k1"><div class="in cut"><h3>Problem found</h3><ul>
+        <li><code>ranks_tab.dart</code> builds the picker from <code>GameId.values</code> as equal-width segments with short titles ("Rocket", "Memory", "Math", "Color"). At 375 pt width each segment is about 80 pt, and 7 games would make each one about 46 pt.</li>
+        <li>The difficulty row appears and disappears under it, so the board jumps up and down between games.</li></ul></div></div>
+      <div class="box cut k2"><div class="in cut"><h3>Requirement</h3><ul>
+        <li><b>‹ Game ›</b> switcher: game icon, full name and accent colour; arrows on both sides, swipe on the name or the board, and it wraps around.</li>
+        <li>Dots under it, one per game, current one wide and in the game's colour.</li>
+        <li><b>Easy · Medium · Hard</b> tabs always take the same space. Games without levels show one "One board" tab in the same spot, so nothing jumps.</li>
+        <li>Each switch animates: old rows slide out the way you swiped, new rows slide in staggered (30 ms apart), and scores count up from 0 to their value.</li>
+        <li>The last game and difficulty you viewed are remembered.</li></ul></div></div>
+      <div class="box cut k3"><div class="in cut"><h3>How</h3><ul>
+        <li>A <code>PageView</code> (or <code>GestureDetector</code> + index) over <code>GameId.values</code> for the name strip; the board below listens to the index. Adding a game needs no layout change.</li>
+        <li>Rows reuse the existing <code>RankRow</code> and its rank-change animation; switching game runs the same staggered entrance with a direction.</li>
+        <li>Count-up via <code>TweenAnimationBuilder&lt;int&gt;</code> (600 ms, ease-out). Reduce motion: rows appear at once, no count-up.</li>
+        <li>Accessibility: arrows are 44 pt buttons labelled "Previous game" / "Next game"; the name strip announces "Angle Sense, 5 of 7".</li></ul></div></div>
+    </div>
+    <div class="phone cut-lg"><div class="screen cut-lg">
+      <div class="pbar"><span class="t">Global Top 10</span><span class="mono">Example data</span></div>
+      <div class="t10" id="t10">
+        <div class="gsw"><button class="arr" id="gPrev" aria-label="Previous game">‹</button><div class="gname" id="gName" role="status"></div><button class="arr" id="gNext" aria-label="Next game">›</button></div>
+        <div class="gdots" id="gDots"></div>
+        <div class="dtabs" id="dTabs"></div>
+        <div class="t10rows" id="t10rows"></div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ===================== LANES ===================== -->
+<section class="sec">
+  <div class="sec-head"><span class="mono">Build order</span><h2>Running it next to Angle Sense</h2>
+  <p>Four lanes that can be built at the same time, each on its own branch. They're split so that no two lanes edit the same file at once, apart from the noted merge points.</p></div>
+  <div class="lanes">
+    <div class="box cut lane"><div class="in cut"><div class="hd"><h3>Lane 1</h3><span class="tag">Angle Sense</span></div>
+      <ol><li>Engine + tests</li><li>Painters, tape</li><li>Wire into app, home grid</li><li>Migration: allow <code>angleSense</code></li></ol></div></div>
+    <div class="box cut lane"><div class="in cut"><div class="hd"><h3>Lane 2</h3><span class="tag">A · B · F · G</span></div>
+      <ol><li>Revive countdown (A), lands <b>first</b> since Angle Sense extends <code>RoundEngine</code></li><li>Loading screen (G)</li><li>Privacy at a glance (B)</li><li>Motion pass (F) last</li></ol></div></div>
+    <div class="box cut lane"><div class="in cut"><div class="hd"><h3>Lane 3</h3><span class="tag">C · E</span></div>
+      <ol><li><code>RunRecord</code> fields + limit 1000</li><li>History screen + query</li><li>Trophy case</li><li>Share card + <code>share_plus</code></li></ol></div></div>
+    <div class="box cut lane"><div class="in cut"><div class="hd"><h3>Lane 4</h3><span class="tag">D</span></div>
+      <ol><li>SQL view + RPC on a Supabase branch</li><li>Dart cross-check test</li><li>Deploy migration</li><li>Rating on Trophy case (after lane 3 step 3)</li></ol></div></div>
+  </div>
+  <div class="warn"><b>Merge points:</b> lane 2's <code>RunState.resuming</code> should merge before lane 1 wires its screen. Lanes 1 and 4 both add Supabase migrations, so use separate, dated migration files instead of editing <code>schema.sql</code> in both. Both migrations deploy before the app build ships.</div>
+</section>
+
+<section class="sec">
+  <div class="sec-head"><span class="mono">Decide before building</span><h2>Open questions</h2></div>
+  <div class="decisions">
+    <div><b>Revive offer window</b><span>Keep the offer at 5 s and add the 3 s comeback (recommended), or also stretch the offer to 7 s.</span></div>
+    <div><b>Rating gate</b><span>Hidden below 75 as you asked. Alternative: show the number to the player privately and keep only the share card gated.</span></div>
+    <div><b>Shrinkage strength</b><span>k = 2 makes one game worth at most 66. k = 1 is softer (one game at 99 → 75), k = 3 stricter.</span></div>
+    <div><b>Direct IG / Snap buttons</b><span>Phase 1 share sheet covers both. Direct buttons need a Meta app ID and Snap Kit review; worth it only if sharing takes off.</span></div>
+    <div><b>Release split</b><span>Ship A + G + B as 1.0.4 quickly, then Angle Sense + C + D + E together as 1.1.0.</span></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const ACC = { Rocket:'#3B7BF0', Memory:'#2BB3D6', Math:'#34C29A', Color:'#8C8CFF', Angle:'#F5C542' };
+  const GAMES = Object.keys(ACC);
+  const FULL = { Rocket:'Rocket Launch', Memory:'Memory Lane', Math:'Quick Math', Color:'Guess Color', Angle:'Angle Sense' };
+
+  /* ---------- A: revive ---------- */
+  let mode = 'new', rocks = [], raf = 0, playing = false, offerT = 0;
+  const stage = $('stage');
+  function spawn() { const r = document.createElement('div'); r.className = 'rock'; r.style.left = (20 + Math.random() * 280) + 'px'; r.style.top = '-30px'; stage.insertBefore(r, $('offer')); rocks.push({ el: r, y: -30, v: 2.2 + Math.random() * 1.6 }); }
+  function loop() {
+    if (playing) { if (Math.random() < .07) spawn(); rocks.forEach(r => { r.y += r.v; r.el.style.top = r.y + 'px'; }); rocks = rocks.filter(r => r.y < 440 || (r.el.remove(), false)); }
+    raf = requestAnimationFrame(loop);
+  }
+  function showOffer() {
+    playing = false; $('offer').hidden = false; $('scrim').hidden = true;
+    const arc = $('ringArc'), txt = arc.nextElementSibling; let t0 = performance.now();
+    cancelAnimationFrame(offerT);
+    const step = now => { const e = (now - t0) / 5000; arc.setAttribute('stroke-dashoffset', 276.5 * Math.min(e,1)); txt.textContent = Math.max(1, Math.ceil(5 - e * 5)); if (e < 1 && !$('offer').hidden) offerT = requestAnimationFrame(step); else if (e >= 1) t0 = performance.now(), offerT = requestAnimationFrame(step); };
+    offerT = requestAnimationFrame(step);
+  }
+  function revive() {
+    $('offer').hidden = true; rocks.forEach(r => r.el.remove()); rocks = [];
+    for (let i = 0; i < 6; i++) spawn(), rocks[i].y = -30 + i * 55;
+    if (mode === 'old') { playing = true; setTimeout(showOffer, 2600); return; }
+    const sc = $('scrim'), dg = $('digit'); sc.hidden = false;
+    const t0 = performance.now(); let last = 0;
+    const step = now => {
+      const e = (now - t0) / 3000;
+      sc.style.background = `rgba(0,0,0,${(0.85 * Math.pow(1 - Math.min(e,1), 1.6)).toFixed(3)})`;
+      const n = 3 - Math.floor(e * 3);
+      if (n !== last && n > 0) { last = n; dg.textContent = n; dg.classList.remove('pop'); void dg.offsetWidth; dg.classList.add('pop'); }
+      if (e < 1) requestAnimationFrame(step); else { sc.hidden = true; playing = true; setTimeout(showOffer, 3200); }
+    };
+    requestAnimationFrame(step);
+  }
+  $('watch').onclick = revive;
+  $('modeNew').onclick = () => { mode = 'new'; $('modeNew').classList.add('on'); $('modeOld').classList.remove('on'); showOffer(); };
+  $('modeOld').onclick = () => { mode = 'old'; $('modeOld').classList.add('on'); $('modeNew').classList.remove('on'); showOffer(); };
+  for (let i = 0; i < 6; i++) spawn(), rocks[i].y = 20 + i * 50, rocks[i].el.style.top = rocks[i].y + 'px';
+  loop(); showOffer();
+
+  /* ---------- B: privacy ---------- */
+  const PV = [
+    ['High scores + run times','phone'],['Run history','phone'],['Hearts & revives','phone'],['Settings','phone'],['Display name','phone'],['Leaderboard cache','phone'],
+    ['Name + 4-digit code','board'],['Best score per game','board'],['Advertising ID','ads'],
+    ['Email','never'],['Phone number','never'],['Contacts','never'],['Photos','never'],['Precise location','never'],['Analytics SDKs','never'],
+  ];
+  const BK = [
+    ['phone','Your phone','#34C29A','Stays on the device. Uninstalling deletes it.'],
+    ['board','Leaderboard','#3B7BF0','Anonymous profile. Your name is public on the Top 10.'],
+    ['ads','Ads','#F5C542','Google AdMob. No internet, no ads.'],
+    ['never','Never collected','#FF5A6E','Not asked for, not read, not sent.'],
+  ];
+  function sortPv() {
+    $('pvB').innerHTML = BK.map(([k,h,c,n]) => `<div class="pv-card k-${k}" style="--k:${c}"><div class="pv-head"><h4>${h}</h4><b>${PV.filter(x=>x[1]===k).length} item${PV.filter(x=>x[1]===k).length>1?'s':''}</b></div><div class="pv-note">${n}</div><div class="pv-chips" data-k="${k}"></div></div>`).join('');
+    PV.forEach(([t,k], i) => setTimeout(() => { const c = document.createElement('span'); c.className = 'chip'; c.textContent = t; $('pvB').querySelector(`.pv-chips[data-k="${k}"]`).appendChild(c); }, 150 + i * 80));
+  }
+  const pvTab = full => { $('pvGlance').hidden = full; $('pvFull').hidden = !full; $('pvTabA').classList.toggle('on', !full); $('pvTabF').classList.toggle('on', full); if (!full) sortPv(); };
+  $('pvTabA').onclick = () => pvTab(false); $('pvTabF').onclick = () => pvTab(true);
+  $('pvSort').onclick = sortPv; sortPv();
+
+  /* ---------- C: history (example data) ---------- */
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const now = new Date('2026-11-20T18:00:00');
+  const RUNS = Array.from({ length: 140 }, (_, i) => {
+    const g = GAMES[Math.floor(rnd() * 5)];
+    const base = { Rocket: 2600, Memory: 420, Math: 300, Color: 380, Angle: 260 }[g];
+    const d = new Date(now - Math.floor(rnd() * 40 * 24 + i * 0.5) * 3600e3);
+    return { g, score: Math.round(base * (0.2 + rnd() * 1.4) / 10) * 10, at: d, rev: rnd() < .25 ? 1 + Math.floor(rnd()*3) : 0, diff: g==='Memory'||g==='Math' ? ['Easy','Medium','Hard'][Math.floor(rnd()*3)] : '' };
+  }).sort((a,b) => b.at - a.at);
+  const bests = {}; [...RUNS].reverse().forEach(r => { const k = r.g + r.diff; if (!(r.score <= (bests[k]||0))) { bests[k] = r.score; r.best = true; } });
+  const hf = { game: 'All', per: 'All' };
+  const chips = (el, list, key) => { el.innerHTML = list.map(x => `<button class="${hf[key]===x?'on':''}" data-v="${x}">${x}</button>`).join(''); el.onclick = e => { const v = e.target.dataset.v; if (!v) return; hf[key] = v; chips(el, list, key); renderH(); }; };
+  // Desktop stand-in for a finger swipe; phones scroll these rows natively.
+  document.querySelectorAll('.fchips').forEach(row => {
+    let x0 = 0, s0 = 0, moved = false, down = false;
+    row.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') return; down = true; moved = false; x0 = e.clientX; s0 = row.scrollLeft; });
+    row.addEventListener('pointermove', e => { if (!down) return; const dx = e.clientX - x0; if (Math.abs(dx) > 4) { moved = true; row.classList.add('dragging'); } row.scrollLeft = s0 - dx; });
+    const up = () => { down = false; row.classList.remove('dragging'); };
+    row.addEventListener('pointerup', up); row.addEventListener('pointerleave', up);
+    row.addEventListener('click', e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  });
+  chips($('hgame'), ['All', ...GAMES], 'game');
+  chips($('hper'), ['All', 'Today', '7 days', '30 days', 'Bests', 'No revives'], 'per');
+  const fmtD = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + ' · ' + d.toTimeString().slice(0,5);
+  function renderH() {
+    const q = $('hq').value.trim().toLowerCase();
+    const m = q.match(/^([<>])\s*(\d+)$/);
+    const day = 24 * 3600e3;
+    const list = RUNS.filter(r => {
+      if (hf.game !== 'All' && r.g !== hf.game) return false;
+      if (hf.per === 'Today' && now - r.at > day) return false;
+      if (hf.per === '7 days' && now - r.at > 7 * day) return false;
+      if (hf.per === '30 days' && now - r.at > 30 * day) return false;
+      if (hf.per === 'Bests' && !r.best) return false;
+      if (hf.per === 'No revives' && r.rev) return false;
+      if (m) return m[1] === '>' ? r.score > +m[2] : r.score < +m[2];
+      if (q === 'today') return now - r.at <= day;
+      if (q) return (FULL[r.g] + ' ' + r.g + ' ' + r.diff + ' ' + fmtD(r.at) + ' ' + r.score).toLowerCase().includes(q);
+      return true;
+    });
+    const SORTS = { Newest: (a,b) => b.at - a.at, Oldest: (a,b) => a.at - b.at, Highest: (a,b) => b.score - a.score, Lowest: (a,b) => a.score - b.score };
+    list.sort(SORTS[hf.sort]);
+    $('hs1').textContent = list.length;
+    const ago = d => { const h = Math.round((now - d) / 3600e3); return h < 1 ? 'just now' : h < 24 ? `${h}h ago` : `${Math.round(h/24)}d ago`; };
+    $('hrows').innerHTML = list.length ? list.slice(0, 60).map(r => `<div class="hrow"><span class="gt" style="background:${ACC[r.g]}22;color:${ACC[r.g]}">${r.g[0]}</span><div style="min-width:0"><div class="n">${FULL[r.g]}${r.diff?` · ${r.diff.toUpperCase()}`:''}</div><div class="d">${ago(r.at)}${r.rev?` · ${r.rev} revive${r.rev>1?'s':''}`:''}</div></div>${r.best?'<span class="best">BEST</span>':'<span></span>'}<div class="s">${r.score.toLocaleString()}</div></div>`).join('') : '<div class="empty">No runs match. Clear the search or pick another filter.</div>';
+  }
+  hf.sort = 'Newest';
+  $('hsort').onclick = () => { const order = ['Newest','Highest','Oldest','Lowest']; hf.sort = order[(order.indexOf(hf.sort) + 1) % order.length]; $('hsort').textContent = (hf.sort === 'Oldest' || hf.sort === 'Lowest' ? '↑ ' : '↓ ') + hf.sort; renderH(); };
+  $('hq').oninput = renderH; renderH();
+
+  /* ---------- D: rating ---------- */
+  const K = 2;
+  const Rof = ps => { const xs = ps.filter(p => p > 0); return (xs.reduce((s,p) => s + p, 0) + K * 50) / (xs.length + K); };
+  // simulated population: skill ~ normal, each player plays 1–5 games, per-game percentile noisy around skill
+  seed = 42;
+  const gauss = () => Math.sqrt(-2 * Math.log(rnd() + 1e-9)) * Math.cos(2 * Math.PI * rnd());
+  const POP = Array.from({ length: 2000 }, () => {
+    const skill = 50 + 22 * gauss(), n = 1 + Math.floor(rnd() * 5);
+    const ps = GAMES.map((_, i) => i < n ? Math.max(1, Math.min(99, skill + 15 * gauss())) : 0);
+    return ps.filter(p=>p>0).length >= 2 ? Rof(ps) : null;
+  }).filter(x => x != null).sort((a,b) => a - b);
+  const rankOf = R => { let lo = 0; while (lo < POP.length && POP[lo] < R) lo++; return 100 * lo / POP.length; };
+  const vals = [70, 60, 0, 0, 0];
+  $('sliders').innerHTML = GAMES.map((g,i) => `<div class="sl"><label for="s${i}" style="color:${ACC[g]}">${FULL[g]}</label><input type="range" id="s${i}" min="0" max="99" value="${vals[i]}"><output id="o${i}">${vals[i]||'–'}</output></div>`).join('');
+  function calc() {
+    GAMES.forEach((_, i) => { vals[i] = +$('s' + i).value; $('o' + i).textContent = vals[i] || '–'; });
+    const n = vals.filter(v => v > 0).length, R = Rof(vals);
+    $('rR').textContent = n ? R.toFixed(1) : '–';
+    let S = n >= 2 ? Math.floor(rankOf(R)) : null;
+    $('rS').textContent = S == null ? '–' : S;
+    const top = S == null ? null : 100 - S;
+    const bucket = top == null ? null : [1,2,5,10,15,20,25].find(b => top <= b);
+    $('rBadge').innerHTML = S == null ? `<span class="badge" style="background:#111A23;color:#8C9DAD">Rate ${2 - n} more game${2-n>1?'s':''} to get a rating</span>`
+      : S >= 75 ? `<span class="badge" style="background:rgba(52,194,154,.15);color:#34C29A">Top ${bucket}% player</span>`
+      : `<span class="badge" style="background:#111A23;color:#8C9DAD">Hidden · below 75</span>`;
+    $('rNote').textContent = n === 1 ? `One game only: R would be ${R.toFixed(1)}, but a rating needs at least two games.` :
+      n ? `R = (${vals.filter(v=>v>0).join(' + ')} + ${K}×50) ÷ (${n} + ${K}). Your R beats ${S}% of rated players.` : 'Set at least two games.';
+    // dist
+    const bins = Array(40).fill(0); POP.forEach(r => bins[Math.min(39, Math.floor(r / 2.5))]++); const mx = Math.max(...bins);
+    let s = '';
+    bins.forEach((b,i) => { const x = 10 + i * 9.5, h = b / mx * 92, hot = n >= 2 && (i * 2.5) >= R; s += `<rect x="${x}" y="${104 - h}" width="8" height="${h}" fill="${hot ? '#1E2A36' : '#34C29A'}" opacity="${hot?1:.75}"/>`; });
+    if (n >= 2) { const x = 10 + R / 2.5 * 9.5; s += `<line x1="${x}" y1="6" x2="${x}" y2="106" stroke="#F5C542" stroke-width="2"/><text x="${Math.min(x+4, 340)}" y="16" fill="#F5C542" font-family="JetBrains Mono, monospace" font-size="10">YOU</text>`; }
+    [0,25,50,75,100].forEach(v => s += `<text x="${10 + v/2.5*9.5}" y="122" fill="#667A8C" font-family="JetBrains Mono, monospace" font-size="9" text-anchor="middle">${v}</text>`);
+    $('dist').innerHTML = s;
+  }
+  document.querySelectorAll('#sliders input').forEach(i => i.oninput = calc);
+  document.querySelectorAll('.presets button[data-p]').forEach(b => b.onclick = () => { b.dataset.p.split(',').forEach((v,i) => $('s'+i).value = v); calc(); });
+  calc();
+
+  /* ---------- E: share card ---------- */
+  const SH = { name: true, rating: true, fmt: 'story', games: { Rocket: true, Memory: true, Math: true, Color: true, Angle: true } };
+  const EX = { Rocket: [5140, 'Top 8%', 41], Memory: [460, 'Hard · Top 12%', 22], Math: [310, 'Medium · #4', 18], Color: [520, 'Top 20%', 30], Angle: [380, 'Top 15%', 9] };
+  $('shareOpts').innerHTML = `<label class="toggle"><input type="checkbox" id="opName" checked> Show my name and code (NEON_FOX#0420)</label><label class="toggle"><input type="checkbox" id="opRate" checked> Show Sprint Score</label>` +
+    GAMES.map(g => `<label class="toggle"><input type="checkbox" data-g="${g}" ${SH.games[g]?'checked':''}> <span style="color:${ACC[g]}">${FULL[g]}</span></label>`).join('');
+  function cardHTML() {
+    const gs = GAMES.filter(g => SH.games[g]);
+    return `<div class="grid-bg"></div>
+      <div class="wm">LOGIC<span class="teal">SPRINT</span></div>
+      ${SH.name ? `<div class="nm" style="font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.03em">NEON_FOX<span style="color:var(--dim)">#0420</span></div>` : ''}
+      ${SH.rating ? `<div><span class="mono">Sprint score</span><div class="top teal">Top 4%</div></div>` : `<div class="top">My bests</div>`}
+      <div class="games">${gs.map(g => `<div class="gcard"><i style="background:${ACC[g]}"></i><div><div class="gn">${FULL[g]}</div><div class="gp">${EX[g][1]} · ${EX[g][2]} runs</div></div><b style="color:${ACC[g]}">${EX[g][0].toLocaleString()}</b></div>`).join('') || '<span class="mono">Pick at least one game</span>'}</div>
+      <div class="foot"><span>Can you beat it?</span><span>logicsprint.trueorfalse.dev</span></div>`;
+  }
+  // Profile version: no wordmark or link (those are for the shared image); the name on
+  // top, then a full 2×3 grid where Sprint Score fills the sixth slot.
+  function profileHTML() {
+    return `<div class="pc-name">NEON_FOX<span>#0420</span></div>
+      <div class="pc-grid">
+        <div class="pc-tile pc-score"><span class="mono">Sprint score</span><b>Top 4%</b></div>
+        ${GAMES.map(g => `<div class="pc-tile" style="--c:${ACC[g]}"><span class="mono">${FULL[g]}</span><b>${EX[g][0].toLocaleString()}</b></div>`).join('')}
+      </div>`;
+  }
+  const TARGETS = {
+    story: ['Instagram Story', '1080 × 1920', 'story', 'Opens Instagram on a new Story with the card as the background. Instagram does not let apps add a link sticker, so the app copies the download link first and shows “Link copied: tap the sticker icon → Link → paste”. The link is also printed on the card.'],
+    post:  ['Instagram post', '1080 × 1080', 'square', 'A square card for the feed: games sit in two columns so all five fit. Feed captions can’t hold tappable links, so the link stays printed on the card and in the copied caption.'],
+    snap:  ['Snapchat', '1080 × 1920', 'story', 'Opens Snapchat with the card and a tappable download link attached (Creative Kit attachment URL). Snap only allows a direct link, not a redirect, so it points at logicsprint.trueorfalse.dev.'],
+    more:  ['Share sheet', '1080 × 1920', 'story', 'The phone\'s own share sheet: WhatsApp, Messages, Save Image, and every other app.'],
+  };
+  const PST = { Rocket: ['#4 of 46', 'Top 8%', 41, null], Memory: ['Hard · #9', 'Top 12%', 22, '1:03'], Math: ['Medium · #4', 'Top 9%', 18, '1:10'], Color: ['#11', 'Top 20%', 30, null], Angle: ['New', '—', 9, null] };
+  $('pgames').innerHTML = GAMES.map(g => `<div class="pg"><i style="background:${ACC[g]}"></i><div style="min-width:0"><div class="n">${FULL[g]}</div><div class="m">${PST[g][0]} · ${PST[g][2]} runs${PST[g][3] ? ' · ' + PST[g][3] : ''}</div></div><div class="r"><b style="color:${ACC[g]}">${EX[g][0].toLocaleString()}</b><span>${PST[g][1]}</span></div></div>`).join('');
+  let shareTo = 'story';
+  function renderStory() {
+    const [title, size, fmt, note] = TARGETS[shareTo];
+    SH.fmt = fmt;
+    const st = $('story'); st.style.aspectRatio = fmt === 'story' ? '9/16' : '1/1'; st.classList.toggle('sq', fmt !== 'story');
+    st.innerHTML = cardHTML();
+    $('pcard').innerHTML = profileHTML();
+    $('sendTitle').textContent = title; $('sendSize').textContent = size; $('sendNote').textContent = note;
+  }
+  $('shareOne').onclick = () => document.getElementById('shrow').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  $('shrow').onclick = e => { const b = e.target.closest('button'); if (!b) return; shareTo = b.dataset.to; document.querySelectorAll('#shrow button').forEach(x => x.classList.toggle('on', x === b)); renderStory(); };
+  $('shareOpts').onchange = e => { const t = e.target; if (t.id === 'opName') SH.name = t.checked; else if (t.id === 'opRate') SH.rating = t.checked; else if (t.dataset.g) SH.games[t.dataset.g] = t.checked; renderStory(); };
+  renderStory();
+
+  /* ---------- G: splash ---------- */
+  // LOGICSPRINT in the centre. One circuit line per game runs from the wordmark to that
+  // game's corner, in its accent; a light pulse travels along each, and the game's hint
+  // lights up when its pulse arrives. The rocket flies by once across the top.
+  $('word').innerHTML = [...'LOGICSPRINT'].map((c,i) => `<span style="animation-delay:${0.1 + i*0.035}s;${i>4?'color:#34C29A':''}">${c}</span>`).join('');
+  const cv = $('spc'), g = cv.getContext('2d'), W = 680, H = 900;
+  const calmMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let sr = 7; const R = () => (sr = (sr * 16807) % 2147483647) / 2147483647;
+  const spStars = Array.from({ length: 45 }, () => ({ x: R() * W, y: R() * H, r: 0.6 + R() * 1.2, p: R() * 6 }));
+  const DUR = 2.6;
+  const mirror = pts => pts.map(([x, y]) => [W - x, y]);
+  const TL = [[250, 405], [250, 330], [140, 330], [140, 250]];
+  const BL = [[250, 495], [250, 570], [140, 570], [140, 640]];
+  const HINTS = [
+    { name: 'MEMORY LANE', c: '#2BB3D6', line: TL, x: 140, y: 200, at: 0.5 },
+    { name: 'QUICK MATH',  c: '#34C29A', line: mirror(TL), x: 540, y: 200, at: 0.75 },
+    { name: 'GUESS COLOR', c: '#8C8CFF', line: BL, x: 140, y: 700, at: 1.0 },
+    { name: 'ANGLE SENSE', c: '#F5C542', line: mirror(BL), x: 540, y: 700, at: 1.25 },
+  ];
+  const segLen = pts => pts.slice(1).reduce((a, p, k) => a + Math.hypot(p[0] - pts[k][0], p[1] - pts[k][1]), 0);
+  function strokeLine(pts) { g.beginPath(); pts.forEach(([x, y], k) => k ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); }
+  function drawHint(h, a) {
+    if (a <= 0 || h.name === 'ROCKET') return;
+    g.save(); g.globalAlpha = a; const { x, y, c } = h;
+    if (h.name === 'MEMORY LANE') for (let k = 0; k < 9; k++) { g.fillStyle = k === 4 ? c : '#111A23'; g.fillRect(x - 33 + (k % 3) * 24, y - 44 + Math.floor(k / 3) * 24, 20, 20); }
+    if (h.name === 'QUICK MATH') { g.fillStyle = '#EAF2F7'; g.font = '700 34px JetBrains Mono, monospace'; g.textAlign = 'center'; g.fillText('7×8', x, y); }
+    if (h.name === 'GUESS COLOR') { g.fillStyle = '#FF5A6E'; g.font = '700 40px Rajdhani, sans-serif'; g.textAlign = 'center'; g.fillText('BLUE', x, y + 8); }
+    if (h.name === 'ANGLE SENSE') { g.strokeStyle = '#EAF2F7'; g.lineWidth = 3; g.beginPath(); g.moveTo(x + 40, y + 12); g.lineTo(x - 36, y + 12); g.lineTo(x - 36 + Math.cos(-0.9) * 60, y + 12 + Math.sin(-0.9) * 60); g.stroke(); g.strokeStyle = c; g.beginPath(); g.arc(x - 36, y + 12, 20, -0.9, 0); g.stroke(); }
+    g.fillStyle = c; g.font = '500 13px JetBrains Mono, monospace'; g.textAlign = 'center'; g.fillText(h.name, x, (y < H / 2 ? y - 62 : y + 46));
+    g.restore();
+  }
+  function drawShip(x, y, ang) {
+    g.save(); g.translate(x, y); g.rotate(ang); g.scale(0.7, 0.7);
+    const fl = 26 + Math.sin(performance.now() / 40) * 4; const grd = g.createLinearGradient(0, 38, 0, 38 + fl); grd.addColorStop(0, '#F5C542'); grd.addColorStop(1, 'rgba(255,90,110,0)'); g.fillStyle = grd; g.beginPath(); g.moveTo(-10, 38); g.quadraticCurveTo(0, 38 + fl * 1.3, 10, 38); g.closePath(); g.fill();
+    g.fillStyle = '#2B5FC4'; g.beginPath(); g.moveTo(-16, 18); g.lineTo(-28, 42); g.lineTo(-14, 38); g.closePath(); g.fill(); g.beginPath(); g.moveTo(16, 18); g.lineTo(28, 42); g.lineTo(14, 38); g.closePath(); g.fill();
+    const bg = g.createLinearGradient(-16, 0, 16, 0); bg.addColorStop(0, '#2F6FE0'); bg.addColorStop(.5, '#5B93FF'); bg.addColorStop(1, '#2457BF'); g.fillStyle = bg;
+    g.beginPath(); g.moveTo(0, -44); g.quadraticCurveTo(18, -20, 16, 38); g.lineTo(-16, 38); g.quadraticCurveTo(-18, -20, 0, -44); g.closePath(); g.fill();
+    g.fillStyle = '#04080C'; g.beginPath(); g.arc(0, -8, 7, 0, 7); g.fill(); g.strokeStyle = '#34C29A'; g.lineWidth = 2.5; g.stroke();
+    g.restore();
+  }
+  let raf2 = 0, t0 = 0;
+  function frame(now) {
+    const t = (now - t0) / 1000;
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    spStars.forEach(s => { g.fillStyle = `rgba(234,242,247,${0.14 + 0.1 * Math.sin(t * 1.5 + s.p)})`; g.beginPath(); g.arc(s.x, s.y, s.r, 0, 7); g.fill(); });
+    g.lineCap = 'square'; g.lineJoin = 'miter';
+    HINTS.forEach(h => {
+      const L = segLen(h.line), grow = Math.min(1, Math.max(0, (t - h.at + 0.5) / 0.5));
+      if (grow <= 0) return;
+      // the line draws out from the wordmark, then stays as a faint trace
+      g.setLineDash([L * grow, L]); g.lineDashOffset = 0; g.strokeStyle = h.c + '40'; g.lineWidth = 3; strokeLine(h.line);
+      // a bright pulse keeps travelling outward along it
+      g.setLineDash([46, L + 120]); g.lineDashOffset = -((t * 260) % (L + 166)) + 46; g.strokeStyle = h.c; g.lineWidth = 3; g.shadowColor = h.c; g.shadowBlur = 10; strokeLine(h.line); g.shadowBlur = 0;
+      g.setLineDash([]);
+      const end = h.line[h.line.length - 1]; g.fillStyle = h.c; g.fillRect(end[0] - 4, end[1] - 4, 8, 8);
+      drawHint(h, Math.min(0.85, Math.max(0, (t - h.at) / 0.35) * 0.85));
+    });
+    // The rocket hovers above and tows LOGICSPRINT up on a rope of 0s and 1s.
+    const sb = $('splashEl').getBoundingClientRect(), sc = H / sb.height;
+    const rise = Math.min(1, t / 1.3), back = 1 + 2.4 * Math.pow(rise - 1, 3) + 1.4 * Math.pow(rise - 1, 2);  // ease-out with a little overshoot
+    const sway = Math.sin(t * 1.6) * 6 * Math.min(1, t / 1.3);
+    const lift = (1 - back) * 120;                          // wordmark starts 120 canvas px low
+    $('word').parentElement.style.transform = `translate(${(sway * 0.4) / sc}px, calc(-50% + ${lift / sc}px))`;
+    const wb = $('word').getBoundingClientRect();
+    const ropeEnd = [W / 2 + sway * 0.4, (wb.top - sb.top) * sc - 6];
+    const shipX = W / 2 + sway, shipY = 150 + lift * 0.35 + Math.sin(t * 2.2) * 4;
+    const ropeStart = [shipX, shipY + 36];
+    const slack = 46 * (1 - Math.min(1, t / 0.9));         // the rope pulls taut as it lifts
+    const ctrl = [(ropeStart[0] + ropeEnd[0]) / 2 + 14, (ropeStart[1] + ropeEnd[1]) / 2 + slack];
+    const along = u => { const v = 1 - u; return [v * v * ropeStart[0] + 2 * v * u * ctrl[0] + u * u * ropeEnd[0], v * v * ropeStart[1] + 2 * v * u * ctrl[1] + u * u * ropeEnd[1]]; };
+    const ropeLen = Math.hypot(ropeEnd[0] - ropeStart[0], ropeEnd[1] - ropeStart[1]) + slack;
+    const n = Math.max(4, Math.floor(ropeLen / 17));
+    const flow = Math.floor(t * 9);                          // bits climb toward the rocket
+    g.font = '700 17px JetBrains Mono, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let q = 0; q <= n; q++) {
+      const [px, py] = along(q / n);
+      const bit = ((q + flow) * 2654435761 >>> 0) % 7 < 3 ? '1' : '0';
+      g.fillStyle = q / n < 0.5 ? '#2BB3D6' : '#34C29A';
+      g.globalAlpha = 0.55 + 0.45 * (((q + flow) % 5) === 0 ? 1 : 0);
+      g.fillText(bit, px, py);
+    }
+    g.globalAlpha = 1; g.textBaseline = 'alphabetic';
+    drawShip(shipX, shipY, sway * 0.006);
+    $('spBar').style.width = Math.min(100, t / DUR * 100) + '%';
+    $('ldtxt').textContent = t < 0.8 ? 'STORAGE' : t < 1.6 ? 'LEADERBOARD' : t < DUR ? 'NETWORK' : 'READY';
+    if (!calmMotion) raf2 = requestAnimationFrame(frame);
+  }
+  function playSplash() {
+    cancelAnimationFrame(raf2);
+    const el = $('splashEl'); el.classList.remove('run'); void el.offsetWidth; el.classList.add('run');
+    t0 = performance.now();
+    if (calmMotion) { t0 = performance.now() - (DUR + 1) * 1000; frame(performance.now()); } else raf2 = requestAnimationFrame(frame);
+  }
+  $('replay').onclick = playSplash; playSplash();
+
+  /* ---------- J: Top 10 switcher (example data) ---------- */
+  const T10G = [
+    ['Rocket Launch','R','#3B7BF0',false,false], ['Memory Lane','M','#2BB3D6',true,true], ['Quick Math','Q','#34C29A',true,true],
+    ['Guess Color','G','#8C8CFF',false,false], ['Angle Sense','A','#F5C542',true,false], ['Line Split','L','#F472B6',false,false], ['True or False','T','#FF8A3D',true,false],
+  ];
+  const NAMES = ['R3ZZOR#9665','ANJI#0409','YASHASVEE#0607','NEON_FOX#0420','PRE#9226','BK#3373','DHARTI#8055','NJ#0001','AP#1956','YASHAV#1678'];
+  let gi = 0, di = 1;
+  function boardFor(g, d) {
+    let sd = (g * 7 + d * 3 + 11) % 2147483647 || 5; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+    const top = [11080, 1170, 850, 810, 640, 750, 520][g] * (d === 0 ? .8 : d === 2 ? 1.2 : 1);
+    let v = top; const names = [...NAMES].sort(() => r() - .5);
+    return names.map((n, i) => { const sc = Math.round(v / 10) * 10; v *= .78 + r() * .14; return { n, sc, time: T10G[g][4] ? `${Math.floor(30 + r() * 120 / (i + 1))}s` : '' }; });
+  }
+  function drawT10(dir = 0) {
+    const [name, ic, acc, hasDiff] = T10G[gi];
+    const root = $('t10'); root.style.setProperty('--acc', acc);
+    const inner = document.createElement('div'); inner.className = 'in';
+    inner.innerHTML = `<span class="ic" style="background:${acc}22;color:${acc}">${ic}</span><b>${name}</b>`;
+    const gn = $('gName'); gn.innerHTML = ''; gn.appendChild(inner); gn.setAttribute('aria-label', `${name}, ${gi + 1} of ${T10G.length}`);
+    if (dir && !reduceMotion) { inner.style.transform = `translateX(${dir * 60}px)`; inner.style.opacity = 0; requestAnimationFrame(() => requestAnimationFrame(() => { inner.style.transform = ''; inner.style.opacity = 1; })); }
+    $('gDots').innerHTML = T10G.map((_, i) => `<i class="${i === gi ? 'on' : ''}"></i>`).join('');
+    const tabs = $('dTabs'); tabs.classList.toggle('one', !hasDiff);
+    tabs.innerHTML = hasDiff ? ['Easy','Medium','Hard'].map((t, i) => `<button class="${i === di ? 'on' : ''}" data-d="${i}">${t}</button>`).join('') : `<button tabindex="-1">One board</button>`;
+    const rows = boardFor(gi, hasDiff ? di : 1);
+    $('t10rows').innerHTML = rows.map((x, i) => `<div class="t10row${i === 0 ? ' first' : ''}${x.n.startsWith('NEON_FOX') ? ' me' : ''}" style="--from:${(dir || 1) * 26}px;animation-delay:${reduceMotion ? 0 : i * 30}ms"><span class="rk">${String(i + 1).padStart(2, '0')}</span><span class="nm">${x.n.replace(/(#\d+)/, '<span>$1</span>')}</span><span class="sc" data-v="${x.sc}">0${x.time ? `<small>${x.time}</small>` : ''}</span></div>`).join('');
+    const els = [...document.querySelectorAll('#t10rows .sc')], t0 = performance.now(), dur = reduceMotion ? 0 : 600;
+    const step = now => { const k = dur ? Math.min(1, (now - t0) / dur) : 1, e = 1 - Math.pow(1 - k, 3);
+      els.forEach(el => { const small = el.querySelector('small'); el.firstChild.nodeValue = Math.round(+el.dataset.v * e).toLocaleString(); if (small) el.appendChild(small); });
+      if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  $('gPrev').onclick = () => { gi = (gi + T10G.length - 1) % T10G.length; drawT10(-1); };
+  $('gNext').onclick = () => { gi = (gi + 1) % T10G.length; drawT10(1); };
+  $('dTabs').onclick = e => { const b = e.target.closest('button[data-d]'); if (!b) return; di = +b.dataset.d; drawT10(0); };
+  let sx = null; const sw = $('t10');
+  sw.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; sx = e.clientX; });
+  sw.addEventListener('pointerup', e => { if (sx == null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 40) (dx < 0 ? $('gNext') : $('gPrev')).click(); });
+  drawT10();
+})();
+</script>

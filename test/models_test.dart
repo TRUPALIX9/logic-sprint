@@ -57,6 +57,7 @@ void main() {
       expect(GameId.values.where((g) => g.hasDifficulty), [
         GameId.memoryLane,
         GameId.quickMath,
+        GameId.angleSense,
       ]);
     });
   });

@@ -1,0 +1,303 @@
+<title>Rocket Launch Upgrade</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: Logic Sprint "Circuit Noir". A playable before/after prototype beside the brief,
+   then movement & scoring, the layered background, fairness numbers, build map, playbook.
+   Dark only, like the app. Accent: Rocket Launch blue. */
+:root{
+  color-scheme:dark;
+  --bg:#000;--well:#04080C;--surface:#0A1016;--surface2:#111A23;--line:#1E2A36;
+  --text:#EAF2F7;--muted:#8C9DAD;--dim:#667A8C;
+  --blue:#3B7BF0;--blue-soft:rgba(59,123,240,.15);--teal:#34C29A;--aqua:#2BB3D6;--violet:#8C8CFF;--gold:#F5C542;--coral:#FF5A6E;
+  --display:'Rajdhani','Arial Narrow',sans-serif;--body:'IBM Plex Sans','Helvetica Neue',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding-block:28px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:60px}
+h1,h2,h3{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.03em;line-height:1;margin:0;text-wrap:balance}
+h1{font-size:clamp(42px,7vw,70px)}h2{font-size:32px}h3{font-size:19px}
+p{margin:0;max-width:68ch}
+.mono{font-family:var(--mono);font-weight:500;letter-spacing:.12em;font-size:11px;color:var(--muted);text-transform:uppercase}
+.blue{color:var(--blue)}.muted{color:var(--muted)}
+code{font-family:var(--mono);font-size:12.5px;color:var(--aqua);background:var(--surface2);padding:1px 5px;overflow-wrap:anywhere}
+.cut{clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.cut-sm{clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.cut-lg{clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)}
+.sec-head{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.sec-head p{color:var(--muted)}
+.tile{background:var(--line);padding:1px}.tile>.in{background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:10px;height:100%;box-sizing:border-box}
+.tile p,.tile li{color:var(--muted);font-size:14px}
+.tile ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.tile ul b{color:var(--text);font-weight:600}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.tbl{border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--surface)}
+td{background:var(--bg)}tr:last-child td{border-bottom:0}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:48px;align-items:start}
+.hero-copy{display:flex;flex-direction:column;gap:18px;padding-top:12px}
+.lede{font-size:17px}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.facts div{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.facts b{font-family:var(--mono);font-size:13px;font-weight:700}
+
+.phone{width:100%;max-width:380px;background:var(--line);padding:1px}
+.phone>.screen{background:var(--bg);display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.bar .t{flex:1;display:flex;flex-direction:column;gap:3px}
+.bar .t span:first-child{font-family:var(--display);font-weight:700;font-size:20px;text-transform:uppercase;letter-spacing:.03em;line-height:1}
+.score{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.score b{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--blue);line-height:1;font-variant-numeric:tabular-nums}
+.field{position:relative;touch-action:none;cursor:crosshair}
+.field canvas{display:block;width:100%;height:auto}
+.hud{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;pointer-events:none}
+.hud span{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;background:rgba(0,0,0,.55);padding:4px 7px;color:var(--muted)}
+.hud b{color:var(--gold)}
+.over{position:absolute;inset:0;background:rgba(0,0,0,.78);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px}
+.btn{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:16px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer;padding:10px 16px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 14px 14px}
+.seg button{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:15px;padding:9px 0;border:0;background:var(--surface2);color:var(--muted);cursor:pointer;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.seg button.on{background:var(--blue);color:#fff}
+.seg button:focus-visible,.btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+.layers{display:flex;flex-direction:column;gap:6px}
+.layer{display:grid;grid-template-columns:28px 150px minmax(0,1fr) 90px;gap:12px;align-items:center;background:var(--surface);padding:10px 12px;font-size:14px}
+.layer i{width:22px;height:22px;display:block}
+.layer b{font-family:var(--display);font-size:16px;text-transform:uppercase;letter-spacing:.03em}
+.layer span{color:var(--muted)}
+.layer code{justify-self:end}
+.steps{display:flex;flex-direction:column;border-left:1px solid var(--line);margin-left:14px}
+.step{position:relative;padding:0 0 24px 30px;display:flex;flex-direction:column;gap:8px}
+.step::before{content:attr(data-n);position:absolute;left:-15px;top:-2px;width:28px;height:28px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--blue);color:var(--blue);font-family:var(--mono);font-size:12px;font-weight:700;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.step .h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.step ul{margin:0;padding-left:18px;color:var(--muted);display:flex;flex-direction:column;gap:4px;max-width:80ch}
+.decisions{display:flex;flex-direction:column;gap:8px}
+.decisions div{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;padding:12px 14px;background:var(--surface);border:1px solid var(--line)}
+.decisions b{font-family:var(--display);text-transform:uppercase;font-size:16px;letter-spacing:.03em}
+.decisions span{color:var(--muted);font-size:14px}
+
+@media (max-width:900px){.hero{grid-template-columns:minmax(0,1fr)}.phone{margin:0 auto}.grid3{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:600px){.grid2,.facts{grid-template-columns:minmax(0,1fr)}.decisions div{grid-template-columns:minmax(0,1fr);gap:4px}.layer{grid-template-columns:28px minmax(0,1fr)}.layer span,.layer code{grid-column:2;justify-self:start}h2{font-size:27px}
+  table,thead,tbody,tr,th,td{display:block;width:auto}thead{display:none}tr{border-bottom:1px solid var(--line);padding:6px 0}tr:last-child{border-bottom:0}td{border-bottom:0;padding:4px 12px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<section class="hero">
+  <div class="hero-copy">
+    <span class="mono">Logic Sprint · Rocket Launch · upgrade plan</span>
+    <h1>Rocket <span class="blue">Launch</span> 2</h1>
+    <p class="lede">Today the ship slides along one row at the bottom. Now you fly it anywhere in the <b class="blue">lower half</b> of the screen, and space has depth: stars, nebula and planets move at different speeds and lean as you move. Flying higher is riskier and pays more. Skim past a rock and you get a close-call bonus.</p>
+    <div class="facts">
+      <div><span class="mono">Movement</span><b>Free in the lower half (50%–90% of the height)</b></div>
+      <div><span class="mono">Finger</span><b>Ship sits above the fingertip, never under it</b></div>
+      <div><span class="mono">Altitude</span><b>×1.0 at the bottom → ×1.5 at the halfway line</b></div>
+      <div><span class="mono">Close call</span><b>+5 for a rock that just misses</b></div>
+      <div><span class="mono">Depth</span><b>5 layers that lean as you move</b></div>
+      <div><span class="mono">Still</span><b>One hit ends the run · revives ×3 · themes every 1,250</b></div>
+    </div>
+    <p class="muted">The phone is a working prototype. Press and drag on it to fly. Switch between <b>Today</b> and <b>New</b> to feel the difference. It's tuned faster than the real game so the storm arrives in a minute.</p>
+  </div>
+
+  <div class="phone cut-lg"><div class="screen cut-lg">
+    <div class="bar"><div class="t"><span>Rocket Launch</span><span class="mono">Reflex</span></div><div class="score"><span class="mono">Score</span><b id="score">0</b></div></div>
+    <div class="field" id="field">
+      <canvas id="cv" width="680" height="1080" aria-label="Rocket Launch prototype: drag to fly"></canvas>
+      <div class="hud"><span id="alt">Altitude <b>×1.0</b></span><span id="storm">Storm 1.0×</span></div>
+      <div class="over" id="over" hidden><span class="mono">Hit</span><h2 id="overScore" class="blue">0</h2><p class="muted" id="overWhy" style="font-size:14px"></p><button class="btn cut-sm" id="restart">Fly again</button></div>
+    </div>
+    <div class="seg" id="seg"><button data-m="today">Today</button><button data-m="new" class="on">New</button></div>
+  </div></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="mono">01 · Movement and scoring</span><h2>Fly the lower half</h2>
+  <p>The top half stays clear: that's where rocks appear, and you need to see them coming. Within the lower half you can go anywhere, and the higher you fly, the less time you have to react, so height pays.</p></div>
+  <div class="grid3">
+    <div class="tile cut"><div class="in cut"><h3>How it moves</h3><ul>
+      <li>Touch anywhere; the ship flies to a point <b>about one thumb above your finger</b>, so your finger never hides it.</li>
+      <li>Allowed band: from the halfway line (50% of the height) to 90%. A faint line marks the top of the band.</li>
+      <li>Same top speed as today (1.8 screen widths a second), now on both axes, easing in as it arrives. It slightly leans in the direction it's moving.</li>
+    </ul></div></div>
+    <div class="tile cut"><div class="in cut"><h3>How it's scored</h3><ul>
+      <li>Every rock that falls past: <b>10 × altitude</b>. Altitude is ×1.0 at the bottom of the band, rising evenly to <b>×1.5</b> at the halfway line. The HUD shows it live.</li>
+      <li><b>Close call:</b> a rock that passes within half a ship-width without hitting gives +5, with a small flash.</li>
+      <li>Theme changes stay every 1,250 points. One hit ends the run; revives work as today.</li>
+    </ul></div></div>
+    <div class="tile cut"><div class="in cut"><h3>Fair hit rules</h3><ul>
+      <li>Today a hit is "crossed the rocket's row near it". In 2D that's not enough, so a hit becomes <b>circle against ship shape</b>, checked along the rock's path each frame (so fast rocks can't skip through).</li>
+      <li>The ship's hit shape is a bit <b>smaller</b> than its drawing (about 80%), so a hit always looks like a hit.</li>
+      <li>The revive shield and the calm 3 s after a revive stay as they are.</li>
+    </ul></div></div>
+  </div>
+  <div class="tile cut" style="margin-top:14px"><div class="in cut">
+    <h3>Why height pays (reaction time)</h3>
+    <p>Rocks fall at 0.32 screen heights a second at the start and about 0.54 once the storm builds. The time between a rock appearing and reaching the ship:</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Ship height</th><th>Altitude</th><th>Reaction time, calm</th><th>Reaction time, storm</th></tr></thead>
+      <tbody>
+        <tr><td>Bottom of band (90%)</td><td class="num">×1.0</td><td class="num">3.0 s</td><td class="num">1.8 s</td></tr>
+        <tr><td>Middle (70%)</td><td class="num">×1.25</td><td class="num">2.3 s</td><td class="num">1.4 s</td></tr>
+        <tr><td>Halfway line (50%)</td><td class="num">×1.5</td><td class="num">1.7 s</td><td class="num">1.0 s</td></tr>
+      </tbody>
+    </table></div>
+    <p>At the top of the band you have about half the reaction time for 50% more points. Today's fixed row (85%) sits near the bottom, so a cautious player loses nothing compared with now.</p>
+  </div></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="mono">02 · The background</span><h2>Five layers of space</h2>
+  <p>Depth comes from layers moving at different speeds (parallax). Each layer also shifts a few pixels against the ship's position, so the whole scene leans as you fly. Nearer layers lean more. Everything stays behind the rocks, and nothing moves near the bottom half's edge in a way that could be mistaken for a rock.</p></div>
+  <div class="layers">
+    <div class="layer"><i style="background:radial-gradient(circle,#3B7BF0 0,transparent 70%)"></i><b>Nebula</b><span>Soft colour clouds in the theme's colours, drifting very slowly. Fades from blue to violet to gold as themes change.</span><code>0.02× · lean 4 px</code></div>
+    <div class="layer"><i style="background:radial-gradient(circle,#8C8CFF 0 30%,transparent 32%)"></i><b>Planets</b><span>Today's planets (gas giant, ringed, moon orbit, cloud world), unchanged, on their own layer.</span><code>0.05× · lean 8 px</code></div>
+    <div class="layer"><i style="background:radial-gradient(circle,#EAF2F7 0 12%,transparent 14%)"></i><b>Far stars</b><span>Many tiny, dim dots, slow.</span><code>0.15× · lean 6 px</code></div>
+    <div class="layer"><i style="background:radial-gradient(circle,#EAF2F7 0 22%,transparent 24%)"></i><b>Near stars</b><span>Fewer, brighter, faster. Stretch into speed lines as the storm builds.</span><code>0.8× · lean 18 px</code></div>
+    <div class="layer"><i style="background:linear-gradient(#F5C542,transparent)"></i><b>Ship glow and trail</b><span>Engine flame that grows when you climb, and a short fading trail behind the ship.</span><code>with the ship</code></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="tile cut"><div class="in cut"><h3>Comfort and speed</h3><ul>
+      <li><b>Reduce motion:</b> no leaning and no speed lines; stars still drift slowly so it isn't frozen.</li>
+      <li>Shooting stars stay (they're today's best detail) and still burst on planets.</li>
+      <li>All layers are painted in one <code>CustomPainter</code> per layer with cached star positions, so it stays at 60 fps on older phones.</li>
+    </ul></div></div>
+    <div class="tile cut"><div class="in cut"><h3>Optional: tilt</h3><ul>
+      <li>Later, the lean could also follow the phone's tilt (gyroscope), so moving the phone moves the stars a little. Off by default, a switch in Settings, and never affects play.</li>
+    </ul></div></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="mono">03 · Build map</span><h2>Where it plugs in</h2></div>
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th>Change</th></tr></thead>
+    <tbody>
+      <tr><td><code>lib/games/rocket_launch/rocket_launch_engine.dart</code></td><td><code>rocketY</code> and <code>targetY</code> join <code>rocketX</code>; <code>steerTo(x, y)</code> clamps y to 0.5–0.9 after the thumb offset. Hits become a swept circle-vs-ship check. Score uses the altitude multiplier; close calls add +5 and are reported to the screen for the flash.</td></tr>
+      <tr><td><code>lib/games/rocket_launch/rocket_launch_screen.dart</code></td><td>Pass both axes from the <code>Listener</code>; draw the band line and the HUD altitude chip.</td></tr>
+      <tr><td><code>lib/games/rocket_launch/space_scenery.dart</code></td><td>Split into layers with a <code>lean</code> offset from the ship's position; add the nebula layer and speed-line stretch.</td></tr>
+      <tr><td><code>lib/games/rocket_launch/rocket_look.dart</code></td><td>Ship tilt toward its movement, bigger flame when climbing, short trail.</td></tr>
+      <tr><td><code>supabase/schema.sql</code> (<code>record_run</code>)</td><td>No change needed: the "impossible score" cap is 50,000 for non-timed games, and today's best is 11,080. Even ×1.6 from altitude and close calls puts it near 18,000.</td></tr>
+      <tr><td><code>test/games/rocket_launch_engine_test.dart</code></td><td>Band clamp, thumb offset, swept collision (no tunnelling at max speed), altitude scoring, close-call detection, unchanged revive calm.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="mono">04 · Playbook</span><h2>Steps</h2></div>
+  <div class="steps">
+    <div class="step" data-n="1"><div class="h"><h3>Engine</h3><span class="mono">1 day</span></div><ul><li>Two-axis steering, swept collision, scoring; tests first.</li></ul></div>
+    <div class="step" data-n="2"><div class="h"><h3>Background layers</h3><span class="mono">1.5 days</span></div><ul><li>Split scenery into layers, add lean, nebula and speed lines; profile at 60 fps on the oldest supported phone.</li></ul></div>
+    <div class="step" data-n="3"><div class="h"><h3>Feel</h3><span class="mono">1 day</span></div><ul><li>Tune thumb offset, band top and lean amounts on real phones; check left-handed play.</li></ul></div>
+    <div class="step" data-n="4"><div class="h"><h3>Leaderboard fairness</h3><span class="mono">0.5 day</span></div><ul><li>New scoring makes old and new runs not quite comparable; pick an option below. The server's score cap already has room.</li></ul></div>
+    <div class="step" data-n="5"><div class="h"><h3>Ship</h3><span class="mono">0.5 day</span></div><ul><li>New store screenshot and trailer clip (the leaning starfield is the hero shot).</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="mono">05 · Decide before building</span><h2>Open questions</h2></div>
+  <div class="decisions">
+    <div><b>Old high scores</b><span>The altitude bonus can make scores up to ~1.6× higher. Keep the current board (old bests stay but are easier to beat), or start a fresh "Rocket Launch 2" board and keep the old one as a hall of fame?</span></div>
+    <div><b>Band height</b><span>Halfway (50%) as you asked, or a little lower (60%) if playtests show the top of the band is too tight on small phones.</span></div>
+    <div><b>Close-call flash</b><span>A small "+5" near the ship, or also a tiny camera shake (off with reduce motion)?</span></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const cv = $('cv'), g = cv.getContext('2d'), W = 680, H = 1080;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let mode = 'new';
+  const BAND_TOP = 0.5, BAND_BOT = 0.9, THUMB = 0.09;
+  let sd = 9; const R = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+  const layer = (n, speed, lean, size, alpha) => Array.from({ length: n }, () => ({ x: R() * W, y: R() * H, s: size * (0.6 + R() * 0.8) })).map(p => Object.assign(p, { speed, lean, alpha }));
+  let far, near, nebula, st;
+  function reset() {
+    far = layer(70, 0.15, 6, 2.2, .35); near = layer(28, 0.8, 18, 3.6, .75);
+    nebula = [{ x: W * .25, y: H * .3, r: 340, c: '59,123,240' }, { x: W * .8, y: H * .65, r: 300, c: '140,140,255' }, { x: W * .5, y: H * 1.1, r: 380, c: '43,179,214' }];
+    st = { t: 0, ship: { x: W / 2, y: H * .85, vx: 0 }, target: { x: W / 2, y: H * .85 }, rocks: [], untilSpawn: 0.8, score: 0, over: false, pops: [], trail: [] };
+    $('score').textContent = 0; $('over').hidden = true;
+  }
+  const storm = t => Math.min(2.4, 1 + t / 40);            // faster ramp than the real game, for the demo
+  const altitude = y => mode === 'today' ? 1 : 1 + 0.5 * Math.min(1, Math.max(0, (BAND_BOT * H - y) / ((BAND_BOT - BAND_TOP) * H)));
+
+  // input
+  const field = $('field'); let down = false;
+  const toLocal = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+  function aim(e) { const [x, y] = toLocal(e); st.target.x = Math.max(30, Math.min(W - 30, x)); st.target.y = mode === 'today' ? H * .85 : Math.max(BAND_TOP * H, Math.min(BAND_BOT * H, y - THUMB * H)); }
+  field.addEventListener('pointerdown', e => { if (st.over) return; down = true; field.setPointerCapture(e.pointerId); aim(e); });
+  field.addEventListener('pointermove', e => { if (down || e.pointerType === 'mouse' && e.buttons) aim(e); });
+  field.addEventListener('pointerup', () => down = false);
+  field.addEventListener('pointercancel', () => down = false);
+  $('restart').onclick = reset;
+  $('seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; mode = b.dataset.m; document.querySelectorAll('#seg button').forEach(x => x.classList.toggle('on', x === b)); reset(); };
+
+  function rockShape(r) { return Array.from({ length: 9 }, () => .72 + R() * .3); }
+  function step(dt) {
+    const s = st, f = storm(s.t);
+    s.t += dt;
+    // ship eases toward the target, capped speed on both axes
+    const max = 1.8 * W * dt, dx = s.target.x - s.ship.x, dy = s.target.y - s.ship.y, d = Math.hypot(dx, dy);
+    const move = Math.min(max, d * 10 * dt); const px = s.ship.x;
+    if (d > 0.01) { s.ship.x += dx / d * Math.min(move, d); s.ship.y += dy / d * Math.min(move, d); }
+    s.ship.vx = (s.ship.x - px) / Math.max(dt, 1e-3);
+    s.trail.push({ x: s.ship.x, y: s.ship.y + 40, a: 1 }); if (s.trail.length > 14) s.trail.shift();
+    // background
+    for (const p of [...far, ...near]) { p.y += p.speed * 0.32 * H * f * dt * (mode === 'today' ? .6 : 1); if (p.y > H + 10) { p.y -= H + 20; p.x = R() * W; } }
+    for (const n of nebula) { n.y += 0.02 * H * dt; if (n.y - n.r > H) n.y = -n.r; }
+    // rocks
+    s.untilSpawn -= dt;
+    if (s.untilSpawn <= 0) { const r = 26 + R() * 24; s.rocks.push({ x: 40 + R() * (W - 80), y: -r, r, v: 0.32 * H * f * (.85 + R() * .3), a: R() * 6, va: (R() - .5) * 1.4, pts: rockShape(r), close: false }); s.untilSpawn = Math.max(0.28, 0.75 - s.t * 0.008) / (mode === 'today' ? 1 : 1); }
+    const hitR = 22;                                      // ship hit circle (about 80% of its drawing)
+    for (const rk of [...s.rocks]) {
+      const y0 = rk.y; rk.y += rk.v * dt; rk.a += rk.va * dt;
+      // swept check: closest approach of the segment (y0 → y) to the ship centre
+      const cy = Math.max(Math.min(s.ship.y, rk.y), y0), dist = Math.hypot(rk.x - s.ship.x, cy - s.ship.y);
+      if (dist < rk.r * .85 + hitR) { s.over = true; $('overScore').textContent = s.score; $('overWhy').textContent = `${Math.round(s.t)} s in, storm ${storm(s.t).toFixed(1)}×.${mode === 'new' ? ' Try flying high when it’s calm and low when it’s busy.' : ''}`; $('over').hidden = false; return; }
+      if (mode === 'new' && !rk.close && dist < rk.r * .85 + hitR + 32 && rk.y > s.ship.y) { rk.close = true; s.score += 5; s.pops.push({ x: s.ship.x, y: s.ship.y - 70, t: 0, txt: 'CLOSE +5' }); }
+      if (rk.y - rk.r > H) { s.rocks.splice(s.rocks.indexOf(rk), 1); const pts = Math.round(10 * altitude(s.ship.y)); s.score += pts; }
+    }
+    s.pops.forEach(p => p.t += dt); s.pops = s.pops.filter(p => p.t < .9);
+    $('score').textContent = s.score;
+    $('alt').innerHTML = `Altitude <b>×${altitude(s.ship.y).toFixed(2)}</b>`;
+    $('storm').textContent = `Storm ${f.toFixed(1)}×`;
+  }
+
+  function draw() {
+    const s = st, f = storm(s.t), lean = mode === 'new' && !reduce;
+    const lx = lean ? -(s.ship.x - W / 2) / (W / 2) : 0, ly = lean ? -(s.ship.y - H * .7) / (H * .2) : 0;
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    if (mode === 'new') for (const n of nebula) { const gr = g.createRadialGradient(n.x + lx * 4, n.y + ly * 4, 0, n.x + lx * 4, n.y + ly * 4, n.r); gr.addColorStop(0, `rgba(${n.c},.16)`); gr.addColorStop(1, `rgba(${n.c},0)`); g.fillStyle = gr; g.fillRect(0, 0, W, H); }
+    // planet layer (one, simplified)
+    if (mode === 'new') { const py = ((s.t * 0.05 * H) % (H + 400)) - 200 + ly * 8, pxp = W * .78 + lx * 8; const gr = g.createRadialGradient(pxp - 30, py - 30, 10, pxp, py, 90); gr.addColorStop(0, '#5A5AB8'); gr.addColorStop(1, '#1A1A40'); g.fillStyle = gr; g.beginPath(); g.arc(pxp, py, 90, 0, 7); g.fill(); g.strokeStyle = 'rgba(140,140,255,.5)'; g.lineWidth = 4; g.beginPath(); g.ellipse(pxp, py, 150, 34, -.3, 0, 7); g.stroke(); }
+    const streak = mode === 'new' && !reduce ? Math.max(0, f - 1.3) * 26 : 0;
+    for (const p of far) { g.fillStyle = `rgba(234,242,247,${p.alpha})`; g.fillRect(p.x + lx * p.lean, p.y + ly * p.lean, p.s, p.s); }
+    for (const p of near) { const x = p.x + lx * p.lean, y = p.y + ly * p.lean; g.strokeStyle = `rgba(234,242,247,${p.alpha})`; g.lineWidth = p.s; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - 1 - streak); g.stroke(); }
+    // band line
+    if (mode === 'new') { g.setLineDash([10, 12]); g.strokeStyle = 'rgba(59,123,240,.35)'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, BAND_TOP * H); g.lineTo(W, BAND_TOP * H); g.stroke(); g.setLineDash([]); g.fillStyle = 'rgba(59,123,240,.6)'; g.font = '500 18px JetBrains Mono, monospace'; g.fillText('×1.5', 12, BAND_TOP * H - 10); }
+    // rocks
+    for (const rk of s.rocks) { g.save(); g.translate(rk.x, rk.y); g.rotate(rk.a); g.beginPath(); rk.pts.forEach((p, k) => { const a = k / rk.pts.length * 7; k ? g.lineTo(Math.cos(a) * rk.r * p, Math.sin(a) * rk.r * p) : g.moveTo(Math.cos(a) * rk.r * p, Math.sin(a) * rk.r * p); }); g.closePath(); g.fillStyle = '#3A4652'; g.fill(); g.strokeStyle = '#56636F'; g.lineWidth = 3; g.stroke(); g.restore(); }
+    // trail + ship
+    if (mode === 'new') s.trail.forEach((t, i) => { g.fillStyle = `rgba(245,197,66,${i / s.trail.length * .25})`; g.beginPath(); g.arc(t.x, t.y, 4 + i * .5, 0, 7); g.fill(); });
+    const climb = mode === 'new' ? Math.max(0, (s.target.y < s.ship.y - 4) ? 1 : 0) : 0;
+    g.save(); g.translate(s.ship.x, s.ship.y); g.rotate(mode === 'new' ? Math.max(-.35, Math.min(.35, s.ship.vx / 2600)) : 0);
+    const fl = (30 + Math.random() * 12) * (1 + climb * .6); const fg = g.createLinearGradient(0, 30, 0, 30 + fl); fg.addColorStop(0, '#F5C542'); fg.addColorStop(1, 'rgba(255,90,110,0)'); g.fillStyle = fg; g.beginPath(); g.moveTo(-12, 30); g.quadraticCurveTo(0, 30 + fl * 1.3, 12, 30); g.fill();
+    g.fillStyle = '#2B5FC4'; g.beginPath(); g.moveTo(-18, 10); g.lineTo(-32, 36); g.lineTo(-15, 32); g.fill(); g.beginPath(); g.moveTo(18, 10); g.lineTo(32, 36); g.lineTo(15, 32); g.fill();
+    const bg = g.createLinearGradient(-18, 0, 18, 0); bg.addColorStop(0, '#2F6FE0'); bg.addColorStop(.5, '#5B93FF'); bg.addColorStop(1, '#2457BF'); g.fillStyle = bg; g.beginPath(); g.moveTo(0, -52); g.quadraticCurveTo(20, -24, 18, 32); g.lineTo(-18, 32); g.quadraticCurveTo(-20, -24, 0, -52); g.fill();
+    g.fillStyle = '#04080C'; g.beginPath(); g.arc(0, -14, 8, 0, 7); g.fill(); g.strokeStyle = '#34C29A'; g.lineWidth = 3; g.stroke();
+    g.restore();
+    for (const p of s.pops) { g.globalAlpha = 1 - p.t / .9; g.fillStyle = '#F5C542'; g.font = '700 28px JetBrains Mono, monospace'; g.textAlign = 'center'; g.fillText(p.txt, p.x, p.y - p.t * 40); g.textAlign = 'left'; g.globalAlpha = 1; }
+  }
+  let last = performance.now();
+  function loop(now) { const dt = Math.min(.05, (now - last) / 1000); last = now; if (!st.over) step(dt); draw(); requestAnimationFrame(loop); }
+  reset(); requestAnimationFrame(loop);
+})();
+</script>

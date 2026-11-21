@@ -4,6 +4,7 @@ import '../../core/theme.dart';
 import '../../models/game.dart';
 import '../../ui/chamfer.dart';
 import '../../ui/kit.dart';
+import '../../ui/reveal.dart';
 import '../round_screen.dart';
 import 'quick_math_engine.dart';
 
@@ -48,18 +49,24 @@ class _QuickMathBody extends StatelessWidget {
               color: LS.well,
               padding: const EdgeInsets.all(20),
               child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    FittedBox(
-                      child: DisplayText(engine.problem.text, size: 88),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      '= ?',
-                      style: LSText.mono(26, color: LS.dim, spacing: 0),
-                    ),
-                  ],
+                // Hidden during the get-ready countdown; each new problem
+                // eases in.
+                child: Reveal(
+                  revealKey: engine.problem,
+                  hidden: engine.isResuming,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FittedBox(
+                        child: DisplayText(engine.problem.text, size: 88),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        '= ?',
+                        style: LSText.mono(26, color: LS.dim, spacing: 0),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -136,8 +143,12 @@ class _AnswerButton extends StatelessWidget {
       borderColor: state ?? LS.line,
       onTap: engine.locked ? null : () => engine.answer(value),
       child: Center(
-        child: FittedBox(
-          child: DisplayText('$value', size: 44, color: state ?? LS.text),
+        child: Reveal(
+          revealKey: engine.problem,
+          hidden: engine.isResuming,
+          child: FittedBox(
+            child: DisplayText('$value', size: 44, color: state ?? LS.text),
+          ),
         ),
       ),
     );

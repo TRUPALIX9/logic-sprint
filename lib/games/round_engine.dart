@@ -19,8 +19,10 @@ abstract interface class RoundFeedback {
 /// background or the player tapped pause): nothing moves and the clock is
 /// stopped until [RoundEngine.resume]. After a mistake the run is [down]:
 /// the host may offer a revive (a rewarded ad or a heart) before it is
-/// [over].
-enum RunState { ready, playing, paused, down, over }
+/// [over]. A revive can hold the run in [resuming] (the clock stopped, the
+/// board already reset) while the host counts the player back in; then
+/// [RoundEngine.go] makes it [playing].
+enum RunState { ready, playing, paused, down, resuming, over }
 
 /// An endless run: plays until a mistake, can be revived up to
 /// [AppConfig.maxRevivesPerRun] times, and records how long it lasted (time
@@ -57,6 +59,9 @@ abstract class RoundEngine extends ChangeNotifier {
   /// True only while the run is live: false when paused, down or over.
   bool get isPlaying => _state == RunState.playing;
   bool get isPaused => _state == RunState.paused;
+
+  /// Revived and waiting for [go] (the get-ready countdown).
+  bool get isResuming => _state == RunState.resuming;
   bool get isFinished => _state == RunState.over;
 
   /// Down with revives left this run.
@@ -140,6 +145,13 @@ abstract class RoundEngine extends ChangeNotifier {
     notify();
   }
 
+  /// A miss that doesn't end the run (a strike in the estimation games):
+  /// the hit streak starts over.
+  @protected
+  void breakStreak() {
+    _streak = 0;
+  }
+
   @protected
   void addBonus(int points) {
     score += points;
@@ -162,15 +174,34 @@ abstract class RoundEngine extends ChangeNotifier {
   }
 
   /// Continues a [RunState.down] run (after a rewarded ad or a heart), while
-  /// [canRevive].
-  void revive() {
+  /// [canRevive]. With [hold] the run waits in [RunState.resuming]: the
+  /// board is reset ([onRevive]) and frozen ([onPause]), the clock stays
+  /// stopped, and nothing moves until [go].
+  void revive({bool hold = false}) {
     if (!canRevive) {
       return;
     }
     _revives++;
+    if (hold) {
+      _state = RunState.resuming;
+      onRevive();
+      onPause();
+    } else {
+      _state = RunState.playing;
+      _stopwatch.start();
+      onRevive();
+    }
+    notify();
+  }
+
+  /// Starts a [RunState.resuming] run; a no-op otherwise.
+  void go() {
+    if (!isResuming) {
+      return;
+    }
     _state = RunState.playing;
     _stopwatch.start();
-    onRevive();
+    onResume();
     notify();
   }
 

@@ -126,6 +126,20 @@ void main() {
     expect(find.text('REFRESH'), findsOneWidget, reason: 'waits for its ad');
   });
 
+  testWidgets('a best with no rank yet still pins under the list', (
+    tester,
+  ) async {
+    final h = await _setUp();
+    h.api.rank = null;
+    await h.storage.saveBestIfHigher(_game, _difficulty, 640);
+    await _pump(tester, h);
+
+    expect(find.text('NEON'), findsOneWidget);
+    expect(find.text('640'), findsOneWidget);
+    expect(find.text('—'), findsOneWidget, reason: 'rank not known yet');
+    expect(find.text('YOUR BEST · RANKED AFTER 00:00 UTC'), findsOneWidget);
+  });
+
   testWidgets('a changed board: chips, dates and the climb banner', (
     tester,
   ) async {
@@ -209,5 +223,70 @@ void main() {
       find.text('UPDATED TODAY, 3:00 PM · DAILY 00:00 UTC'),
       findsOneWidget,
     );
+  });
+
+  group('‹ game › picker', () {
+    // Rows exist for Rocket Launch only, so other boards are empty.
+    Finder announced(String label) => find.bySemanticsLabel(label);
+
+    testWidgets('arrows step through every game and wrap around', (
+      tester,
+    ) async {
+      final h = await _setUp();
+      await _pump(tester, h);
+      final n = GameId.values.length;
+      expect(announced('Rocket Launch, 1 of $n'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Next game'));
+      await tester.pumpAndSettle();
+      expect(announced('Memory Lane, 2 of $n'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Previous game'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Previous game'));
+      await tester.pumpAndSettle();
+      expect(
+        announced('${GameId.values.last.title}, $n of $n'),
+        findsOneWidget,
+        reason: 'wraps from the first game to the last',
+      );
+    });
+
+    testWidgets('single-board games show no difficulty row', (tester) async {
+      final h = await _setUp();
+      await _pump(tester, h);
+      expect(find.text('EASY'), findsNothing, reason: 'Rocket Launch');
+
+      await tester.tap(find.byTooltip('Next game')); // Memory Lane
+      await tester.pumpAndSettle();
+      expect(find.text('EASY'), findsOneWidget);
+      expect(find.text('HARD'), findsOneWidget);
+    });
+
+    testWidgets('a swipe on the board changes game', (tester) async {
+      final h = await _setUp();
+      await _pump(tester, h);
+      await tester.fling(find.text('AXON'), const Offset(-300, 0), 1200);
+      await tester.pumpAndSettle();
+      expect(
+        announced('Memory Lane, 2 of ${GameId.values.length}'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('switching back counts the scores up from 0', (tester) async {
+      final h = await _setUp();
+      await _pump(tester, h);
+      await tester.tap(find.byTooltip('Next game'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Previous game'));
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+      expect(find.text('980'), findsNothing, reason: 'still counting up');
+      await tester.pumpAndSettle();
+      expect(find.text('980'), findsOneWidget);
+      expect(find.text('AXON'), findsOneWidget);
+    });
   });
 }

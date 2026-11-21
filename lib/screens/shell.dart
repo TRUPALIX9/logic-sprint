@@ -32,12 +32,7 @@ class Shell extends StatelessWidget {
             bottom: false,
             child: Column(
               children: [
-                Expanded(
-                  child: IndexedStack(
-                    index: tabs.value,
-                    children: const [RanksTab(), HomeTab(), ProfileTab()],
-                  ),
-                ),
+                Expanded(child: _TabStack(index: tabs.value)),
                 // One banner for all three tabs: loads once and stays while
                 // switching. The bottom gap keeps it off the nav buttons.
                 const AdBanner(padding: EdgeInsets.fromLTRB(0, 8, 0, 12)),
@@ -169,6 +164,66 @@ class _NavItem extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The three tabs, kept alive (an [IndexedStack]) so each keeps its scroll
+/// and state. Switching fades the new tab in with a short slide from the side
+/// it sits on; instant under reduce motion.
+class _TabStack extends StatefulWidget {
+  const _TabStack({required this.index});
+
+  final int index;
+
+  @override
+  State<_TabStack> createState() => _TabStackState();
+}
+
+class _TabStackState extends State<_TabStack>
+    with SingleTickerProviderStateMixin {
+  late final _in = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 220),
+    value: 1,
+  );
+  double _from = 0;
+
+  @override
+  void didUpdateWidget(covariant _TabStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.index != widget.index) {
+      _from = widget.index > oldWidget.index ? 0.04 : -0.04;
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _in.value = 1;
+      } else {
+        _in.forward(from: 0);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _in.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final curve = CurvedAnimation(parent: _in, curve: Curves.easeOutCubic);
+    return FadeTransition(
+      opacity: curve,
+      child: AnimatedBuilder(
+        animation: curve,
+        builder: (context, child) => FractionalTranslation(
+          translation: Offset(_from * (1 - curve.value), 0),
+          child: child,
+        ),
+        child: IndexedStack(
+          index: widget.index,
+          children: const [RanksTab(), HomeTab(), ProfileTab()],
         ),
       ),
     );

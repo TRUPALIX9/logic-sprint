@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/device_log.dart';
 import '../models/game.dart';
 import '../models/run_record.dart';
 
@@ -11,9 +12,6 @@ class Storage {
 
   static Future<Storage> open() async =>
       Storage(await SharedPreferences.getInstance());
-
-  /// History keeps the most recent runs only.
-  static const historyLimit = 100;
 
   final SharedPreferences _prefs;
 
@@ -139,11 +137,121 @@ class Storage {
     await _prefs.setString('lastDifficulty', difficulty.name);
   }
 
-  /// Local run history, newest first.
-  List<RunRecord> get history => _records('runHistory');
+  /// Local run history, newest first. Every run is kept: rows are compact
+  /// (see [RunRecord.toRow]) and decoded once, then served from memory.
+  List<RunRecord> get history => _history ??= List.unmodifiable(_readHistory());
+  List<RunRecord>? _history;
 
-  Future<void> addHistory(RunRecord run) =>
-      _setRecords('runHistory', [run, ...history].take(historyLimit).toList());
+  Future<void> addHistory(RunRecord run) {
+    final runs = [run, ...history];
+    _history = List.unmodifiable(runs);
+    return _prefs.setString(
+      _historyKey,
+      jsonEncode([for (final r in runs) r.toRow()]),
+    );
+  }
+
+  static const _historyKey = 'runHistory';
+
+  /// The most recent video ads shown here, oldest first (banners are only
+  /// counted). Capped at [adLogLimit] so it stays small. Kept only here.
+  List<AdEvent> get adLog => _adLog ??= List.unmodifiable(
+    _rows('adLog').map(AdEvent.fromRow).nonNulls,
+  );
+  List<AdEvent>? _adLog;
+
+  static const adLogLimit = 500;
+
+  /// Running totals per kind and outcome ("revive.rewarded": 12). They
+  /// never drop old ads, and a banner only bumps a number.
+  Map<String, int> get _adTotals => _adTotalsCache ??= _readTotals();
+  Map<String, int>? _adTotalsCache;
+
+  Map<String, int> _readTotals() {
+    try {
+      final raw = jsonDecode(_prefs.getString('adTotals') ?? '{}') as Map;
+      return {
+        for (final MapEntry(:key, :value) in raw.entries)
+          if (value is num) '$key': value.toInt(),
+      };
+    } on Object {
+      return {};
+    }
+  }
+
+  Future<void> addAdEvent(AdEvent event) async {
+    final key = '${event.kind.name}.${event.outcome.name}';
+    final totals = {..._adTotals, key: (_adTotals[key] ?? 0) + 1};
+    _adTotalsCache = totals;
+    await _prefs.setString('adTotals', jsonEncode(totals));
+    if (event.kind == AdKind.banner) {
+      return;
+    }
+    final events = [...adLog, event];
+    final kept = events.length > adLogLimit
+        ? events.sublist(events.length - adLogLimit)
+        : events;
+    _adLog = List.unmodifiable(kept);
+    await _prefs.setString(
+      'adLog',
+      jsonEncode([for (final e in kept) e.toRow()]),
+    );
+  }
+
+  /// How many ads of each kind were shown here, all time.
+  Map<AdKind, int> get adCounts => {
+    for (final kind in AdKind.values) kind: adCount(kind),
+  };
+
+  /// Shown ads of [kind], optionally only those with [outcome].
+  int adCount(AdKind kind, [AdOutcome? outcome]) => [
+    for (final o in AdOutcome.values)
+      if (outcome == null || o == outcome)
+        _adTotals['${kind.name}.${o.name}'] ?? 0,
+  ].fold(0, (a, b) => a + b);
+
+  /// Every name this player has taken, oldest first. Kept only here; it
+  /// stays when the leaderboard data is deleted from the server.
+  List<NameUse> get nameLog =>
+      List.unmodifiable(_rows('nameLog').map(NameUse.fromRow).nonNulls);
+
+  Future<void> addNameUse(NameUse use) => _prefs.setString(
+    'nameLog',
+    jsonEncode([
+      for (final n in [...nameLog, use]) n.toRow(),
+    ]),
+  );
+
+  List<Object?> _rows(String key) {
+    final raw = _prefs.getString(key);
+    if (raw == null) {
+      return const [];
+    }
+    try {
+      return jsonDecode(raw) as List;
+    } on Object {
+      return const [];
+    }
+  }
+
+  /// Reads both the compact rows and the older map-per-run format.
+  List<RunRecord> _readHistory() {
+    final raw = _prefs.getString(_historyKey);
+    if (raw == null) {
+      return [];
+    }
+    try {
+      return [
+        for (final e in jsonDecode(raw) as List)
+          if (e is List)
+            RunRecord.fromRow(e)
+          else if (e is Map)
+            RunRecord.fromJson(Map<String, dynamic>.from(e)),
+      ].nonNulls.toList();
+    } on Object {
+      return [];
+    }
+  }
 
   /// Runs not yet sent to the server, oldest first.
   List<RunRecord> get pendingRuns => _records('pendingRuns');

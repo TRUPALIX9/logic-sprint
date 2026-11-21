@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "logicsprint-site",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/trupal/Projects/portfolio", "run", "dev"],
+      "port": 3000,
+      "url": "http://logicsprint.localhost:3000"
+    }
+  ]
+}

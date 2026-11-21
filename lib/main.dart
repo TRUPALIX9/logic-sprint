@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'app.dart';
+import 'models/device_log.dart';
 import 'services/ads.dart';
 import 'services/leaderboard.dart';
 import 'services/leaderboard_api.dart';
@@ -28,7 +29,11 @@ Future<void> main() async {
   final info = await PackageInfo.fromPlatform();
   await SupabaseLeaderboardApi.initialize();
   final leaderboard = Leaderboard(storage, api: SupabaseLeaderboardApi());
-  final ads = Ads();
+  final ads = Ads()
+    // Every ad shown is kept in a log on this phone only.
+    ..onEvent = (kind, outcome) => storage.addAdEvent(
+      AdEvent(kind: kind, outcome: outcome, at: DateTime.now()),
+    );
   final appState = AppState(storage);
   final network = Network();
   await network.start();

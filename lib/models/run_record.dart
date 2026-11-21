@@ -55,6 +55,34 @@ class RunRecord {
     );
   }
 
+  /// The compact form kept in History (about 55 bytes a run, so 10,000
+  /// runs is about half a megabyte): game, difficulty, score, duration ms,
+  /// played-at ms, best (1/0).
+  List<Object> toRow() => [
+    game.name,
+    difficulty.name,
+    score,
+    duration.inMilliseconds,
+    playedAt.millisecondsSinceEpoch,
+    if (isBest) 1 else 0,
+  ];
+
+  /// Reads [toRow]; null for a malformed row or a game this build doesn't
+  /// know.
+  static RunRecord? fromRow(List<dynamic> row) {
+    if (row.length < 6) {
+      return null;
+    }
+    return fromJson({
+      'game': row[0],
+      'difficulty': row[1],
+      'score': row[2],
+      'durationMs': row[3],
+      'at': row[4],
+      'best': row[5] == 1,
+    });
+  }
+
   Map<String, dynamic> toJson() => {
     'game': game.name,
     'difficulty': difficulty.name,

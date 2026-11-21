@@ -35,8 +35,8 @@ enum GuessShape { circle, square, triangle, star }
 /// - 1–5 [classic]: rule COLOR, fixed order, labels match fills, about 1 in 4
 ///   words congruent (the only stage with congruent words).
 /// - 6–12 [shuffled]: button order reshuffles every word.
-/// - 13–20 [timed]: per-word countdown, 3.0 s at word 13, −0.05 s per word,
-///   floor 1.0 s. Running out is a mistake.
+/// - 13–20 [timed]: per-word countdown, 3.0 s at word 13, −0.025 s per
+///   word, floor 1.6 s. Running out is a mistake.
 /// - 21–30 [ruleSwap]: rule swaps between COLOR and TEXT (about 35% TEXT); a
 ///   new rule holds for at least [minRuleRun] words.
 /// - 31–40 [mislabeled]: every label names a different color than its fill.
@@ -184,15 +184,21 @@ class GuessColorEngine extends RoundEngine {
   /// The current word's countdown; null before word 13.
   Duration? get timeLimit => timeLimitFor(number);
 
-  /// The countdown on word 13; each later word gets 50 ms less, to 1 s.
+  /// The countdown on word 13; each later word gets [timeStep] less, down
+  /// to [minTimeLimit]. 1.6 s leaves room to read a mislabeled, distracting
+  /// word and reach the button (a 4-choice Stroop answer takes most people
+  /// about a second).
   static const maxTimeLimit = Duration(seconds: 3);
+  static const minTimeLimit = Duration(milliseconds: 1600);
+  static const timeStep = Duration(milliseconds: 25);
 
   static Duration? timeLimitFor(int number) {
     if (!GuessStage.of(number).hasCountdown) {
       return null;
     }
-    final ms = maxTimeLimit.inMilliseconds - 50 * (number - 13);
-    return Duration(milliseconds: max(1000, ms));
+    final ms =
+        maxTimeLimit.inMilliseconds - timeStep.inMilliseconds * (number - 13);
+    return Duration(milliseconds: max(minTimeLimit.inMilliseconds, ms));
   }
 
   /// The item for word [number]. [previousRule] and [ruleRun] (words shown

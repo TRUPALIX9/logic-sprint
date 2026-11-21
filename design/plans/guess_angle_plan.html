@@ -1,0 +1,826 @@
+<title>Angle Sense Game Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: Logic Sprint "Circuit Noir" — AMOLED black, chamfered (never rounded) panels,
+   a playable phone-sized prototype beside the brief, then spec → build → playbook → ideas.
+   Single dark theme on purpose: the app itself only ships dark. */
+:root {
+  color-scheme: dark;
+  --bg: #000000; --well: #04080C; --surface: #0A1016; --surface2: #111A23;
+  --line: #1E2A36; --trace: #0A131B;
+  --text: #EAF2F7; --muted: #8C9DAD; --dim: #667A8C;
+  --teal: #34C29A; --blue: #3B7BF0; --aqua: #2BB3D6; --violet: #8C8CFF;
+  --gold: #F5C542; --coral: #FF5A6E;
+  --gold-soft: rgba(245,197,66,.14); --teal-soft: rgba(52,194,154,.14); --coral-soft: rgba(255,90,110,.14);
+  --display: 'Rajdhani', 'Arial Narrow', sans-serif;
+  --body: 'IBM Plex Sans', 'Helvetica Neue', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--body); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 28px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 64px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; line-height: 1; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(44px, 7vw, 72px); }
+h2 { font-size: 34px; }
+h3 { font-size: 21px; }
+p { margin: 0; max-width: 66ch; }
+.mono { font-family: var(--mono); font-weight: 500; letter-spacing: .12em; font-size: 11px; color: var(--muted); text-transform: uppercase; }
+.gold { color: var(--gold); } .teal { color: var(--teal); } .coral { color: var(--coral); } .muted { color: var(--muted); }
+code { font-family: var(--mono); font-size: 12.5px; color: var(--aqua); background: var(--surface2); padding: 1px 5px; overflow-wrap: anywhere; }
+.cut { clip-path: polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px); }
+.cut-sm { clip-path: polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px); }
+.cut-lg { clip-path: polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px); }
+/* bordered chamfer = 1px line colour wrapper + inner fill */
+.frame { background: var(--line); padding: 1px; }
+.frame > .in { background: var(--surface); }
+.sec-head { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.sec-head p { color: var(--muted); }
+
+/* ---------- hero ---------- */
+.hero { display: grid; grid-template-columns: minmax(0,1fr) 380px; gap: 48px; align-items: start; }
+.hero-copy { display: flex; flex-direction: column; gap: 20px; padding-top: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; padding: 6px 10px; background: var(--surface2); color: var(--muted); }
+.chip.on { background: var(--gold-soft); color: var(--gold); }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.facts div { background: var(--surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.facts b { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text); }
+.lede { font-size: 17px; color: var(--text); }
+
+/* ---------- phone prototype ---------- */
+.phone { width: 100%; max-width: 380px; background: var(--line); padding: 1px; }
+.phone > .screen { background: var(--bg); display: flex; flex-direction: column; }
+.bar { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.bar .t { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.bar .t span:first-child { font-family: var(--display); font-weight: 700; font-size: 22px; text-transform: uppercase; letter-spacing: .03em; line-height: 1; }
+.score { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.score b { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--gold); line-height: 1; font-variant-numeric: tabular-nums; }
+.pz { padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.strikes { display: flex; gap: 5px; }
+.strikes i { width: 12px; height: 12px; background: var(--gold); clip-path: polygon(50% 0,100% 50%,50% 100%,0 50%); transition: opacity .3s, transform .3s; }
+.strikes i.gone { opacity: .18; transform: scale(.7) rotate(25deg); }
+.rule { position: relative; display: grid; grid-template-columns: 1fr 1fr; background: var(--surface); border: 1px solid var(--line); height: 46px; padding: 2px; box-sizing: border-box; }
+.rule .lit { position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px); border: 1px solid var(--gold); background: #1E1A0C; transition: transform .26s cubic-bezier(.2,.8,.2,1); clip-path: polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px); }
+.rule.draw .lit { transform: translateX(100%); }
+.rule .lit.pulse { animation: rulepulse .42s ease-out; }
+@keyframes rulepulse { 50% { scale: 1.08; } }
+.rule span { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 16px; letter-spacing: .05em; color: var(--dim); transition: color .2s; }
+.rule span.on { color: var(--gold); }
+.modes { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+.modes button { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 15px; letter-spacing: .05em; padding: 8px 0; border: 0; background: var(--surface2); color: var(--muted); cursor: pointer; clip-path: polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px); }
+.modes button.on { background: var(--gold); color: #000; }
+.bars { display: flex; flex-direction: column; gap: 8px; }
+.bars .b { display: grid; grid-template-columns: 54px minmax(0,1fr) 92px; gap: 10px; align-items: center; font-family: var(--mono); font-size: 12px; }
+.bars .b i { display: block; height: 14px; background: var(--gold); }
+.bars .b span:last-child { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.sheet { background: var(--surface); border: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.sheet .opt { border: 1px solid var(--line); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; background: var(--bg); }
+.sheet .opt.on { border-color: var(--gold); background: #1E1A0C; }
+.sheet .opt b { font-family: var(--display); font-size: 18px; text-transform: uppercase; letter-spacing: .04em; }
+.sheet .opt span { font-size: 13px; color: var(--muted); }
+.tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--line); padding: 1px; }
+.tabs > div { background: var(--surface); display: grid; grid-template-columns: 1fr 1fr; }
+.tabs span { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 16px; letter-spacing: .05em; text-align: center; padding: 9px 0; color: var(--dim); }
+.tabs span.on { color: var(--gold); background: #1E1A0C; outline: 1px solid var(--gold); outline-offset: -2px; }
+.status { display: flex; justify-content: space-between; align-items: center; }
+.card { position: relative; background: var(--line); padding: 1px; }
+.card > .in { background: var(--well); aspect-ratio: 1 / 1; position: relative; touch-action: none; }
+.card svg { display: block; width: 100%; height: 100%; }
+.card .tbar { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--gold); width: 0; }
+.verdict { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); font-family: var(--display); font-size: 24px; font-weight: 700; letter-spacing: .06em; padding: 4px 12px; white-space: nowrap; pointer-events: none; }
+.verdict.hit { color: var(--teal); background: var(--teal-soft); }
+.verdict.bull { color: var(--gold); background: var(--gold-soft); }
+.verdict.miss { color: var(--coral); background: var(--coral-soft); }
+.over { position: absolute; inset: 0; background: rgba(0,0,0,.82); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 20px; }
+.tape-wrap { display: flex; flex-direction: column; gap: 8px; }
+.readout { display: flex; align-items: baseline; justify-content: center; gap: 2px; font-family: var(--mono); font-weight: 700; font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
+.readout small { font-size: 20px; color: var(--muted); }
+.tape { position: relative; height: 54px; background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); overflow: hidden; cursor: ew-resize; touch-action: none; user-select: none; }
+.tape:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.tape .strip { position: absolute; top: 0; left: 0; height: 100%; will-change: transform; }
+.tape .needle { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--gold); }
+.tape .needle::before { content: ""; position: absolute; top: 0; left: -5px; border: 6px solid transparent; border-top-color: var(--gold); }
+.row { display: flex; gap: 8px; }
+.btn { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 18px; border: 0; cursor: pointer; padding: 12px 0; color: var(--text); background: var(--surface2); }
+.btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.btn.nudge { width: 56px; font-family: var(--mono); font-size: 16px; }
+.btn.lock { flex: 1; background: var(--gold); color: #000; }
+.btn.lock:disabled { opacity: .4; cursor: default; }
+.btn.ghost { background: transparent; border: 1px solid var(--line); padding: 10px 16px; font-size: 15px; }
+.jump { display: flex; flex-wrap: wrap; gap: 6px; }
+.jump button { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; padding: 6px 8px; background: var(--surface2); color: var(--muted); border: 0; cursor: pointer; }
+.jump button:hover, .jump button:focus-visible { color: var(--gold); outline: 1px solid var(--gold); }
+.drawhint { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: center; letter-spacing: .08em; text-transform: uppercase; }
+
+/* ---------- grids / tables ---------- */
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+.tile { background: var(--line); padding: 1px; }
+.tile > .in { background: var(--surface); padding: 16px; display: flex; flex-direction: column; gap: 10px; height: 100%; box-sizing: border-box; }
+.tile svg { width: 100%; height: auto; display: block; background: var(--well); }
+.tile .cap { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.tile .cap b { font-family: var(--mono); color: var(--gold); font-size: 15px; }
+.tile p { color: var(--muted); font-size: 13.5px; }
+.tbl { border: 1px solid var(--line); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+td code { word-break: break-word; }
+th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 500; background: var(--surface); }
+td { background: var(--bg); }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.tol { font-family: var(--mono); font-weight: 700; color: var(--gold); white-space: nowrap; }
+
+/* ---------- mockup states ---------- */
+.states { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.state { display: flex; flex-direction: column; gap: 10px; }
+.state .phone { max-width: none; }
+.state .pz { gap: 10px; }
+.state p { color: var(--muted); font-size: 13.5px; }
+
+/* ---------- playbook ---------- */
+.steps { display: flex; flex-direction: column; gap: 0; border-left: 1px solid var(--line); margin-left: 14px; }
+.step { position: relative; padding: 0 0 28px 30px; display: flex; flex-direction: column; gap: 8px; }
+.step::before { content: attr(data-n); position: absolute; left: -15px; top: -2px; width: 28px; height: 28px; display: grid; place-items: center; background: var(--bg); border: 1px solid var(--gold); color: var(--gold); font-family: var(--mono); font-size: 12px; font-weight: 700; clip-path: polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px); }
+.step .h { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.step ul { margin: 0; padding-left: 18px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; max-width: 80ch; }
+.step ul b { color: var(--text); font-weight: 600; }
+.warn { border: 1px solid var(--coral); background: var(--coral-soft); padding: 10px 14px; font-size: 14px; max-width: 80ch; }
+.warn b { color: var(--coral); }
+
+/* ---------- ideas ---------- */
+.idea { background: var(--line); padding: 1px; }
+.idea > .in { background: var(--surface); padding: 16px; display: flex; flex-direction: column; gap: 10px; height: 100%; box-sizing: border-box; }
+.idea .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.idea .sk { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px; }
+.idea p { font-size: 14px; color: var(--muted); }
+.idea .meta { display: flex; gap: 14px; margin-top: auto; padding-top: 6px; border-top: 1px solid var(--line); }
+.idea .meta span { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: .06em; }
+.idea .meta b { color: var(--text); }
+.pick { outline: 1px solid var(--gold); outline-offset: -1px; }
+.decisions { display: flex; flex-direction: column; gap: 10px; }
+.decisions div { display: grid; grid-template-columns: 210px minmax(0,1fr); gap: 16px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); }
+.decisions b { font-family: var(--display); text-transform: uppercase; font-size: 17px; letter-spacing: .03em; }
+.decisions span { color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .hero { grid-template-columns: minmax(0,1fr); }
+  .phone { margin: 0 auto; }
+  .grid3, .states { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 600px) {
+  .grid3, .grid2, .states, .facts { grid-template-columns: minmax(0,1fr); }
+  .decisions div { grid-template-columns: minmax(0,1fr); gap: 4px; }
+  h2 { font-size: 28px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+<!-- ======================= HERO + PROTOTYPE ======================= -->
+<section class="hero">
+  <div class="hero-copy">
+    <span class="mono">Logic Sprint · Game 05 · Plan</span>
+    <h1>Angle <span class="gold">Sense</span></h1>
+    <p class="lede">An angle appears. You call how many degrees it is. Close enough and you keep going. Pick Easy, Medium or Hard. Every stage brings a new kind of angle and a slightly tighter window, sized from how accurately people really judge angles. Calls within <b class="gold">±3°</b> earn a Sharp bonus, within 1° a Bullseye. A miss cracks one of your <b class="gold">3 strikes</b>; the third ends the run.</p>
+    <div class="chips">
+      <span class="chip on">Skill · Spatial</span>
+      <span class="chip on">Accent · Gold</span>
+      <span class="chip">Easy · Medium · Hard</span>
+      <span class="chip">Ranked by score</span>
+      <span class="chip">Revive ×3</span>
+    </div>
+    <div class="facts">
+      <div><span class="mono">Core loop</span><b>See angle → set degrees → lock</b></div>
+      <div><span class="mono">Window</span><b>Easy ±8→5° · Med ±8→5° · Hard ±9→6° · 3 strikes</b></div>
+      <div><span class="mono">Two rules</span><b>READ it · DRAW it</b></div>
+      <div><span class="mono">Scenes</span><b>Lines, crossing, pie, clock, triangle, compass</b></div>
+      <div><span class="mono">Points</span><b>10 hit · +5 Sharp ≤3° · +10 Bullseye ≤1°</b></div>
+      <div><span class="mono">Fits engine</span><b>RoundEngine subclass, like Guess Color</b></div>
+    </div>
+    <p class="muted">The phone on the right is a working prototype of the proposed screen. Drag the tape (or use ← → keys) to set your number, then <b>Lock</b>. Pick a difficulty, then use the stage buttons to jump ahead. After every Lock, the gold arm sweeps from your answer to the true angle and the tape slides to the right number.</p>
+  </div>
+
+  <div class="phone cut-lg" id="proto">
+    <div class="screen cut-lg">
+      <div class="bar">
+        <div class="t"><span>Angle Sense</span><span class="mono">Spatial</span></div>
+        <div class="score"><span class="mono">Score</span><b id="score">0</b></div>
+      </div>
+      <div class="pz">
+        <div class="rule cut" id="rule" aria-live="polite" aria-label="Rule: read the angle"><div class="lit" id="ruleLit"></div><span id="tabRead" class="on">◢ Read</span><span id="tabDraw">↗ Draw</span></div>
+        <div class="status"><span class="mono" id="stageLbl">01 · Basics</span><span class="strikes" id="strikes" aria-label="3 strikes left"><i></i><i></i><i></i></span><span class="mono">Window <b class="gold" id="tolLbl">±8°</b></span></div>
+        <div class="card cut-lg"><div class="in cut-lg" id="cardIn">
+          <svg id="scene" viewBox="0 0 320 320" aria-label="Angle to estimate"></svg>
+          <div class="tbar" id="tbar"></div>
+          <div class="verdict" id="verdict" hidden></div>
+          <div class="over" id="over" hidden>
+            <span class="mono">Run over</span>
+            <h2 id="overScore" class="gold">0</h2>
+            <p class="muted" id="overWhy" style="font-size:14px"></p>
+            <button class="btn ghost cut-sm" id="restart">Play again</button>
+          </div>
+        </div></div>
+        <div class="tape-wrap" id="readUi">
+          <div class="readout"><span id="val">90</span><small>°</small></div>
+          <div class="tape" id="tape" tabindex="0" role="slider" aria-label="Your guess in degrees" aria-valuemin="0" aria-valuemax="360" aria-valuenow="90"><div class="strip" id="strip"></div><div class="needle"></div></div>
+        </div>
+        <div class="drawhint" id="drawUi" hidden>Drag on the card to place the second arm</div>
+        <div class="row">
+          <button class="btn nudge cut-sm" id="minus" aria-label="Minus one degree">−1</button>
+          <button class="btn lock cut-sm" id="lock">Lock</button>
+          <button class="btn nudge cut-sm" id="plus" aria-label="Plus one degree">+1</button>
+        </div>
+        <div class="modes" id="modes" aria-label="Difficulty"><button data-m="easy">Easy</button><button data-m="medium" class="on">Medium</button><button data-m="hard">Hard</button></div>
+        <div class="jump" aria-label="Jump to stage">
+          <button data-n="1">Q01</button><button data-n="6">Q06</button><button data-n="10">Q10</button><button data-n="13">Q13</button><button data-n="21">Q21</button><button data-n="31">Q31</button><button data-n="41">Q41</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= SCENES ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">01 · What you measure</span>
+    <h2>Six angle scenes</h2>
+    <p>Same question every time ("how many degrees?"), asked through different everyday shapes so the run never feels like one drill. Each scene is a painter that returns a vertex, a starting arm and the answer, so the reveal overlay works the same for all of them.</p>
+  </div>
+  <div class="grid3" id="gallery"></div>
+</section>
+
+<!-- ======================= DIFFICULTY ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">02 · Easy, Medium, Hard</span>
+    <h2>Three ways to see an angle</h2>
+    <p>Each difficulty changes what the angle hangs on, not only how strict the check is. Easy keeps one arm fixed on the x-axis. Medium uses things with a built-in reference (a clock's 12, a pie's top, north on a compass). Hard spins everything at random and makes up for it with a wider window. Every window comes from a simple model of human error, so the game stays fair for normal people.</p>
+  </div>
+  <div class="grid3">
+    <div class="tile cut"><div class="in cut">
+      <div class="cap"><h3>Easy · fixed base</h3><b>±8° → ±5°</b></div>
+      <p>One arm always lies flat along the x-axis, pointing right. You only judge how far the other arm opens. Lines first, then two crossing lines where one is flat. Draw mode joins at Q26, still from the flat arm. No timer.</p>
+    </div></div>
+    <div class="tile cut"><div class="in cut">
+      <div class="cap"><h3>Medium · fixed reference</h3><b>±8° → ±5°</b></div>
+      <p>Clock hands, pie slices that start at 12 o'clock, compass bearings from north. The reference never moves, but the other side does. A timer from Q13; Draw mode ("set the hand to 135°") from Q21.</p>
+      <p><b class="gold">Every 10th question is a phone-compass round:</b> turn your real phone until you face the bearing shown (say, SE · 135°), hold it for a second. Wider ±12° window and no timer, so it's a breather between the timed stretches.</p>
+    </div></div>
+    <div class="tile cut"><div class="in cut">
+      <div class="cap"><h3>Hard · anything goes</h3><b>±9° → ±6°</b></div>
+      <p>Random rotation on every question: lines, crossings, pie slices, triangles, then Draw, big reflex angles and trick drawings. Random angles are much harder to read, so the window stays a degree wider than Medium's. It still tightens and the timer starts at 6 s on question 1, so it never gets easy.</p>
+    </div></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="tile cut"><div class="in cut">
+      <h3>How often a typical player lands inside the window</h3>
+      <p>A typical adult's guess on two plain lines is off by about 5° (one standard deviation). Fixed-base angles are easier (about 4°), randomly rotated ones harder (6–9°). Hit chance on plain lines, and of ten hits in a row:</p>
+      <div class="bars" id="hitbars"></div>
+      <p>A fixed ±3° window would end almost every run inside ten questions. That's why ±3° is a <b class="gold">Sharp</b> bonus (+5) rather than the pass mark, and within 1° is a <b class="gold">Bullseye</b> (+10).</p><p><b class="gold">3 strikes:</b> windows of ±8° down to ±5° feel precise, but with one-miss-ends-it a typical Medium player would be out by question 5. Angle Sense alone gives three strikes: a miss cracks one marker, the third crack ends the run, and a revive brings the run back as in every game. A miss here is "a bit off", not a wrong answer.</p>
+    </div></div>
+    <div class="tile cut"><div class="in cut">
+      <h3>Simulated run length (median question reached)</h3>
+      <p>4,000 runs per cell with the tight windows and 3 strikes. Each player's error is scaled from the typical: new ×1.3, sharp ×0.75, expert ×0.55. The timer adds about 12% error.</p>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>New</th><th>Typical</th><th>Sharp</th><th>Expert</th></tr></thead>
+        <tbody>
+          <tr><td><b>Easy</b></td><td class="num">17</td><td class="num">28</td><td class="num">51</td><td class="num">126</td></tr>
+          <tr><td><b>Medium</b></td><td class="num">10</td><td class="num">16</td><td class="num">27</td><td class="num">53</td></tr>
+          <tr><td><b>Hard</b></td><td class="num">7</td><td class="num">11</td><td class="num">21</td><td class="num">40</td></tr>
+        </tbody>
+      </table></div>
+      <p>Targets: Easy lets anyone play a while, Medium gives a typical player 15 or so, Hard is for sharp eyes. After launch, check against real play logs and tune only the constants.</p>
+    </div></div>
+  </div>
+  <div class="tbl" style="margin-top:14px">
+    <table>
+      <thead><tr><th>Questions</th><th>Easy · fixed base</th><th>Medium · fixed reference</th><th>Hard · anything goes</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1–5</td><td><span class="tol">±8°</span> lines from the x-axis · no timer</td><td><span class="tol">±8°</span> clock hands, pie from 12</td><td><span class="tol">±9°</span> random lines, crossings, pie · 6 s</td></tr>
+        <tr><td class="num">6–12</td><td><span class="tol">±8° → ±7°</span> crossing lines (one flat) from Q8</td><td><span class="tol">±7°</span> compass bearings join</td><td><span class="tol">±8°</span> triangles join · 5.5 s</td></tr>
+        <tr><td class="num">13–20</td><td><span class="tol">±7° → ±6°</span></td><td><span class="tol">±7°</span> 8 s timer</td><td><span class="tol">±8°</span> Draw joins · 5 s</td></tr>
+        <tr><td class="num">21–30</td><td><span class="tol">±6°</span> Draw from Q26</td><td><span class="tol">±6°</span> Draw ("set the hand") · 7 s</td><td><span class="tol">±7°</span> reflex angles · 4.5 s</td></tr>
+        <tr><td class="num">31–40</td><td><span class="tol">±6°</span></td><td><span class="tol">±6°</span> 6 s</td><td><span class="tol">±7°</span> trick drawings · 4 s</td></tr>
+        <tr><td class="num">41+</td><td><span class="tol">±5°</span></td><td><span class="tol">±5°</span> 5.5 s</td><td><span class="tol">±7° → ±6°</span> from Q51</td></tr>
+        <tr><td class="num">10, 20, 30…</td><td>normal question</td><td><b class="gold">Phone-compass round</b> · ±12° · no timer</td><td>normal question</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="sheet cut">
+      <span class="mono">Game sheet · what players read before they start</span>
+      <div class="opt"><b>Easy</b><span>One arm stays flat, so you only judge how wide it opens. Lines and crossings, ±8° shrinking to ±5°, no timer. Three strikes.</span></div>
+      <div class="opt on"><b>Medium</b><span>Clocks, pie slices and compass bearings, all measured from a fixed 12 or north. Timer from question 13. Every 10th question: turn your phone to face a direction. Three strikes.</span></div>
+      <div class="opt"><b>Hard</b><span>Angles at any rotation: lines, triangles, big angles over 180° and trick drawings. A degree more room than Medium, a timer from question 1. Three strikes.</span></div>
+      <span class="mono" style="color:var(--gold)">Within 3° = Sharp +5 · within 1° = Bullseye +10</span>
+    </div>
+    <div class="tile cut"><div class="in cut">
+      <h3>In the app</h3>
+      <p><code>GameId.hasDifficulty</code> includes <code>angleSense</code>, so the game sheet shows Easy / Medium / Hard like Memory Lane and Quick Math. <code>detail(difficulty)</code> returns the one-line summaries above, and each difficulty gets its own leaderboard board.</p>
+      <p><b>Phone-compass round:</b> read the heading with a compass plugin (for example <code>flutter_compass</code>, or <code>sensors_plus</code> magnetometer). Show a live arrow and the target, and count it as a hit once the heading stays within ±12° for one second. With no compass (simulator, some tablets) or before calibration, the round falls back to dragging the needle on screen. No location permission is needed for heading.</p>
+      <p>The window shown during play is exactly the one that's checked.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ======================= SCREEN STATES ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">03 · Screen design</span>
+    <h2>Three moments of a question</h2>
+    <p>Layout mirrors Guess Color: game bar, rule tabs, square card, input underneath. Gold is this game's accent the way violet is Guess Color's. No live degree readout ever appears on the card in DRAW, or the game becomes a reading test.</p>
+  </div>
+  <div class="states" id="states"></div>
+  <div class="grid2" style="margin-top:20px">
+    <div class="tile cut"><div class="in cut">
+      <h3>Input: the degree tape</h3>
+      <p>A horizontal tape like a measuring tape under a fixed needle. Flick for big moves, nudge ±1 for the last bit, Lock to submit. It is thumb-sized, never covers the angle, and gives continuous values so the ±3° window means something. The readout above it shows your number in big mono digits.</p>
+      <p><b class="gold">Rejected:</b> number keypad (slow, three taps plus enter, feels like Quick Math). 4-choice buttons (turns a ±3° skill into guessing between 4 options; fine as an onboarding hint only).</p>
+    </div></div>
+    <div class="tile cut"><div class="in cut">
+      <h3>Feedback: the reveal</h3>
+      <p>After Lock the true arm sweeps in gold over 250 ms, your guess shows as a dashed teal arm, and a chip says the error: <span class="mono gold">+2°</span>. Inside the window = <b class="teal">HIT</b>; within 1° = <b class="gold">BULLSEYE</b> with a stronger haptic; outside = <b class="coral">MISS</b> and the run goes down (revive offer if score ≥ 50).</p>
+      <p>Haptics and sounds reuse <code>RoundFeedback.correct()</code> / <code>wrong()</code>; bullseye adds a second light tap.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ======================= BUILD MAP ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">04 · Build map</span>
+    <h2>Where it plugs in</h2>
+    <p>Every file that knows the list of games today, plus the new ones. Found by searching the repo for <code>guessColor</code> and <code>GameId.values</code>.</p>
+  </div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>File</th><th>Change</th><th>Size</th></tr></thead>
+      <tbody>
+        <tr><td><code>lib/games/angle_sense/angle_sense_engine.dart</code></td><td><b>New.</b> <code>AngleSenseEngine extends RoundEngine</code>; <code>AngleStage.of(n)</code>, <code>windowFor(n)</code>, <code>timeLimitFor(n)</code>, <code>static generate(n, random)</code> returning an <code>AngleQuestion</code> (scene, base, answer, rule, tricks). <code>lock(guess)</code> scores, or spends a strike; only the third strike calls <code>fail()</code> (so revives work unchanged and reset strikes to one left). Pure and seedable, like the Guess Color engine.</td><td class="num">~300 lines</td></tr>
+        <tr><td><code>lib/games/angle_sense/angle_painter.dart</code></td><td><b>New.</b> One <code>CustomPainter</code> per scene (lines, crossing lines, pie, clock, triangle, compass) plus the reveal overlay. Colours from <code>LS</code> only.</td><td class="num">~350</td></tr>
+        <tr><td><code>lib/games/angle_sense/degree_tape.dart</code></td><td><b>New.</b> Drag tape widget with fling physics, ±1 nudge, semantics as a slider.</td><td class="num">~150</td></tr>
+        <tr><td><code>lib/games/angle_sense/angle_sense_screen.dart</code></td><td><b>New.</b> Wraps <code>RoundScreen</code> like the other games; READ/DRAW tabs, card, tape, Lock.</td><td class="num">~250</td></tr>
+        <tr><td><code>lib/models/game.dart</code></td><td>Add <code>angleSense</code> to <code>GameId</code> (last, so stored keys don't shift): title, skill <i>Spatial</i>, accent <code>LS.gold</code>, icon <code>Icons.architecture</code>, rules text. Add it to <code>hasDifficulty</code> and give <code>detail(difficulty)</code> the three game-sheet lines from section 02.</td><td class="num">small</td></tr>
+        <tr><td><code>lib/games/games.dart</code></td><td>Route <code>GameId.angleSense</code> to the new screen.</td><td class="num">1 line</td></tr>
+        <tr><td><code>lib/screens/home_tab.dart</code></td><td>The game grid is hard-coded as two rows of two (<code>sublist(0,2)</code>, <code>sublist(2)</code>). Change to rows of two where an odd last card spans full width with a NEW tag. A sixth game later fills it back to even.</td><td class="num">medium</td></tr>
+        <tr><td><code>lib/screens/ranks_tab.dart</code></td><td>Add <code>GameId.angleSense: 'Angle'</code> to <code>_shortTitles</code>; check the game picker still fits 5 at 375 px width.</td><td class="num">small</td></tr>
+        <tr><td><code>lib/screens/profile_tab.dart</code>, <code>lib/services/storage.dart</code>, <code>lib/services/leaderboard.dart</code>, <code>lib/state/app_state.dart</code></td><td>Loop over <code>GameId.values</code> already; verify, no code change expected.</td><td class="num">check</td></tr>
+        <tr><td><code>supabase/schema.sql</code> + migration</td><td>Add <code>'angleSense'</code> to the <code>game_bests.game_type</code> check constraint, and to any RPC that validates game names.</td><td class="num">small</td></tr>
+        <tr><td><code>test/games/angle_sense_engine_test.dart</code></td><td>Stage boundaries, window per stage, timer floor, rule run length ≥2, answers stay in range, seeded generate is deterministic, lock at exact edge of window counts as a hit.</td><td class="num">~200</td></tr>
+        <tr><td><code>test/models_test.dart</code>, store screenshot + demo tests</td><td>Update game counts; add a Angle Sense screenshot scene.</td><td class="num">small</td></tr>
+        <tr><td><code>design/wireframes/AngleSense.dc.html</code></td><td>Wireframe in the same format as <code>GuessColor.dc.html</code>.</td><td class="num">1 file</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ======================= PLAYBOOK ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">05 · Playbook</span>
+    <h2>From plan to store</h2>
+    <p>Order matters in two places: the backend constraint ships before the app, and tuning happens before store screenshots.</p>
+  </div>
+  <div class="steps">
+    <div class="step" data-n="1"><div class="h"><h3>Lock the design</h3><span class="mono">0.5 day</span></div>
+      <ul><li>Agree on name, accent, the six scenes and the stage table on this page.</li><li>Draw <b>AngleSense.dc.html</b> wireframe: READ, DRAW, reveal, run over.</li><li>Decide the open questions at the bottom of this page.</li></ul></div>
+    <div class="step" data-n="2"><div class="h"><h3>Engine first, with tests</h3><span class="mono">1–1.5 days</span></div>
+      <ul><li>Write <b>AngleSenseEngine</b> and its tests before any UI. Seeded <code>Random</code> so tests pin exact questions.</li><li>Error is the shortest way round the circle: <code>min(|g−a|, 360−|g−a|)</code>, so 359 vs 1 is 2°, not 358°.</li><li>Run <code>flutter test</code> green.</li></ul></div>
+    <div class="step" data-n="3"><div class="h"><h3>Painters and tape</h3><span class="mono">2 days</span></div>
+      <ul><li>Build each scene painter against a debug screen that cycles seeds.</li><li>Tape: fling, ±1 nudge, haptic tick every 5°, VoiceOver/TalkBack label "Your guess, 172 degrees".</li><li>Test on the smallest phone (SE) and on iPad inside <code>tablet_frame</code>.</li></ul></div>
+    <div class="step" data-n="4"><div class="h"><h3>Wire into the app</h3><span class="mono">1 day</span></div>
+      <ul><li>Add the enum value, route, home grid change, ranks short title.</li><li>Pause, background, revive and result screen come free from <code>RoundEngine</code>; check the countdown freezes on pause.</li></ul></div>
+    <div class="step" data-n="5"><div class="h"><h3>Backend before release</h3><span class="mono">0.5 day</span></div>
+      <div class="warn"><b>Deploy order:</b> run the Supabase migration that allows <code>'angleSense'</code> before the app build reaches anyone. An app that submits a game name the check constraint rejects will lose those scores silently. Old app versions are unaffected.</div></div>
+    <div class="step" data-n="6"><div class="h"><h3>Playtest and tune</h3><span class="mono">2–3 days</span></div>
+      <ul><li>Five or more people, ten runs each. Log every guess and error.</li><li>Targets: median run reaches Q15–20; fewer than 1 in 5 runs die in Basics; ±3° at Q41+ hit about 40% of the time.</li><li>Tune windows and timers only in the engine's constants.</li></ul></div>
+    <div class="step" data-n="7"><div class="h"><h3>Store and release</h3><span class="mono">1 day</span></div>
+      <ul><li>Screenshot <b>10_angle_sense</b> for App Store, 6.5", iPad and Play; update the home screenshot (now 5 games).</li><li>Release notes and listing line: "New game: Angle Sense. How close can you call it?"</li><li>Ship as <b>1.1.0</b>: a new game is a minor version, not a patch.</li></ul></div>
+  </div>
+</section>
+
+<!-- ======================= OPEN QUESTIONS ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">06 · Decide before building</span>
+    <h2>Open questions</h2>
+  </div>
+  <div class="decisions">
+    <div><b>Name</b><span>"Angle Sense": its own name, so it doesn't read as a Guess Color variant. Other options: Sharp Eye, Right Angle.</span></div>
+    <div><b>±3° goal</b><span>Kept as the Sharp bonus (+5) rather than the pass mark. The model shows a fixed ±3° window ends almost every run in under ten questions, even for good players.</span></div>
+    <div><b>3 strikes</b><span>Decided: tight windows (±8° → ±5°) with three strikes per run. Angle Sense is the only game where one miss doesn't end the run, because a miss here is "a bit off", not a wrong answer. Revives work on top.</span></div>
+    <div><b>DRAW mode</b><span>Adds the most variety but is the most work (drag-to-aim on the card). Can ship READ-only first and add DRAW in 1.1.1.</span></div>
+    <div><b>Clock scene</b><span>Players who know clock maths can compute it instead of eyeballing. Keep it (it's fun and fair) or limit to odd minutes.</span></div>
+    <div><b>Home grid</b><span>Full-width fifth card with a NEW tag (recommended), or switch the grid to a scrolling list now to make room for more games.</span></div>
+  </div>
+</section>
+
+<!-- ======================= MORE GAME IDEAS ======================= -->
+<section>
+  <div class="sec-head">
+    <span class="mono">07 · What could come next</span>
+    <h2>More games in the same mould</h2>
+    <p>Every idea keeps the Logic Sprint rules: one screen, endless run, one mistake ends it, difficulty that ramps up as you go, a single skill tag. Ordered by how well they fit and how cheaply they build on what Angle Sense adds.</p>
+  </div>
+  <div class="grid3" id="ideas"></div>
+</section>
+
+</div>
+
+<script>
+(() => {
+  const C = { gold:'#F5C542', teal:'#34C29A', text:'#EAF2F7', muted:'#8C9DAD', dim:'#667A8C', line:'#1E2A36', coral:'#FF5A6E', aqua:'#2BB3D6', blue:'#3B7BF0', violet:'#8C8CFF', well:'#04080C', surface2:'#111A23' };
+  const rad = d => d * Math.PI / 180;
+  const pt = (cx, cy, a, L) => [cx + L * Math.cos(rad(a)), cy - L * Math.sin(rad(a))];
+  const norm = a => ((a % 360) + 360) % 360;
+  const f = n => n.toFixed(1);
+  const err = (g, a) => { const d = Math.abs(norm(g) - norm(a)); return Math.min(d, 360 - d); };
+  const signedErr = (g, a) => { let d = norm(g) - norm(a); if (d > 180) d -= 360; if (d < -180) d += 360; return d; };
+  const ri = (rng, a, b) => a + Math.floor(rng() * (b - a + 1));
+
+  function line(x1,y1,x2,y2,col,w=3,dash='') { return `<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" stroke="${col}" stroke-width="${w}" stroke-linecap="square"${dash?` stroke-dasharray="${dash}"`:''}/>`; }
+  // arc from angle a sweeping `sweep` degrees (positive = counter-clockwise on screen)
+  function arc(cx, cy, r, a, sweep, col, w=2) {
+    const [x1,y1] = pt(cx,cy,a,r), [x2,y2] = pt(cx,cy,a+sweep,r);
+    const large = Math.abs(sweep) > 180 ? 1 : 0, sw = sweep > 0 ? 0 : 1;
+    return `<path d="M${f(x1)} ${f(y1)} A${r} ${r} 0 ${large} ${sw} ${f(x2)} ${f(y2)}" fill="none" stroke="${col}" stroke-width="${w}"/>`;
+  }
+  const grid = () => { let s = ''; for (let i = 40; i < 320; i += 40) s += line(i,0,i,320,'#0A131B',1) + line(0,i,320,i,'#0A131B',1); return s; };
+
+  /* ---------- scene builders: each returns {svg, cx, cy, base, dir, answer, armL, label} ---------- */
+  const Scenes = {
+    rays(o) {
+      const cx = o.cx ?? 110, cy = o.cy ?? 210, base = o.base ?? 0, A = o.answer, L = o.L ?? 150, L2 = o.L2 ?? L;
+      const big = A > 180;
+      const vx = big ? 160 : cx, vy = big ? 160 : cy, LL = big ? 120 : L, LL2 = big ? (o.L2 ? 70 : 120) : L2;
+      const [x1,y1] = pt(vx,vy,base,LL), [x2,y2] = pt(vx,vy,base+A,LL2);
+      let s = grid();
+      if (o.decoy) s += arc(vx,vy,26,base+A,360-A,C.dim,2);
+      s += arc(vx,vy,big?30:34,base,A,C.gold,2);
+      s += line(vx,vy,x1,y1,C.text,3,o.dashed?'8 6':'') + line(vx,vy,x2,y2,C.text,3,o.dashed?'8 6':'');
+      s += `<rect x="${f(vx-4)}" y="${f(vy-4)}" width="8" height="8" fill="${C.gold}"/>`;
+      return { svg: s, cx: vx, cy: vy, base, dir: 1, answer: A, armL: LL };
+    },
+    cross(o) {
+      // Two lines cross in an X; the marked one of the four angles is the answer.
+      const A = o.answer, base = o.base ?? 20, cx = 160, cy = 160, L = 130;
+      const [a1,b1] = pt(cx,cy,base,L), [a2,b2] = pt(cx,cy,base+180,L), [c1,d1] = pt(cx,cy,base+A,L), [c2,d2] = pt(cx,cy,base+A+180,L);
+      let s = grid() + line(a2,b2,a1,b1,C.text,3) + line(c2,d2,c1,d1,C.text,3);
+      s += arc(cx,cy,30,base+180,180-A,C.dim,2) + arc(cx,cy,36,base,A,C.gold,3);
+      s += `<rect x="${cx-4}" y="${cy-4}" width="8" height="8" fill="${C.gold}"/>`;
+      return { svg: s, cx, cy, base, dir: 1, answer: A, armL: L };
+    },
+    pie(o) {
+      const A = o.answer, base = o.base ?? 20, cx = 160, cy = 160, r = 110;
+      const [x1,y1] = pt(cx,cy,base,r), [x2,y2] = pt(cx,cy,base+A,r);
+      let s = grid();
+      s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#111A23" stroke="${C.line}" stroke-width="2"/>`;
+      s += `<path d="M${cx} ${cy} L${f(x1)} ${f(y1)} A${r} ${r} 0 ${A>180?1:0} 0 ${f(x2)} ${f(y2)} Z" fill="rgba(245,197,66,.28)" stroke="${C.gold}" stroke-width="2"/>`;
+      return { svg: s, cx, cy, base, dir: 1, answer: A, armL: r };
+    },
+    clock(o) {
+      const h = o.h, m = o.m, cx = 160, cy = 160, r = 120;
+      const ha = 90 - (h % 12) * 30 - m * 0.5, ma = 90 - m * 6;
+      let d = norm(ma - ha), base = ha, A = d;
+      if (d > 180) { A = 360 - d; base = ma; }
+      let s = grid() + `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#0A1016" stroke="${C.line}" stroke-width="2"/>`;
+      for (let i = 0; i < 12; i++) { const [a,b] = pt(cx,cy,90-i*30,r-6), [c2,d2] = pt(cx,cy,90-i*30,r-(i%3?14:22)); s += line(a,b,c2,d2,i%3?C.dim:C.muted,i%3?2:3); }
+      s += arc(cx,cy,28,base,A,C.gold,2);
+      const [hx,hy] = pt(cx,cy,ha,62), [mx,my] = pt(cx,cy,ma,96);
+      s += line(cx,cy,hx,hy,C.text,5) + line(cx,cy,mx,my,C.text,3) + `<rect x="${cx-5}" y="${cy-5}" width="10" height="10" fill="${C.gold}"/>`;
+      s += `<text x="${cx}" y="${cy+60}" text-anchor="middle" fill="${C.muted}" font-family="JetBrains Mono, monospace" font-size="13" letter-spacing="1.5">${h}:${String(m).padStart(2,'0')}</text>`;
+      return { svg: s, cx, cy, base, dir: 1, answer: A, armL: 96 };
+    },
+    triangle(o) {
+      const P = o.pts; // [[x,y],[x,y],[x,y]], measure at P[0]
+      const ang = (p,q) => norm(Math.atan2(-(q[1]-p[1]), q[0]-p[0]) * 180 / Math.PI);
+      let a1 = ang(P[0],P[1]), a2 = ang(P[0],P[2]), d = norm(a2 - a1), base = a1;
+      if (d > 180) { d = 360 - d; base = a2; }
+      const A = Math.round(d);
+      let s = grid() + `<polygon points="${P.map(p=>p.join(',')).join(' ')}" fill="#111A23" stroke="${C.text}" stroke-width="3" stroke-linejoin="miter"/>`;
+      s += arc(P[0][0],P[0][1],34,base,d,C.gold,2) + `<rect x="${P[0][0]-4}" y="${P[0][1]-4}" width="8" height="8" fill="${C.gold}"/>`;
+      return { svg: s, cx: P[0][0], cy: P[0][1], base, dir: 1, answer: A, exact: d, armL: 130 };
+    },
+    compass(o) {
+      const B = o.answer, cx = 160, cy = 160, r = 120;
+      let s = grid() + `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#0A1016" stroke="${C.line}" stroke-width="2"/>`;
+      ['N','E','S','W'].forEach((t,i) => { const [x,y] = pt(cx,cy,90-i*90,r-20); s += `<text x="${f(x)}" y="${f(y+5)}" text-anchor="middle" fill="${t==='N'?C.coral:C.muted}" font-family="Rajdhani, sans-serif" font-weight="700" font-size="17">${t}</text>`; });
+      for (let i = 0; i < 36; i++) { const [a,b] = pt(cx,cy,i*10,r-2), [c2,d2] = pt(cx,cy,i*10,r-(i%9?7:12)); s += line(a,b,c2,d2,C.dim,1.5); }
+      s += line(cx,cy,cx,cy-r+34,C.dim,2,'4 5');
+      s += arc(cx,cy,30,90,-B,C.gold,2);
+      const [nx,ny] = pt(cx,cy,90-B,r-30); s += line(cx,cy,nx,ny,C.text,3) + `<circle cx="${f(nx)}" cy="${f(ny)}" r="5" fill="${C.text}"/>`;
+      s += `<text x="${cx}" y="${cy+56}" text-anchor="middle" fill="${C.muted}" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.5">BEARING</text>`;
+      return { svg: s, cx, cy, base: 90, dir: -1, answer: B, armL: r - 30 };
+    },
+    drawBase(o) {
+      const cx = o.cx ?? 110, cy = o.cy ?? 210, base = o.base ?? 0, L = o.L ?? (o.dir === -1 ? 110 : 150), dir = o.dir ?? 1;
+      const [x1,y1] = pt(cx,cy,base,L);
+      let s = grid();
+      if (dir === -1) {
+        s += `<circle cx="${cx}" cy="${cy}" r="${L+8}" fill="#0A1016" stroke="${C.line}" stroke-width="2"/>`;
+        if (o.phone) ['N','E','S','W'].forEach((t,i) => { const [x,y] = pt(cx,cy,90-i*90,L-14); s += `<text x="${f(x)}" y="${f(y+5)}" text-anchor="middle" fill="${t==='N'?C.coral:C.muted}" font-family="Rajdhani, sans-serif" font-weight="700" font-size="16">${t}</text>`; });
+        else for (let i = 0; i < 12; i++) { const [a,b] = pt(cx,cy,90-i*30,L+6), [c2,d2] = pt(cx,cy,90-i*30,L-(i%3?4:10)); s += line(a,b,c2,d2,i%3?C.dim:C.muted,i%3?2:3); }
+        s += line(cx,cy,x1,y1,C.dim,2,'4 5');
+      } else s += line(cx,cy,x1,y1,C.text,3);
+      s += `<rect x="${cx-4}" y="${cy-4}" width="8" height="8" fill="${C.gold}"/>`;
+      const big = o.phone ? `FACE ${['N','NE','E','SE','S','SW','W','NW'][Math.round(o.answer/45)%8]} · ${o.answer}°` : `${o.answer}°`;
+      s += `<text x="${o.phone ? 160 : 300}" y="${o.phone ? 306 : 44}" text-anchor="${o.phone ? 'middle' : 'end'}" fill="${C.gold}" font-family="JetBrains Mono, monospace" font-weight="700" font-size="${o.phone ? 22 : 40}">${big}</text>`;
+      s += `<text x="${o.phone ? 160 : 300}" y="${o.phone ? 24 : 64}" text-anchor="${o.phone ? 'middle' : 'end'}" fill="${C.muted}" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.5">${o.phone ? 'PHONE ROUND · TURN YOUR PHONE (DRAG HERE)' : (o.label || 'DRAW THIS')}</text>`;
+      return { svg: s, cx, cy, base, dir, answer: o.answer, armL: L };
+    },
+  };
+
+  function revealSvg(sc, guess) {
+    const [tx,ty] = pt(sc.cx,sc.cy,sc.base + sc.dir*sc.answer, sc.armL);
+    const [gx,gy] = pt(sc.cx,sc.cy,sc.base + sc.dir*guess, sc.armL*0.92);
+    return line(sc.cx,sc.cy,gx,gy,C.teal,3,'7 6') + line(sc.cx,sc.cy,tx,ty,C.gold,4);
+  }
+  const svgWrap = inner => `<svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+
+  /* ---------- gallery ---------- */
+  const gallery = [
+    { s: Scenes.rays({ answer: 175, base: 0, cx: 160, cy: 200 }), name: 'Rays', why: 'Your example: two arms, one vertex. 175° is nearly flat, which is exactly why it is hard to call. The base arm rotates from stage 2.' },
+    { s: Scenes.cross({ answer: 58, base: 25 }), name: 'Crossing lines', why: 'Two lines cross and make four angles; the gold arc marks the one to call. The neighbouring angle (here 122°) is right there to tempt you.' },
+    { s: Scenes.pie({ answer: 72, base: 35 }), name: 'Pie slice', why: 'A filled wedge. Ties to percentages (72° is a fifth) and reads differently from thin lines.' },
+    { s: Scenes.clock({ h: 4, m: 50 }), name: 'Clock hands', why: 'The smaller angle between the hands. Players can eyeball it or work it out; both are fair.' },
+    { s: Scenes.triangle({ pts: [[60,250],[270,215],[170,70]] }), name: 'Triangle corner', why: 'One marked corner of a random triangle. The other two corners pull your eye, which is the challenge.' },
+    { s: Scenes.compass({ answer: 237 }), name: 'Compass bearing', why: 'Clockwise from north, 0–359°. A Medium scene, from question 6.' },
+  ];
+  document.getElementById('gallery').innerHTML = gallery.map(g => `
+    <div class="tile cut"><div class="in cut">
+      ${svgWrap(g.s.svg)}
+      <div class="cap"><h3>${g.name}</h3><b>${g.s.answer}°</b></div>
+      <p>${g.why}</p>
+    </div></div>`).join('');
+
+  /* ---------- static state mockups ---------- */
+  function phone(inner, tabs, stage, tol, score) {
+    return `<div class="phone cut-lg"><div class="screen cut-lg">
+      <div class="bar"><div class="t"><span>Angle Sense</span><span class="mono">Spatial</span></div><div class="score"><span class="mono">Score</span><b>${score}</b></div></div>
+      <div class="pz"><div class="rule cut${tabs==='d'?' draw':''}"><div class="lit"></div><span class="${tabs==='r'?'on':''}">◢ Read</span><span class="${tabs==='d'?'on':''}">↗ Draw</span></div>
+      <div class="status"><span class="mono">${stage}</span><span class="mono">Window <b class="gold">${tol}</b></span></div>
+      ${inner}</div></div></div>`;
+  }
+  const s1 = Scenes.rays({ answer: 128, base: 18, cx: 110, cy: 220 });
+  const s2 = Scenes.drawBase({ answer: 64, base: 0 });
+  const s3 = Scenes.clock({ h: 10, m: 10 });
+  const card = (svg, extra='') => `<div class="card cut-lg"><div class="in cut-lg">${svgWrap(svg)}${extra}</div></div>`;
+  const tapeStatic = v => `<div class="readout"><span>${v}</span><small>°</small></div>`;
+  document.getElementById('states').innerHTML = [
+    [phone(card(s1.svg) + tapeStatic(131), 'r', 'Medium · Q06', '±11°', 70), '<b>READ.</b> Angle on the card, tape underneath. Nothing is labelled; the gold arc only says which side you are measuring.'],
+    [phone(card(s2.svg + line(110,210,...pt(110,210,61,150),C.teal,3,'7 6')) + `<div class="drawhint">Drag to aim · Lock</div>`, 'd', 'Medium · Q23', '±9°', 260), '<b>DRAW.</b> The number is given; you drag the second arm. No live readout, or you would just read the number off.'],
+    [phone(card(s3.svg + revealSvg(s3, s3.answer + 2), `<div class="verdict bull">SHARP +2°</div>`) + tapeStatic(s3.answer), 'r', 'Medium · Q15', '±10°', 150), '<b>REVEAL.</b> The gold arm sweeps from your answer to the true angle, the tape slides to the right number, then the verdict: Hit, Sharp (≤3°) or Bullseye (≤1°).'],
+  ].map(([p, t]) => `<div class="state">${p}<p>${t}</p></div>`).join('');
+
+  /* ---------- ideas ---------- */
+  const ideas = [
+    { n: 'Line Split', sk: 'Spatial', c: C.aqua, p: 'Tap the exact middle of a line, then a third, then a golden-ratio point. Window shrinks from 8 px to 2 px. Reuses the reveal pattern from Angle Sense.', fit: 'High', eff: 'S' },
+    { n: 'Dot Count', sk: 'Estimation', c: C.teal, p: 'A cloud of dots flashes for half a second. Call the count within ±10%. Clouds grow, clump and mix colours. Same tape input as Angle Sense.', fit: 'High', eff: 'S' },
+    { n: 'Mirror or Turn', sk: 'Spatial', c: C.violet, p: 'Two shapes side by side: is the right one the left one rotated, or mirrored? A two-button true/false call, which fits the True or False name.', fit: 'High', eff: 'M' },
+    { n: 'Time Sense', sk: 'Timing', c: C.blue, p: 'Hold to start, release when you think 3.00 s has passed. No clock on screen. Window ±250 ms shrinking to ±60 ms; target times change.', fit: 'High', eff: 'S' },
+    { n: 'Bigger Area', sk: 'Perception', c: C.gold, p: 'Two different shapes (a circle and a triangle, say). Tap the one with more area. The difference shrinks from 30% to 4%.', fit: 'Medium', eff: 'S' },
+    { n: 'Next in Line', sk: 'Logic', c: C.coral, p: 'A sequence of numbers or shapes; pick what comes next from four. Patterns go from +2 to alternating and nested rules.', fit: 'Medium', eff: 'M' },
+    { n: 'Path Recall', sk: 'Memory', c: C.aqua, p: 'A path snakes across a grid, then hides. Trace it back with one finger. A longer path each level. Close to Memory Lane, so keep it for later.', fit: 'Medium', eff: 'M' },
+    { n: 'Balance', sk: 'Logic', c: C.teal, p: 'A beam with weights at distances. Will it tip left, right, or stay level? Leans on Angle Sense\'s physics-free drawing code.', fit: 'Medium', eff: 'M' },
+    { n: 'Route Bearing', sk: 'Spatial', c: C.violet, p: 'You face one way on a map; a landmark is elsewhere. Turn the dial to point at it. Basically Angle Sense\'s compass scene grown into its own game.', fit: 'Low (overlap)', eff: 'S' },
+  ];
+  document.getElementById('ideas').innerHTML = ideas.map((x,i) => `
+    <div class="idea cut${i<2?' pick':''}"><div class="in cut">
+      <div class="top"><h3>${x.n}</h3><span class="sk cut-sm" style="color:${x.c};background:${x.c}22">${x.sk}</span></div>
+      <p>${x.p}</p>
+      <div class="meta"><span>Fit <b>${x.fit}</b></span><span>Build <b>${x.eff}</b></span>${i<2?'<span class="gold">Next up</span>':''}</div>
+    </div></div>`).join('');
+
+  /* ======================= PLAYABLE PROTOTYPE ======================= */
+  const $ = id => document.getElementById(id);
+  const svgEl = $('scene'), cardIn = $('cardIn');
+  const PX = 6; // px per degree on the tape
+  // build tape strip
+  (() => {
+    let s = `<svg width="${360*PX + 400}" height="54" xmlns="http://www.w3.org/2000/svg">`;
+    for (let d = 0; d <= 360; d++) {
+      const x = 200 + d * PX, major = d % 30 === 0, mid = d % 5 === 0;
+      if (!mid && PX < 5) continue;
+      s += `<line x1="${x}" y1="0" x2="${x}" y2="${major?22:mid?14:7}" stroke="${major?C.text:mid?C.muted:C.line}" stroke-width="${major?2:1}"/>`;
+      if (major) s += `<text x="${x}" y="42" text-anchor="middle" fill="${C.muted}" font-family="JetBrains Mono, monospace" font-size="11">${d}</text>`;
+    }
+    $('strip').innerHTML = s + '</svg>';
+  })();
+
+  // Difficulty tables, tuned with the human-error model in section 02.
+  // Easy: one arm fixed on the x-axis. Medium: fixed reference (12 o'clock / north),
+  // plus a phone-compass round every 10th question. Hard: random rotation, wider window.
+  const T = (from, tol, scenes, timer = 0) => ({ from, tol, scenes, timer, draw: scenes.includes('draw'), tricks: scenes.includes('trick') });
+  const MODES = {
+    easy:   [T(1,8,['flat']), T(8,7,['flat','flatcross']), T(16,6,['flat','flatcross']), T(26,6,['flat','flatcross','draw']), T(41,5,['flat','flatcross','draw'])],
+    medium: [T(1,8,['clock','pie12']), T(6,7,['clock','pie12','compass']), T(13,7,['clock','pie12','compass'],8), T(21,6,['clock','pie12','compass','draw'],7), T(31,6,['clock','pie12','compass','draw'],6), T(41,5,['clock','pie12','compass','draw'],5.5)],
+    hard:   [T(1,9,['rays','cross','pie'],6), T(6,8,['rays','cross','pie','triangle'],5.5), T(13,8,['rays','cross','pie','triangle','draw'],5), T(21,7,['rays','cross','pie','triangle','draw','reflex'],4.5), T(31,7,['rays','pie','triangle','draw','reflex','trick'],4), T(51,6,['rays','pie','triangle','draw','reflex','trick'],4)],
+  };
+  const PHONE_WIN = 12;
+  const STRIKES = 3;
+  let mode = 'medium';
+  const stageOf = n => [...MODES[mode]].reverse().find(s => n >= s.from);
+  const isPhone = n => mode === 'medium' && n % 10 === 0;
+  const timeFor = n => isPhone(n) ? 0 : stageOf(n).timer * 1000;
+
+  const st = { n: 1, score: 0, guess: 90, q: null, rule: 'read', ruleRun: 0, locked: false, over: false, t0: 0, tl: 0, raf: 0, strikes: 0 };
+  const drawStrikes = () => { [...$('strikes').children].forEach((d, i) => d.classList.toggle('gone', i >= STRIKES - st.strikes)); $('strikes').setAttribute('aria-label', `${STRIKES - st.strikes} ${STRIKES - st.strikes === 1 ? 'strike' : 'strikes'} left`); };
+  const rng = Math.random;
+
+  function makeQuestion(n) {
+    const S = stageOf(n);
+    if (isPhone(n)) {
+      // Phone-compass round: in the app you turn your real phone; here, drag the needle.
+      st.rule = 'draw'; st.ruleRun = 0;
+      const b = ri(rng, 1, 7) * 45 + (rng() < .5 ? 0 : ri(rng, -15, 15));
+      const q = Scenes.drawBase({ answer: norm(b), base: 90, dir: -1, cx: 160, cy: 175, phone: true }); q.kind = 'phone'; return q;
+    }
+    let rule = 'read';
+    if (S.draw) { if (st.ruleRun >= 2 && rng() < 0.4) rule = st.rule === 'read' ? 'draw' : 'read'; else rule = st.rule; }
+    if (rule !== st.rule) st.ruleRun = 0; st.ruleRun++; st.rule = rule;
+    if (rule === 'draw') {
+      if (mode === 'easy') { const q = Scenes.drawBase({ answer: ri(rng, 15, 165), base: 0, cx: 90, cy: 230 }); q.kind = 'draw'; return q; }
+      if (mode === 'medium') { const q = Scenes.drawBase({ answer: ri(rng, 10, 350), base: 90, dir: -1, cx: 160, cy: 175, label: 'FROM 12, CLOCKWISE' }); q.kind = 'draw'; return q; }
+      const base = ri(rng, 0, 359), bis = base + 60; const q = Scenes.drawBase({ answer: ri(rng, 15, 165), base, cx: 160 - 60 * Math.cos(rad(bis)), cy: 160 + 60 * Math.sin(rad(bis)), L: 120 }); q.kind = 'draw'; return q;
+    }
+    const real = S.scenes.filter(k => !['draw','reflex','trick'].includes(k));
+    const kind = real[ri(rng, 0, real.length - 1)];
+    const tag = (q, k) => (q.kind = k, q);
+    if (kind === 'flat') return tag(Scenes.rays({ answer: ri(rng, 10, 170), base: 0, cx: 160, cy: 220, L: 130 }), 'flat');
+    if (kind === 'flatcross') return tag(Scenes.cross({ answer: ri(rng, 20, 160), base: 0 }), 'flatcross');
+    if (kind === 'clock') { let h, m; do { h = ri(rng,1,12); m = ri(rng,0,11)*5; } while (Math.abs(norm((90-m*6) - (90-(h%12)*30-m*.5))) < 6); return tag(Scenes.clock({ h, m }), 'clock'); }
+    if (kind === 'pie12') { const a = ri(rng, 15, 330); return tag(Scenes.pie({ answer: a, base: 90 - a }), 'pie12'); }
+    if (kind === 'compass') return tag(Scenes.compass({ answer: ri(rng, 5, 355) }), 'compass');
+    // Hard: everything at a random rotation
+    const base = ri(rng, 0, 359);
+    if (kind === 'rays') {
+      const a = S.scenes.includes('reflex') && rng() < 0.35 ? ri(rng, 190, 350) : ri(rng, 5, 175);
+      const opts = { answer: a, base };
+      if (a <= 180) { const bis = base + a / 2; opts.cx = 160 - 70 * Math.cos(rad(bis)); opts.cy = 160 + 70 * Math.sin(rad(bis)); opts.L = 130; }
+      if (S.tricks) { if (rng() < .5 && a <= 180) opts.L2 = 70; opts.dashed = rng() < .35; opts.decoy = rng() < .4; }
+      return tag(Scenes.rays(opts), a > 180 ? 'reflex' : 'rays');
+    }
+    if (kind === 'cross') return tag(Scenes.cross({ answer: ri(rng, 20, 160), base: ri(rng, 0, 179) }), 'cross');
+    if (kind === 'pie') { const a = S.scenes.includes('reflex') && rng() < .35 ? ri(rng, 190, 330) : ri(rng, 12, 170); return tag(Scenes.pie({ answer: a, base }), 'pie'); }
+    if (kind === 'triangle') {
+      let P, sc; do { P = [[ri(rng,40,120), ri(rng,200,280)], [ri(rng,200,290), ri(rng,170,290)], [ri(rng,90,250), ri(rng,40,120)]]; if (rng()<.5) P = [P[1],P[2],P[0]]; sc = Scenes.triangle({ pts: P }); } while (sc.answer < 20 || sc.answer > 150);
+      return tag(sc, 'triangle');
+    }
+  }
+
+  function setGuess(v) {
+    st.guess = Math.max(0, Math.min(360, Math.round(v)));
+    $('val').textContent = st.guess;
+    $('strip').style.transform = `translateX(${$('tape').clientWidth / 2 - 200 - st.guess * PX}px)`;
+    $('tape').setAttribute('aria-valuenow', st.guess);
+  }
+
+  function render(extra = '') {
+    const tilt = st.q.tilt ? ` transform="rotate(${st.q.tilt} 160 160)"` : '';
+    svgEl.innerHTML = `<g${tilt}>${st.q.svg}${extra}</g>`;
+  }
+
+  function next() {
+    const S = stageOf(st.n);
+    st.q = makeQuestion(st.n);
+    if (S.tricks && st.q.kind !== 'phone' && rng() < .3) st.q.tilt = ri(rng, -8, 8);
+    st.locked = false;
+    $('verdict').hidden = true;
+    $('lock').disabled = false;
+    st.win = st.q.kind === 'phone' ? PHONE_WIN : S.tol;
+    $('stageLbl').textContent = st.q.kind === 'phone' ? `Q${st.n} · Phone round` : `${mode[0].toUpperCase() + mode.slice(1)} · Q${String(st.n).padStart(2,'0')}`;
+    $('tolLbl').textContent = `±${st.win}°`;
+    const draw = st.rule === 'draw';
+    setRule(draw);
+    $('readUi').hidden = draw; $('drawUi').hidden = !draw;
+    if (draw) st.drawGuess = null;
+    render();
+    cancelAnimationFrame(st.raf);
+    $('tbar').style.width = '0';
+    if (timeFor(st.n)) { st.tl = timeFor(st.n); st.t0 = performance.now(); tick(); }
+  }
+  // Display-only rule switch, like Guess Color's COLOR | TEXT: it slides and pulses
+  // by itself when the rule flips.
+  let lastDraw = false;
+  function setRule(draw) {
+    const rule = $('rule'), lit = $('ruleLit');
+    rule.classList.toggle('draw', draw);
+    $('tabRead').classList.toggle('on', !draw); $('tabDraw').classList.toggle('on', draw);
+    rule.setAttribute('aria-label', draw ? 'Rule: draw the angle' : 'Rule: read the angle');
+    if (draw !== lastDraw) { lit.classList.remove('pulse'); void lit.offsetWidth; lit.classList.add('pulse'); }
+    lastDraw = draw;
+  }
+  function tick() {
+    const left = st.tl - (performance.now() - st.t0);
+    $('tbar').style.width = `${Math.max(0, left / st.tl) * 100}%`;
+    if (left <= 0 && !st.locked) { lockIn(true); return; }
+    if (!st.locked) st.raf = requestAnimationFrame(tick);
+  }
+
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Moves only the picture of the tape, not the player's guess.
+  function showTape(v) {
+    $('val').textContent = Math.round(v);
+    $('strip').style.transform = `translateX(${$('tape').clientWidth / 2 - 200 - v * PX}px)`;
+  }
+  function lockIn(timeout = false) {
+    if (st.locked || st.over) return;
+    const draw = st.rule === 'draw';
+    let g = draw ? st.drawGuess : st.guess;
+    if (draw && g == null) { if (!timeout) return; g = st.q.answer + 90; }
+    st.locked = true; $('lock').disabled = true; cancelAnimationFrame(st.raf);
+    const truth = st.q.exact ?? st.q.answer;
+    const e = err(g, truth), se = Math.round(signedErr(g, truth));
+    const hit = !timeout && Math.round(e) <= st.win, sharp = hit && e <= 3, bull = hit && e <= 1;
+    // Reveal: the gold arm starts on your answer and sweeps to the true angle while the
+    // tape slides from your number to the right one (shown in Draw mode too).
+    $('readUi').hidden = false; $('drawUi').hidden = true;
+    const from = g, delta = -signedErr(g, truth), dur = reduce ? 0 : 700, t0 = performance.now();
+    const guessArm = () => { const [gx,gy] = pt(st.q.cx, st.q.cy, st.q.base + st.q.dir*from, st.q.armL*0.92); return line(st.q.cx, st.q.cy, gx, gy, C.teal, 3, '7 6'); };
+    const step = now => {
+      const k = dur ? Math.min(1, (now - t0) / dur) : 1, ease = k < .5 ? 2*k*k : 1 - Math.pow(-2*k + 2, 2) / 2;
+      const cur = from + delta * ease;
+      const [tx,ty] = pt(st.q.cx, st.q.cy, st.q.base + st.q.dir*cur, st.q.armL);
+      render(guessArm() + line(st.q.cx, st.q.cy, tx, ty, C.gold, 4));
+      showTape(norm(cur));
+      if (k < 1) requestAnimationFrame(step); else finish();
+    };
+    requestAnimationFrame(step);
+    function finish() {
+      const v = $('verdict');
+      v.className = 'verdict ' + (timeout || !hit ? 'miss' : sharp ? 'bull' : 'hit');
+      v.textContent = timeout ? 'TIME' : `${bull ? 'BULLSEYE' : sharp ? 'SHARP' : hit ? 'HIT' : 'MISS'} ${se > 0 ? '+' : ''}${se}°`;
+      v.hidden = false;
+      if (hit) {
+        st.score += 10 + (bull ? 10 : sharp ? 5 : 0); $('score').textContent = st.score;
+        st.n++; setTimeout(() => { setGuess(st.guess); next(); }, 650);
+      } else if (++st.strikes < STRIKES) {
+        // A miss cracks one strike; the run goes on with the next question.
+        drawStrikes(); st.n++; setTimeout(() => { setGuess(st.guess); next(); }, 1100);
+      } else {
+        drawStrikes();
+        setTimeout(() => {
+          st.over = true;
+          $('overScore').textContent = st.score;
+          $('overWhy').textContent = timeout ? `Ran out of time on question ${st.n}.` : `Answer was ${st.q.answer}°, you said ${Math.round(g)}° (window ±${st.win}°). Reached question ${st.n}.`;
+          $('over').hidden = false;
+        }, 900);
+      }
+    }
+  }
+
+  function startAt(n) {
+    st.n = n; st.score = 0; st.over = false; st.rule = 'read'; st.ruleRun = 0; lastDraw = false; st.strikes = 0; drawStrikes();
+    $('score').textContent = 0; $('over').hidden = true; setGuess(90); next();
+  }
+
+  // tape drag
+  const tape = $('tape'); let drag = null;
+  tape.addEventListener('pointerdown', e => { if (st.locked) return; drag = { x: e.clientX, v: st.guess }; tape.setPointerCapture(e.pointerId); });
+  tape.addEventListener('pointermove', e => { if (drag) setGuess(drag.v - (e.clientX - drag.x) / PX * 1.5); });
+  tape.addEventListener('pointerup', () => drag = null);
+  tape.addEventListener('pointercancel', () => drag = null);
+  tape.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') { setGuess(st.guess - (e.shiftKey ? 10 : 1)); e.preventDefault(); }
+    if (e.key === 'ArrowRight') { setGuess(st.guess + (e.shiftKey ? 10 : 1)); e.preventDefault(); }
+    if (e.key === 'Enter') lockIn();
+  });
+  $('minus').onclick = () => { if (st.rule === 'draw') nudgeDraw(-1); else setGuess(st.guess - 1); };
+  $('plus').onclick = () => { if (st.rule === 'draw') nudgeDraw(1); else setGuess(st.guess + 1); };
+  $('lock').onclick = () => lockIn();
+  $('restart').onclick = () => startAt(1);
+  document.querySelectorAll('.jump button').forEach(b => b.onclick = () => startAt(+b.dataset.n));
+  $('modes').onclick = e => { const b = e.target.closest('button'); if (!b) return; mode = b.dataset.m; document.querySelectorAll('#modes button').forEach(x => x.classList.toggle('on', x === b)); startAt(1); };
+  // hit-chance bars for section 02 (typical player, sigma 5 deg, rounded error)
+  (() => {
+    const erf = x => { const t = 1 / (1 + 0.3275911 * Math.abs(x)); const y = 1 - (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x); return x >= 0 ? y : -y; };
+    $('hitbars').innerHTML = [13,10,8,6,5,4,3].map(w => { const p = erf((w + .5) / (5 * Math.SQRT2)); return `<div class="b"><span>±${w}°</span><i style="width:${(p*100).toFixed(0)}%"></i><span>${(p*100).toFixed(0)}% · ten ${(Math.pow(p,10)*100).toFixed(p > .9 ? 0 : 1)}%</span></div>`; }).join('');
+  })();
+
+  // DRAW: drag on card
+  function drawAt(e) {
+    const r = cardIn.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width * 320, y = (e.clientY - r.top) / r.height * 320;
+    const a = norm(Math.atan2(-(y - st.q.cy), x - st.q.cx) * 180 / Math.PI);
+    st.drawGuess = st.q.dir === -1 ? norm(st.q.base - a) : norm(a - st.q.base);
+    showDraw();
+  }
+  function showDraw() {
+    const [gx,gy] = pt(st.q.cx, st.q.cy, st.q.base + st.q.dir * st.drawGuess, st.q.armL);
+    render(line(st.q.cx, st.q.cy, gx, gy, C.teal, 3));
+  }
+  function nudgeDraw(d) { if (st.locked || st.drawGuess == null) return; st.drawGuess = norm(st.drawGuess + d); showDraw(); }
+  let drawing = false;
+  cardIn.addEventListener('pointerdown', e => { if (st.rule !== 'draw' || st.locked || st.over) return; drawing = true; cardIn.setPointerCapture(e.pointerId); drawAt(e); });
+  cardIn.addEventListener('pointermove', e => { if (drawing) drawAt(e); });
+  cardIn.addEventListener('pointerup', () => drawing = false);
+  cardIn.addEventListener('pointercancel', () => drawing = false);
+
+  window.addEventListener('resize', () => setGuess(st.guess));
+  startAt(1);
+})();
+</script>

@@ -7,6 +7,7 @@ import '../app.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../games/games.dart';
+import '../models/device_log.dart';
 import '../models/round_result.dart';
 import '../services/ads.dart';
 import '../services/leaderboard.dart';
@@ -76,18 +77,14 @@ class ResultScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
+                          // The score card already shows the best, so the
+                          // second tile is always the run's length.
                           Expanded(
-                            child: game.tracksTime
-                                ? _Stat(
-                                    'Time',
-                                    formatDuration(result.duration),
-                                    LS.text,
-                                  )
-                                : _Stat(
-                                    'Best',
-                                    '${math.max(result.score, result.previousBest)}',
-                                    LS.text,
-                                  ),
+                            child: _Stat(
+                              'Time',
+                              formatDuration(result.duration),
+                              LS.text,
+                            ),
                           ),
                         ],
                       ),
@@ -148,6 +145,7 @@ class _HeartAdCardState extends State<_HeartAdCard> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _watching = true);
     context.read<Ads>().showRewarded(
+      kind: AdKind.heart,
       onReward: () async {
         await app.earnHeart();
         messenger.showSnackBar(
@@ -194,7 +192,7 @@ class _HeartAdCardState extends State<_HeartAdCard> {
                       const DisplayText('Earn a heart', size: 18),
                       const SizedBox(height: 4),
                       MonoLabel(
-                        'Revive any run · you have ${app.hearts}',
+                        'Revive any run · ${app.hearts} left',
                         size: 10,
                         color: LS.dim,
                       ),

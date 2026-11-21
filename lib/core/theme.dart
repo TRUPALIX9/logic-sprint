@@ -21,6 +21,7 @@ abstract final class LS {
   static const violet = Color(0xFF8C8CFF);
   static const gold = Color(0xFFF5C542);
   static const coral = Color(0xFFFF5A6E);
+  static const pink = Color(0xFFF472B6);
 
   static const brandGradient = LinearGradient(colors: [blue, teal]);
 }

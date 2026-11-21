@@ -27,7 +27,9 @@ class RankRow extends StatelessWidget {
 
   static const height = 56.0;
 
-  final int rank;
+  /// Null when it isn't known yet (the player's pinned row before the
+  /// daily refresh ranks a new best); shows as "—".
+  final int? rank;
   final String name;
   final int score;
 
@@ -66,7 +68,11 @@ class RankRow extends StatelessWidget {
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(
-                rank > 10 ? '#$rank' : '$rank'.padLeft(2, '0'),
+                switch (rank) {
+                  null => '—',
+                  final r when r > 10 => '#$r',
+                  final r => '$r'.padLeft(2, '0'),
+                },
                 style: LSText.mono(
                   16,
                   weight: FontWeight.w700,

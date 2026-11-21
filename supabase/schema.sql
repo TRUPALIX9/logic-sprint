@@ -40,7 +40,8 @@ create unique index if not exists profiles_name_tag_key
 create table if not exists public.game_bests (
   player_id uuid not null references public.profiles (id) on delete cascade,
   game_type text not null check (
-    game_type in ('rocketLaunch', 'memoryLane', 'quickMath', 'guessColor')
+    game_type in ('rocketLaunch', 'memoryLane', 'quickMath', 'guessColor',
+                  'angleSense', 'lineSplit')
   ),
   difficulty text not null check (difficulty in ('easy', 'medium', 'hard')),
   best_score integer not null default 0 check (best_score between 0 and 1000000),
@@ -49,6 +50,15 @@ create table if not exists public.game_bests (
   plays integer not null default 0 check (plays >= 0),
   last_played_at timestamptz not null default now(),
   primary key (player_id, game_type, difficulty)
+);
+
+-- New games (Angle Sense, Line Split). Re-runnable: replaces the game_type
+-- check on an existing table. Run this before shipping an app that sends the
+-- new names, or their scores are rejected.
+alter table public.game_bests drop constraint if exists game_bests_game_type_check;
+alter table public.game_bests add constraint game_bests_game_type_check check (
+  game_type in ('rocketLaunch', 'memoryLane', 'quickMath', 'guessColor',
+                'angleSense', 'lineSplit')
 );
 
 -- Moderation: a name reported by enough players is hidden from the boards

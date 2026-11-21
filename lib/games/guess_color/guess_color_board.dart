@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import '../../models/game.dart';
 import '../../ui/chamfer.dart';
 import '../../ui/kit.dart';
+import '../../ui/reveal.dart';
 import 'guess_color_engine.dart';
 
 /// Label colors on each fill: dark text on yellow and green; light text on
@@ -44,13 +45,19 @@ class GuessColorBoard extends StatelessWidget {
               color: LS.well,
               padding: const EdgeInsets.all(20),
               child: Center(
-                child: Transform.rotate(
-                  angle: item.rotationDegrees * pi / 180,
-                  child: _Distract(
-                    key: ObjectKey(item),
-                    item: item,
-                    active: engine.isPlaying && !calm,
-                    child: _ItemView(item),
+                // Hidden during the get-ready countdown, so the word can't
+                // be read early; each new word eases in.
+                child: Reveal(
+                  revealKey: item,
+                  hidden: engine.isResuming,
+                  child: Transform.rotate(
+                    angle: item.rotationDegrees * pi / 180,
+                    child: _Distract(
+                      key: ObjectKey(item),
+                      item: item,
+                      active: engine.isPlaying && !calm,
+                      child: _ItemView(item),
+                    ),
                   ),
                 ),
               ),
@@ -209,7 +216,7 @@ class _DistractState extends State<_Distract>
     with SingleTickerProviderStateMixin {
   late final _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1200),
+    duration: const Duration(milliseconds: 1500),
   );
 
   bool get _moving => widget.active && (widget.item.pulse || widget.item.shake);
@@ -249,10 +256,11 @@ class _DistractState extends State<_Distract>
       child: widget.child,
       builder: (context, child) {
         final t = _controller.value;
-        final scale = widget.item.pulse ? 1 + 0.06 * sin(2 * pi * t) : 1.0;
-        // A short, fading shake at the start of each cycle.
-        final burst = t < 0.3 ? 1 - t / 0.3 : 0.0;
-        final dx = widget.item.shake ? 6 * burst * sin(t / 0.3 * 6 * pi) : 0.0;
+        final scale = widget.item.pulse ? 1 + 0.045 * sin(2 * pi * t) : 1.0;
+        // A short shake at the start of each cycle: two swings that ease
+        // out, so the word wobbles instead of jittering.
+        final burst = t < 0.35 ? Curves.easeOut.transform(1 - t / 0.35) : 0.0;
+        final dx = widget.item.shake ? 4 * burst * sin(t / 0.35 * 4 * pi) : 0.0;
         return Transform.translate(
           offset: Offset(dx, 0),
           child: Transform.scale(scale: scale, child: child),
@@ -461,56 +469,68 @@ class _AnswerButton extends StatelessWidget {
         color: LS.bg,
         borderColor: state,
         padding: const EdgeInsets.all(4),
-        // Scrambles morph each slot's fill instead of jumping.
-        child: TweenAnimationBuilder<Color?>(
-          tween: ColorTween(end: fill.color),
+        // A reshuffle swaps each slot with a quick fade and settle. Blending
+        // one fill into the next would flash muddy in-between colors that
+        // read as a fifth color.
+        child: AnimatedSwitcher(
           duration: motion,
-          builder: (context, color, child) => ChamferBox(
-            color: color ?? fill.color,
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeIn,
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween(begin: 0.94, end: 1.0).animate(animation),
+              child: child,
+            ),
+          ),
+          layoutBuilder: (current, previous) =>
+              Stack(fit: StackFit.expand, children: [...previous, ?current]),
+          child: ChamferBox(
+            key: ValueKey((fill, button.label)),
+            color: fill.color,
             borderColor: null,
             onTap: engine.locked ? null : () => engine.pick(fill),
-            child: child!,
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: chip == null
-                        ? label
-                        : ColoredBox(
-                            color: chip,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: chip == null
+                          ? label
+                          : ColoredBox(
+                              color: chip,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                child: label,
                               ),
-                              child: label,
                             ),
-                          ),
-                  ),
-                ),
-              ),
-              if (state != null)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: SizedBox.square(
-                    dimension: 28,
-                    child: ColoredBox(
-                      color: LS.bg.withValues(alpha: 0.6),
-                      child: Icon(
-                        isAnswer ? Icons.check : Icons.close,
-                        size: 18,
-                        color: state,
-                      ),
                     ),
                   ),
                 ),
-            ],
+                if (state != null)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: SizedBox.square(
+                      dimension: 28,
+                      child: ColoredBox(
+                        color: LS.bg.withValues(alpha: 0.6),
+                        child: Icon(
+                          isAnswer ? Icons.check : Icons.close,
+                          size: 18,
+                          color: state,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
