@@ -80,12 +80,50 @@ Future<void> _hold(String scene, int ms) async {
   await Future.delayed(Duration(milliseconds: ms));
 }
 
+/// A finger on the screen, sent as device input like a real touch (the test
+/// binding draws a crosshair over test-dispatched pointers; this one shows
+/// nothing). Same as store_demo_test.dart.
+class _Touch {
+  _Touch(Offset at) : _at = at, _pointer = _nextPointer++ {
+    _send(PointerDownEvent(pointer: _pointer, position: at));
+  }
+
+  static int _nextPointer = 1000;
+  final int _pointer;
+  Offset _at;
+
+  void moveTo(Offset at) {
+    _send(PointerMoveEvent(pointer: _pointer, position: at, delta: at - _at));
+    _at = at;
+  }
+
+  void up() => _send(PointerUpEvent(pointer: _pointer, position: _at));
+
+  static void _send(PointerEvent event) =>
+      TestWidgetsFlutterBinding.instance.handlePointerEventForSource(
+        event,
+        source: TestBindingEventSource.device,
+      );
+}
+
+/// Scenes, picked with `--dart-define=SCENE=name`:
+///   (none)        Home, Ranks, Profile (top, scrolled), Rocket Launch
+///   game title    that game's first question ("Guess Color", "Angle Sense"…)
+///   Line Split    one deliberate miss, to show how close the guess was
+///   Revive        a Rocket Launch run that crashes and offers a heart
+const _scene = String.fromEnvironment('SCENE');
+
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   binding.framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
 
   testWidgets('store shots', (tester) async {
-    SharedPreferences.setMockInitialValues(_prefs);
+    binding.shouldPropagateDevicePointerEvents = true;
+    SharedPreferences.setMockInitialValues({
+      ..._prefs,
+      // A low best, so the revive run beats it quickly.
+      if (_scene == 'Revive') 'highScore_rocketLaunch_medium': 10,
+    });
     final storage = Storage(await SharedPreferences.getInstance());
     // Recent runs for the History preview on Profile.
     for (final (i, (g, best, _, time)) in _bests.reversed.indexed) {
@@ -116,42 +154,63 @@ void main() {
     await Future.delayed(const Duration(seconds: 4));
     await tester.pump();
 
-    // --dart-define=SCENE=<name> runs one game scene only.
-    const scene = String.fromEnvironment('SCENE');
-    if (scene.isNotEmpty) {
-      await tester.tap(find.text(scene.toUpperCase()).first);
+    Future<void> startGame(String title, {String? level}) async {
+      await tester.tap(find.text(title.toUpperCase()).first);
       await tester.pump();
       await Future.delayed(const Duration(seconds: 2));
+      final pick = find.text(level ?? 'MEDIUM');
+      if (pick.evaluate().isNotEmpty) {
+        await tester.tap(pick.first);
+        await tester.pump();
+        await Future.delayed(const Duration(milliseconds: 600));
+      }
       await tester.tap(find.textContaining('START').last);
       await tester.pump();
-      await _hold('scene', 12000);
-      debugPrint('SHOT_MARK done');
-      return;
     }
 
-    await tester.tap(find.text('RANKS').last);
-    await tester.pump();
-    await _hold('ranks', 20000);
-
-    await tester.tap(find.text('PROFILE').last);
-    await tester.pump();
-    await _hold('profile', 20000);
-
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
-    await tester.pump();
-    await _hold('profile_scrolled', 15000);
-
-    // Rocket Launch in the first theme (under 1250 points): white hull, blue
-    // trim, teal flame on black space, the app's own colours.
-    await tester.tap(find.text('PLAY').last);
-    await tester.pump();
-    await Future.delayed(const Duration(seconds: 2));
-    await tester.tap(find.text('ROCKET LAUNCH').first);
-    await tester.pump();
-    await Future.delayed(const Duration(seconds: 2));
-    await tester.tap(find.textContaining('START').last);
-    await tester.pump();
-    await _hold('rocket', 12000);
+    switch (_scene) {
+      case '':
+        await _hold('home', 8000);
+        await tester.tap(find.text('RANKS').last);
+        await tester.pump();
+        await _hold('ranks', 12000);
+        await tester.tap(find.text('PROFILE').last);
+        await tester.pump();
+        await _hold('profile', 12000);
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+        await tester.pump();
+        await _hold('profile_scrolled', 10000);
+        // Rocket Launch in the first theme (under 1250 points): white hull,
+        // blue trim, teal flame on black space, the app's own colours.
+        await tester.tap(find.text('PLAY').last);
+        await tester.pump();
+        await Future.delayed(const Duration(seconds: 2));
+        await startGame('Rocket Launch');
+        await _hold('rocket', 12000);
+      case 'Line Split':
+        await startGame('Line Split');
+        await Future.delayed(const Duration(milliseconds: 2500));
+        final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+        final touch = _Touch(Offset(size.width * 0.23, size.height * 0.6));
+        await Future.delayed(const Duration(milliseconds: 250));
+        touch.moveTo(Offset(size.width * 0.235, size.height * 0.6));
+        await Future.delayed(const Duration(milliseconds: 250));
+        touch.up();
+        await _hold('miss', 8000);
+      case 'Revive':
+        await startGame('Rocket Launch');
+        await _hold('revive', 25000);
+      case 'Angle Sense':
+        await startGame('Angle Sense', level: 'MEDIUM');
+        await _hold('scene', 10000);
+      default:
+        await startGame(_scene);
+        await _hold('scene', 10000);
+    }
     debugPrint('SHOT_MARK done');
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+    binding.shouldPropagateDevicePointerEvents = false;
   }, timeout: const Timeout(Duration(minutes: 5)));
 }

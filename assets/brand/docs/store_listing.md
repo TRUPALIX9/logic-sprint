@@ -10,13 +10,13 @@ Play Console → Grow users → Store presence → Main store listing.
 LogicSprint: Brain Games
 
 ## Short description (max 80)
-Brain training games for memory, math, reflexes & focus. How far can you go?
+Six brain games for memory, math, reflexes, focus & angles. How far can you go?
 
 ## Full description (max 4000)
 ```
-Train your brain in a minute a day. LogicSprint is a free brain training app with four endless mini games for memory, mental math, reflexes and focus. Every run gets harder until your first mistake. How far can you go?
+Train your brain in a minute a day. LogicSprint is a free brain training app with six endless mini games for reflexes, memory, mental math, focus, angles and fractions. Every run gets harder until your first mistake. How far can you go?
 
-FOUR BRAIN GAMES
+SIX BRAIN GAMES
 
 • Rocket Launch (reflexes) – Pick a rocket, UFO, spaceship or missile and steer it through an asteroid storm with one finger. Space changes colour every 1250 points and the storm speeds up little by little. One hit ends the run. Can you reach 10,000?
 
@@ -26,17 +26,26 @@ FOUR BRAIN GAMES
 
 • Guess Color (focus) – A Stroop color test: tap the color a word is painted in, or the color the word names, as the COLOR | TEXT rule flips. The buttons shuffle, their labels stop matching and the clock gets shorter.
 
+• Angle Sense (angles) – Read an angle and lock it in on the degree tape, or drag the arm to match. Flat angles first, then upright and crossed lines, with clocks, pies and a compass round on Medium. Within 3° counts as Sharp. Two shields per run.
+
+• Line Split (fractions) – Touch where a number falls on the line: ½, then ⅓, ⅜, 0.43 and fractions like 11/5. The lines get longer and the middle numbers disappear as you go, and you see exactly how close you were. Two shields per run.
+
+YOUR SPRINT SCORE
+
+• One score across all six games, shown as Top X% once enough players are rated
+• Your Profile shows every game's best with its board rank, plus your full run history
+• Share your stats with one tap
+
 WHY PLAYERS LIKE IT
 
 • Quick runs, made for a coffee break or the commute
-• Up to 3 revives per run with hearts or a short video
-• Easy, Medium and Hard for Memory Lane and Quick Math
+• Up to 3 revives per run with hearts or a short video, with a 3-2-1 countdown to get ready
+• Easy, Medium and Hard for Memory Lane, Quick Math and Angle Sense
 • Global Top 10 for every game, updated daily at 00:00 UTC – pick a name with your own 4-digit code (like NEON_FOX#0420)
-• Personal bests, play counts and run history in your Profile
 • Plays offline – runs sync when you're back online
 • No login, email or sign-up
 • Pause any time; runs pause by themselves when you leave the app
-• Clean dark design built for AMOLED screens
+• Clean dark design for iPhone, iPad and Android
 
 FAIR LEADERBOARDS
 
@@ -46,7 +55,12 @@ FAIR LEADERBOARDS
 
 Free, with ads.
 
-Questions or feedback: trupal.work@gmail.com
+Questions or feedback: hello@trueorfalse.dev
+```
+
+## Release notes – 1.1.0 (What's new, max 500)
+```
+Two new games: Angle Sense and Line Split. Read angles, find fractions on a number line, and see how close you really are. Also new: a Sprint Score across all six games, a Profile with your bests and history, a 3-2-1 countdown after every revive, and a fresh loading screen.
 ```
 
 ## Release notes – 1.0.3 (What's new, max 500)
@@ -80,20 +94,10 @@ YouTube (Unlisted is fine): the Play promo cut from `tool/record_demo.sh` (see "
 ## Graphics (upload these)
 - App icon: `assets/brand/store/google_play/play_store_icon_512.png` (512×512)
 - Feature graphic: `assets/brand/store/google_play/feature_graphic_1024x500.png` (1024×500)
-- Phone screenshots, 1080×1920 (9:16): `assets/brand/store/google_play/screenshots/`, in number order (Play accepts up to 8):
-  - 02_game_sheet (Rocket Launch with the ship picker)
-  - 03_rocket_launch
-  - 04_memory_lane
-  - 05_quick_math
-  - 06_guess_color
-  - 07_result
-  - 08_ranks
-  - 09_profile
-
-  Re-render them with `SCREENSHOTS=play` (see README).
+- Phone screenshots, 1080×1920 (9:16): `assets/brand/store/google_play/screenshots/`, in number order (8): home, rocket launch, guess color, angle sense, line split, quick math, ranks, profile. Rendered from `integration_test/store_shots_test.dart` captures with the launch-kit frame design.
 
 ## Contact
-Support email: trupal.work@gmail.com
+Support email: hello@trueorfalse.dev
 
 ## Keywords
 brain games, brain training, logic games, memory game, math game, mental math, reflex game, stroop color test, focus, endless games, puzzle games, offline games, rocket launch, memory lane
@@ -111,18 +115,18 @@ LogicSprint: Brain Games
 Memory, Math & Reflex Training
 
 ## Promotional text (max 170, can change without a new version)
-Four endless brain games: Rocket Launch, Memory Lane, Quick Math and Guess Color. Climb the daily Global Top 10. No login, no sign-up.
+New: Angle Sense and Line Split. Read angles, find fractions on a number line, and see if your eye is as sharp as you think.
 
 ## Keywords (max 100, commas, no spaces)
-puzzle,logic,focus,iq,mind,stroop,color,arcade,rocket,offline,sequence,quiz,mental,arithmetic,test
+puzzle,logic,focus,iq,stroop,color,angle,fraction,estimate,rocket,offline,mental,arithmetic,test
 
 Words already in the name and subtitle (brain, games, memory, math, reflex, training) are indexed from there; don't repeat them here, and don't use other apps' names.
 
 ## Description (max 4000)
 ```
-Train your brain in a minute a day. LogicSprint is a free brain training app with four endless mini games for memory, mental math, reflexes and focus. Every run gets harder until your first mistake. How far can you go?
+Train your brain in a minute a day. LogicSprint is a free brain training app with six endless mini games for reflexes, memory, mental math, focus, angles and fractions. Every run gets harder until your first mistake. How far can you go?
 
-FOUR BRAIN GAMES
+SIX BRAIN GAMES
 
 • Rocket Launch (reflexes) – Pick a rocket, UFO, spaceship or missile and steer it through an asteroid storm with one finger. Space changes colour every 1250 points and the storm speeds up little by little. One hit ends the run. Can you reach 10,000?
 
@@ -132,17 +136,26 @@ FOUR BRAIN GAMES
 
 • Guess Color (focus) – A Stroop color test: tap the color a word is painted in, or the color the word names, as the COLOR | TEXT rule flips. The buttons shuffle, their labels stop matching and the clock gets shorter.
 
+• Angle Sense (angles) – Read an angle and lock it in on the degree tape, or drag the arm to match. Flat angles first, then upright and crossed lines, with clocks, pies and a compass round on Medium. Within 3° counts as Sharp. Two shields per run.
+
+• Line Split (fractions) – Touch where a number falls on the line: ½, then ⅓, ⅜, 0.43 and fractions like 11/5. The lines get longer and the middle numbers disappear as you go, and you see exactly how close you were. Two shields per run.
+
+YOUR SPRINT SCORE
+
+• One score across all six games, shown as Top X% once enough players are rated
+• Your Profile shows every game's best with its board rank, plus your full run history
+• Share your stats with one tap
+
 WHY PLAYERS LIKE IT
 
 • Quick runs, made for a coffee break or the commute
-• Up to 3 revives per run with hearts or a short video
-• Easy, Medium and Hard for Memory Lane and Quick Math
+• Up to 3 revives per run with hearts or a short video, with a 3-2-1 countdown to get ready
+• Easy, Medium and Hard for Memory Lane, Quick Math and Angle Sense
 • Global Top 10 for every game, updated daily at 00:00 UTC – pick a name with your own 4-digit code (like NEON_FOX#0420)
-• Personal bests, play counts and run history in your Profile
 • Plays offline – runs sync when you're back online
 • No login, email or sign-up
 • Pause any time; runs pause by themselves when you leave the app
-• Clean dark design for iPhone and iPad
+• Clean dark design for iPhone, iPad and Android
 
 FAIR LEADERBOARDS
 
@@ -152,7 +165,14 @@ FAIR LEADERBOARDS
 
 Free, with ads.
 
-Questions or feedback: trupal.work@gmail.com
+Questions or feedback: hello@trueorfalse.dev
+```
+
+## What's New – 1.1.0
+```
+Two new games: Angle Sense and Line Split. Read angles, find fractions on a number line, and see how close you really are.
+
+Also new: a Sprint Score that ranks you across all six games, a Profile with your bests and run history, a 3-2-1 countdown after every revive, and a fresh loading screen.
 ```
 
 ## What's New – 1.0.3
@@ -177,7 +197,8 @@ Primary: Games → Puzzle. Secondary: Games → Casual.
 Answer "None" for everything except **Unrestricted web access: No** and **User-generated content: Yes** (leaderboard names, which can be reported and are filtered). Expected result: 12+/13+ depending on the region's scale.
 
 ## Screenshots
-- iPhone 6.9", 1320×2868: `assets/brand/store/app_store/screenshots/` (`SCREENSHOTS=appstore`)
+- iPhone 6.9", 1320×2868: `assets/brand/store/app_store/screenshots/` (10 frames)
+- iPhone 6.1"/6.3", 1206×2622: `assets/brand/store/app_store/screenshots_6.3/` (uploaded for 1.1.0; App Store Connect uses this set for every iPhone size)
 - iPhone 6.5", 1284×2778: `assets/brand/store/app_store/screenshots_6.5/` (resized from the 6.9" set)
 - iPad 13", 2064×2752: `assets/brand/store/app_store/screenshots_ipad/` (`SCREENSHOTS=ipad`)
 
