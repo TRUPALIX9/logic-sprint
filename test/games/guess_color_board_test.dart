@@ -62,8 +62,8 @@ void main() {
 
   testWidgets('switch lights COLOR on a COLOR turn', (tester) async {
     await pumpBoard(tester, newEngine());
-    expect(textColor(tester, 'COLOR'), accent);
-    expect(textColor(tester, 'TEXT'), LS.dim);
+    expect(textColor(tester, 'COLOR'), LS.text);
+    expect(textColor(tester, 'TEXT'), accent);
     expect(litSide(tester), Alignment.centerLeft);
     expect(
       find.textContaining(RegExp(r'\b(ink|word)\b', caseSensitive: false)),
@@ -76,8 +76,8 @@ void main() {
       ..item = itemWhere(25, (item) => item.rule == GuessRule.text);
     await pumpBoard(tester, engine);
     await tester.pump(const Duration(milliseconds: 500));
-    expect(textColor(tester, 'TEXT'), accent);
-    expect(textColor(tester, 'COLOR'), LS.dim);
+    expect(textColor(tester, 'TEXT'), LS.text);
+    expect(textColor(tester, 'COLOR'), accent);
     expect(litSide(tester), Alignment.centerRight);
   });
 
@@ -168,6 +168,19 @@ void main() {
     await pumpBoard(tester, engine, calm: true);
     await tester.pump(const Duration(milliseconds: 500));
     expect(tester.binding.hasScheduledFrame, isFalse);
+  });
+
+  test('the COLOR | TEXT switch is readable on both sides', () {
+    double contrast(Color a, Color b) {
+      final la = a.computeLuminance(), lb = b.computeLuminance();
+      return (max(la, lb) + 0.05) / (min(la, lb) + 0.05);
+    }
+
+    expect(contrast(LS.text, ruleLitFill), greaterThanOrEqualTo(4.5));
+    expect(
+      contrast(GameId.guessColor.accent, LS.surface),
+      greaterThanOrEqualTo(4.5),
+    );
   });
 
   test('labels stay readable on every fill', () {

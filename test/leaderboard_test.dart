@@ -52,6 +52,38 @@ void main() {
     leaderboard = Leaderboard(storage, api: api, now: () => now);
   });
 
+  group('Sprint Score', () {
+    test('comes with the daily fetch and is cached', () async {
+      api.sprintTopPercent = 5;
+      expect(leaderboard.cachedSprintTop, isNull);
+      await leaderboard.load(_math, _easy);
+      expect(leaderboard.cachedSprintTop, 5);
+      final reopened = Leaderboard(storage, api: api, now: () => now);
+      expect(reopened.cachedSprintTop, 5);
+    });
+
+    test('a failing my_rating keeps the boards and the last score', () async {
+      api.sprintTopPercent = 10;
+      await leaderboard.load(_math, _easy);
+      api
+        ..sprintFails = true
+        ..rows = [_row('a', 'AXON', 990)];
+      now = now.add(const Duration(days: 1));
+      final load = await leaderboard.load(_math, _easy);
+      expect(load.entries.single.score, 990);
+      expect(leaderboard.cachedSprintTop, 10);
+    });
+
+    test('clears when the server no longer rates the player', () async {
+      api.sprintTopPercent = 2;
+      await leaderboard.load(_math, _easy);
+      api.sprintTopPercent = null;
+      now = now.add(const Duration(days: 1));
+      await leaderboard.load(_math, _easy);
+      expect(leaderboard.cachedSprintTop, isNull);
+    });
+  });
+
   group('recordRun', () {
     test('saves History locally and records the run on the server', () async {
       await leaderboard.recordRun(_result());

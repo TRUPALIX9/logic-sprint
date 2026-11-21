@@ -9,14 +9,12 @@ import '../../ui/kit.dart';
 import '../../ui/reveal.dart';
 import 'guess_color_engine.dart';
 
-/// Label colors on each fill: dark text on yellow and green; light text on
-/// red and blue, over a dark chip so it keeps ≥ 4.5:1 (checked in tests).
+/// Label colors on each fill: dark text on all four, no chip. It keeps
+/// ≥ 4.5:1 everywhere (red 6.9, blue 5.3, green 9.3, yellow 13; checked in
+/// tests), and the four buttons look alike, so no fill stands out.
 @visibleForTesting
-({Color text, Color? chip}) labelColorsOn(InkColor fill) => switch (fill) {
-  InkColor.yellow || InkColor.green => (text: LS.bg, chip: null),
-  InkColor.red ||
-  InkColor.blue => (text: LS.text, chip: LS.bg.withValues(alpha: 0.6)),
-};
+({Color text, Color? chip}) labelColorsOn(InkColor fill) =>
+    (text: LS.bg, chip: null);
 
 /// The COLOR | TEXT switch on top, the item card filling the middle, the
 /// countdown bar, then the 2×2 answers. Kept apart from the round host so
@@ -104,8 +102,15 @@ class GuessColorBoard extends StatelessWidget {
   }
 }
 
-/// Display-only two-segment control. The lit side slides across on a rule
-/// change and pulses once.
+/// Display-only two-segment control. The lit side is solid purple with white
+/// text; the other side is purple text on the dark box. The lit side slides
+/// across on a rule change and pulses once.
+
+/// The lit side's fill: a deeper shade of the Guess Color violet, so white
+/// text on it keeps ≥ 4.5:1 (4.7; the violet itself would give 2.5).
+@visibleForTesting
+const ruleLitFill = Color(0xFF5B5BD6);
+
 class _RuleSwitch extends StatelessWidget {
   const _RuleSwitch({required this.item, required this.calm});
 
@@ -148,7 +153,7 @@ class _RuleSwitch extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: ShapeDecoration(
                       shape: chamfer(Cut.sm, border: accent),
-                      color: accent.withValues(alpha: 0.16),
+                      color: ruleLitFill,
                     ),
                   ),
                 ),
@@ -160,7 +165,7 @@ class _RuleSwitch extends StatelessWidget {
                   Expanded(
                     child: _RuleSide(
                       rule: rule,
-                      color: rule == item.rule ? accent : LS.dim,
+                      color: rule == item.rule ? LS.text : accent,
                     ),
                   ),
               ],

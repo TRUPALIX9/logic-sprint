@@ -49,6 +49,10 @@ abstract interface class LeaderboardApi {
   /// the caller's ranks.
   Future<Boards> boards();
 
+  /// The caller's Sprint Score as "top X percent" (see `my_rating()` in
+  /// supabase/schema.sql), or null until they and 50+ players are rated.
+  Future<int?> sprintTop();
+
   /// Reports another player's name as offensive.
   Future<void> reportName(String playerId);
 
@@ -178,6 +182,16 @@ class SupabaseLeaderboardApi implements LeaderboardApi {
     await _client.rpc('delete_my_data').timeout(_timeout);
     // The user is gone on the server; just drop the local session.
     await _client.auth.signOut(scope: SignOutScope.local);
+  }
+
+  @override
+  Future<int?> sprintTop() async {
+    final rows = await _client.rpc<dynamic>('my_rating').timeout(_timeout);
+    if (rows is! List || rows.isEmpty) {
+      return null;
+    }
+    final top = (rows.first as Map)['top_percent'];
+    return top is num ? top.toInt() : null;
   }
 
   @override

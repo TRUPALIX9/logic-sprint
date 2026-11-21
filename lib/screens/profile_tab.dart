@@ -110,6 +110,7 @@ ProfileStats profileStats(BuildContext context) {
     plays: app.plays,
     rank: leaderboard.cachedRank,
     history: leaderboard.history,
+    sprintTop: leaderboard.cachedSprintTop,
   );
 }
 

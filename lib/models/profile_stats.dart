@@ -59,6 +59,7 @@ class ProfileStats {
     required int Function(GameId, Difficulty) plays,
     required int? Function(GameId, Difficulty) rank,
     required List<RunRecord> history,
+    int? sprintTop,
   }) {
     final games = <GameStat>[];
     for (final game in GameId.values) {
@@ -96,6 +97,7 @@ class ProfileStats {
       played: history.fold(Duration.zero, (sum, r) => sum + r.duration),
       // History keeps the latest runs only, so older time isn't counted.
       playedIsPartial: history.length < runs,
+      sprintTop: sprintTop,
     );
   }
 
@@ -105,9 +107,9 @@ class ProfileStats {
   /// The 4-digit code ("0420"), once known.
   final String? tag;
 
-  /// Sprint Score as "top X percent" (1–100). Null until the Sprint Score
-  /// backend exists. Only the top 25% is ever shown as a number; see
-  /// [SprintLevel].
+  /// Sprint Score as "top X percent" (1–100) from `my_rating()`; null until
+  /// the player and 50+ others are rated. Only Top 20% or better is shown as
+  /// a number; see [SprintLevel].
   final int? sprintTop;
 
   final List<GameStat> games;

@@ -429,3 +429,132 @@ group by game_type;
 grant select on public.leaderboard_top, public.leaderboard_ranked,
   public.player_stats, public.game_stats
   to anon, authenticated;
+
+-- ---------------------------------------------------------- sprint score --
+-- One 0–100 rating across games (design/plans/upgrades_plan.html, D).
+--   1. Per board with 30+ named players: your percentile,
+--      p = 100 × (below + ½ × tied) ÷ players, ordered like the boards
+--      (score, then the shorter run for Memory Lane and Quick Math).
+--      Easy is capped at 90 and Medium at 97 for the games with levels.
+--   2. Per game (3+ runs in it): your best board.
+--   3. Combined R = (p₁ + … + pₙ + 2 × 50) ÷ (n + 2), so one spike counts
+--      less than steady skill.
+--   4. Rating = your R's percentile among rated players (2+ rated games).
+-- my_rating() turns it into "Top X%" (1, 2, 5, 10, 15, 20, 25, never
+-- overclaiming) once 50+ players are rated. Rebuilt with the boards at
+-- 00:00 UTC by pg_cron. lib/models/sprint_rating.dart is the same maths.
+-- Re-runnable: drops and rebuilds the view and its function.
+drop materialized view if exists public.player_ratings cascade;
+create materialized view public.player_ratings as
+with entries as (
+  select l.player_id, l.game_type, l.difficulty, l.score,
+         case when l.game_type in ('memoryLane', 'quickMath')
+              then coalesce(l.duration_ms, 2147483647) else 0 end as tk
+  from public.leaderboard_top l
+),
+board_pos as (
+  select e.*,
+         count(*) over (partition by e.game_type, e.difficulty) as n,
+         count(*) over (partition by e.game_type, e.difficulty, e.score, e.tk) as tied,
+         rank() over (partition by e.game_type, e.difficulty
+                      order by e.score desc, e.tk asc) - 1 as better
+  from entries e
+),
+board_p as (
+  select player_id, game_type,
+         least(100.0 * (n - better - tied + 0.5 * tied) / n,
+               case when game_type not in ('memoryLane', 'quickMath', 'angleSense') then 100
+                    when difficulty = 'easy' then 90
+                    when difficulty = 'medium' then 97
+                    else 100 end) as p
+  from board_pos
+  where n >= 30
+),
+game_runs as (
+  select player_id, game_type, sum(plays) as runs
+  from public.game_bests
+  group by player_id, game_type
+),
+game_p as (
+  select b.player_id, b.game_type, max(b.p) as p
+  from board_p b
+  join game_runs r using (player_id, game_type)
+  where r.runs >= 3
+  group by b.player_id, b.game_type
+),
+combined as (
+  select player_id,
+         count(*)::integer as rated_games,
+         (sum(p) + 2 * 50.0) / (count(*) + 2) as r
+  from game_p
+  group by player_id
+),
+rated as (
+  select c.player_id,
+         count(*) over () as players,
+         count(*) over (partition by c.r) as tied,
+         rank() over (order by c.r desc) - 1 as better
+  from combined c
+  where c.rated_games >= 2
+)
+select c.player_id,
+       c.rated_games,
+       round(c.r, 2) as combined,
+       round(100.0 * (x.players - x.better - x.tied + 0.5 * x.tied) / x.players, 2) as rating,
+       (select count(*) from combined where rated_games >= 2)::integer as rated_players
+from combined c
+left join rated x using (player_id);
+
+create unique index player_ratings_player_key on public.player_ratings (player_id);
+
+-- Holds player ids: never readable directly, only through my_rating().
+revoke all on public.player_ratings from public, anon, authenticated;
+
+-- "Top X%" from a rating, rounded up to 1, 2, 5, 10, 15, 20 or 25 so it
+-- never claims more than the player earned; plain rounding up above 25.
+create or replace function public.sprint_top_bucket(p_rating numeric)
+returns integer
+language sql
+immutable
+as $$
+  select coalesce(
+    (select b from unnest(array[1, 2, 5, 10, 15, 20, 25]) as b
+     where b >= ceil(100 - p_rating) order by b limit 1),
+    ceil(100 - p_rating)::integer
+  );
+$$;
+
+-- The caller's Sprint Score. top_percent is null until they're rated and
+-- 50+ players are; the app shows it only at Top 20% or better.
+create or replace function public.my_rating()
+returns table (
+  rating numeric,
+  top_percent integer,
+  rated_games integer,
+  rated_players integer
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select pr.rating,
+         case when pr.rating is not null and pr.rated_players >= 50
+              then sprint_top_bucket(pr.rating) end,
+         pr.rated_games,
+         pr.rated_players
+  from player_ratings pr
+  where pr.player_id = auth.uid();
+$$;
+
+revoke execute on function public.my_rating() from public, anon;
+grant execute on function public.my_rating() to authenticated;
+
+-- Rebuild every day at 00:00 UTC, with the boards. On Supabase, enable
+-- pg_cron first (Database → Extensions) if this line fails.
+create extension if not exists pg_cron;
+select cron.schedule(
+  'refresh-player-ratings',
+  '0 0 * * *',
+  $$refresh materialized view concurrently public.player_ratings$$
+);

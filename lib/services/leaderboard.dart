@@ -106,6 +106,7 @@ class Leaderboard extends ChangeNotifier {
   final Random _random;
 
   static const _fetchedKey = '_fetchedAt';
+  static const _sprintKey = '_sprintTop';
 
   /// The name without its tag.
   String? get savedName => _storage.playerName;
@@ -130,6 +131,13 @@ class Leaderboard extends ChangeNotifier {
   /// (null until a fetch has placed them on it). No network.
   int? cachedRank(GameId game, Difficulty difficulty) =>
       _parse(_cache()[_boardKey(game, difficulty)])?.$1.myRank;
+
+  /// The player's Sprint Score ("top X percent") from the last daily fetch;
+  /// null until the server rates them. No network.
+  int? get cachedSprintTop {
+    final top = _cache()[_sprintKey];
+    return top is num ? top.toInt() : null;
+  }
 
   /// The clock used for freshness.
   DateTime now() => _now();
@@ -427,6 +435,14 @@ class Leaderboard extends ChangeNotifier {
         previousMyRank: changed ? old?.myRank : old.previousMyRank,
         anim: changed || (cached?.$2 ?? false),
       );
+    }
+    // The Sprint Score rides along with the daily fetch. If it fails (an older
+    // backend without my_rating, a timeout), the boards still update and the
+    // last known score stays.
+    try {
+      cache[_sprintKey] = await _api.sprintTop();
+    } on Object {
+      // keep cache[_sprintKey] as it was
     }
     cache[_fetchedKey] = at.millisecondsSinceEpoch;
     await _write(cache);

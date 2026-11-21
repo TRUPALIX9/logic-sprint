@@ -10,6 +10,10 @@ class FakeLeaderboardApi implements LeaderboardApi {
 
   /// The player's rank on every board that has rows.
   int? rank;
+
+  /// What [sprintTop] answers ("top X percent"); set [sprintFails] to throw.
+  int? sprintTopPercent;
+  bool sprintFails = false;
   bool online = true;
   String? name;
   int? tag;
@@ -93,6 +97,15 @@ class FakeLeaderboardApi implements LeaderboardApi {
     deleted = true;
     name = null;
     tag = null;
+  }
+
+  @override
+  Future<int?> sprintTop() async {
+    _check();
+    if (sprintFails) {
+      throw StateError('my_rating missing');
+    }
+    return sprintTopPercent;
   }
 
   @override
