@@ -74,3 +74,4 @@ config/admob.ios.json
 *.code-workspace
 # Extra Rocket Launch takes from the screenshot generator
 assets/brand/store/**/*_take*.png
+build-out/
