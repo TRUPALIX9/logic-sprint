@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../core/theme.dart';
 import '../games/games.dart';
 import '../models/game.dart';
+import '../models/profile_stats.dart' show formatScore;
 import '../state/app_state.dart';
 import '../ui/brand.dart';
 import '../ui/chamfer.dart';
@@ -389,58 +390,80 @@ class _GameCard extends StatelessWidget {
   /// At least one run finished (a best of 0 still counts as played).
   final bool played;
 
+  /// Screen height from which the best is shown as a big number. Shorter
+  /// phones (SE, mini) keep the compact one-line "Best 310". Screen size,
+  /// not the card's: the grid measures its cards' natural height, which a
+  /// LayoutBuilder can't report.
+  static const roomyScreen = 800.0;
+
   @override
   Widget build(BuildContext context) {
+    final roomy = MediaQuery.sizeOf(context).height >= roomyScreen;
     return ChamferBox(
       cut: Cut.lg,
       padding: const EdgeInsets.all(14),
       onTap: () => showGameSheet(context, game),
+      // The name with the score just under it, the type at the bottom left
+      // and the game's icon filling the bottom right. The icon grows with
+      // the card so tall phones don't show empty space.
       child: Stack(
         children: [
-          // A large, faint copy of the game's icon fills the space the
-          // card gets on tall phones; it shrinks away on short ones.
           Positioned.fill(
             child: LayoutBuilder(
               builder: (context, box) {
-                final size = math.min(box.maxHeight * 0.5, 84.0);
-                return size < 40
-                    ? const SizedBox.shrink()
-                    : Align(
-                        alignment: const Alignment(1, -0.55),
-                        child: ExcludeSemantics(
-                          child: Icon(
-                            game.icon,
-                            size: size,
-                            color: game.accent.withValues(alpha: 0.16),
-                          ),
-                        ),
-                      );
+                final size = math.min(
+                  math.min(box.maxHeight * 0.52, box.maxWidth * 0.5),
+                  96.0,
+                );
+                return Align(
+                  alignment: Alignment.bottomRight,
+                  child: ExcludeSemantics(
+                    child: Icon(game.icon, size: size, color: game.accent),
+                  ),
+                );
               },
             ),
           ),
-          _cardText(),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DisplayText(game.title, size: 19, maxLines: 2),
+              const SizedBox(height: 10),
+              if (roomy)
+                _bigBest()
+              else
+                MonoLabel(
+                  best > 0 || played ? 'Best $best' : 'Not played',
+                  size: 11,
+                  weight: FontWeight.w700,
+                  color: best > 0 ? game.accent : LS.dim,
+                ),
+              const Spacer(),
+              MonoLabel(game.skill, size: 10),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _cardText() {
+  /// "BEST" over the score in the game's colour; a dim "—" for a game not
+  /// played yet, so every card lines up the same.
+  Widget _bigBest() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Compact enough that all six games fit above the pinned
-        // "Jump back in" card on a regular phone.
-        GameTile(game: game, size: 38),
-        const Spacer(),
-        DisplayText(game.title, size: 19, maxLines: 2),
-        const SizedBox(height: 6),
-        MonoLabel(game.skill, size: 10),
-        const SizedBox(height: 4),
-        MonoLabel(
-          best > 0 || played ? 'Best $best' : 'Not played',
-          size: 11,
-          weight: FontWeight.w700,
-          color: best > 0 ? game.accent : LS.dim,
+        const MonoLabel('Best', size: 10, color: LS.dim),
+        const SizedBox(height: 2),
+        Text(
+          best > 0 || played ? formatScore(best) : '—',
+          maxLines: 1,
+          style: LSText.mono(
+            34,
+            weight: FontWeight.w700,
+            spacing: 0,
+            color: best > 0 ? game.accent : LS.dim,
+          ).copyWith(height: 1),
         ),
       ],
     );

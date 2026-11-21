@@ -66,7 +66,7 @@ final _profileScrollable = find
 void main() {
   setUpAll(_loadFonts);
 
-  testWidgets('home lists the four games and opens a game sheet', (
+  testWidgets('home lists the six games and opens a game sheet', (
     tester,
   ) async {
     await _pumpApp(tester);
@@ -75,6 +75,8 @@ void main() {
       'MEMORY LANE',
       'QUICK MATH',
       'GUESS COLOR',
+      'ANGLE SENSE',
+      'LINE SPLIT',
     ]) {
       expect(find.text(title), findsOneWidget);
     }
