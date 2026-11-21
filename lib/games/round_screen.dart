@@ -8,6 +8,7 @@ import '../core/config.dart';
 import '../core/theme.dart';
 import '../models/game.dart';
 import '../screens/result_screen.dart';
+import '../services/music.dart';
 import '../services/ads.dart';
 import '../services/leaderboard.dart';
 import '../services/network.dart';
@@ -97,6 +98,15 @@ class _RoundScreenState<T extends RoundEngine> extends State<RoundScreen<T>> {
   // Runs before the AnimatedBuilder's listener, so [_offering] is set by the
   // time the overlay rebuilds.
   void _onEngineChange() {
+    final state = _engine.state;
+    if (state == RunState.over) {
+      Music.current?.endRun();
+    } else {
+      Music.current?.inRun(
+        widget.game,
+        live: state == RunState.playing || state == RunState.resuming,
+      );
+    }
     switch (_engine.state) {
       case RunState.down:
         if (_offering || _endTimer != null) {
@@ -207,6 +217,7 @@ class _RoundScreenState<T extends RoundEngine> extends State<RoundScreen<T>> {
 
   @override
   void dispose() {
+    Music.current?.endRun();
     _network.online.removeListener(_onNetworkChange);
     _lifecycle.dispose();
     _endTimer?.cancel();

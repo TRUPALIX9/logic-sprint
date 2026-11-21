@@ -1,132 +1,315 @@
-"""LogicSprint ambient loop: original, procedurally composed, seamless."""
-import numpy as np
-from scipy.signal import fftconvolve, butter, sosfilt
-from scipy.io import wavfile
-import sys
-SR = 44100
-BPM = 66
-BEAT = 60 / BPM
-BAR = 4 * BEAT
-BARS = 16
-LOOP = BARS * BAR
-TAIL = 6.0
-N = int((LOOP + TAIL) * SR)
-rng = np.random.default_rng(42)
-t_all = np.arange(N) / SR
+"""Composes LogicSprint's in-game music: one original, seamless loop per game.
 
-def hz(m):  # MIDI to Hz
+    python3 tool/compose_music.py            # writes assets/audio/<game>.m4a
+    python3 tool/compose_music.py memoryLane # just one
+
+Everything is synthesised here (no samples, no licences). Each track suits its
+game and stays quiet and soft (no drums, nothing harsh above ~6 kHz):
+
+  rocketLaunch  continuous space ambience: drifting pads, low drone, twinkles
+  memoryLane    soft piano, broken chords
+  quickMath     marimba ostinato, steady and light
+  guessColor    warm electric-piano bells, playful
+  angleSense    music box / celesta in 3/4
+  lineSplit     kalimba plucks over a soft pad
+
+Needs numpy, scipy and ffmpeg.
+"""
+import subprocess
+import sys
+from pathlib import Path
+
+import numpy as np
+from scipy.io import wavfile
+from scipy.signal import butter, fftconvolve, sosfilt
+
+SR = 44100
+OUT = Path(__file__).resolve().parent.parent / 'assets' / 'audio'
+
+
+def hz(m):
     return 440.0 * 2 ** ((m - 69) / 12)
 
-def env_adsr(n, a, d, s, r, sustain_len):
-    """attack, decay, sustain level, release (seconds); sustain_len seconds before release"""
-    e = np.zeros(n)
-    ia, id_ = int(a * SR), int(d * SR)
-    isus = int(sustain_len * SR)
-    ir = int(r * SR)
-    seg = []
-    seg.append(np.linspace(0, 1, max(ia, 1), endpoint=False) ** 1.6)
-    seg.append(np.linspace(1, s, max(id_, 1), endpoint=False))
-    hold = max(isus - ia - id_, 0)
-    seg.append(np.full(hold, s))
-    seg.append(np.linspace(s, 0, max(ir, 1)) ** 1.2 * s if s > 0 else np.zeros(max(ir, 1)))
-    x = np.concatenate(seg)[:n]
-    e[: len(x)] = x
-    return e
 
-def warm_tone(freq, n, harmonics=(1, .32, .14, .06, .03), detune=0.0):
+class Track:
+    """A stereo buffer with a seamless loop of [loop] seconds plus a tail."""
+
+    def __init__(self, loop, seed, tail=6.0):
+        self.loop = loop
+        self.n = int((loop + tail) * SR)
+        self.L = np.zeros(self.n)
+        self.R = np.zeros(self.n)
+        self.rng = np.random.default_rng(seed)
+
+    def add(self, sig, start, pan=0.0, gain=1.0):
+        i = int(start * SR)
+        if i >= self.n:
+            return
+        j = min(self.n, i + len(sig))
+        lg, rg = np.cos((pan + 1) * np.pi / 4), np.sin((pan + 1) * np.pi / 4)
+        self.L[i:j] += sig[: j - i] * gain * lg
+        self.R[i:j] += sig[: j - i] * gain * rg
+
+    def reverb(self, seconds, decay, mix):
+        irn = int(seconds * SR)
+        t = np.arange(irn) / SR
+        out = []
+        for ch in (self.L, self.R):
+            ir = self.rng.normal(0, 1, irn) * np.exp(-t / decay)
+            ir = sosfilt(butter(2, 4500, fs=SR, output='sos'), ir)
+            ir /= np.sqrt((ir ** 2).sum())
+            out.append((1 - mix * .4) * ch + mix * fftconvolve(ch, ir)[: self.n])
+        self.L, self.R = out
+
+    def master(self, path, rms_db=-21.0):
+        lp = butter(2, 6000, fs=SR, output='sos')
+        hp = butter(2, 35, btype='high', fs=SR, output='sos')
+        L = sosfilt(hp, sosfilt(lp, self.L))
+        R = sosfilt(hp, sosfilt(lp, self.R))
+        n = int(self.loop * SR)
+        l, r = L[:n].copy(), R[:n].copy()
+        l[: self.n - n] += L[n:]   # fold the tail back: seamless loop
+        r[: self.n - n] += R[n:]
+        st = np.stack([l, r], 1)
+        st *= 10 ** (rms_db / 20) / np.sqrt((st ** 2).mean())
+        peak = np.abs(st).max()
+        if peak > 10 ** (-3 / 20):
+            st *= 10 ** (-3 / 20) / peak
+        wav = path.with_suffix('.wav')
+        wavfile.write(wav, SR, (st * 32767).astype(np.int16))
+        subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', str(wav),
+                        '-c:a', 'aac', '-b:a', '112k', str(path)], check=True)
+        if '--keep-wav' not in sys.argv:
+            wav.unlink()
+        print(f'{path.name}: {n / SR:.1f}s')
+
+
+def env(n, attack, decay_rate):
     t = np.arange(n) / SR
-    out = np.zeros(n)
-    for k, amp in enumerate(harmonics, start=1):
-        ph = rng.uniform(0, 2 * np.pi)
-        out += amp * np.sin(2 * np.pi * freq * k * (1 + detune) * t + ph)
-    return out
+    return (1 - np.exp(-t / max(attack, 1e-4))) * np.exp(-t * decay_rate)
 
-L = np.zeros(N); R = np.zeros(N)
-def add(sig, start, pan=0.0, gain=1.0):
-    i = int(start * SR)
-    j = min(N, i + len(sig))
-    lg = np.cos((pan + 1) * np.pi / 4); rg = np.sin((pan + 1) * np.pi / 4)
-    L[i:j] += sig[: j - i] * gain * lg
-    R[i:j] += sig[: j - i] * gain * rg
 
-# Chords (MIDI): two bars each. Cmaj9, Am9, Fmaj9, G6sus(add9)
-CHORDS = [
-    (36, [52, 55, 59, 62, 67]),   # C:  E G B D G
-    (33, [52, 55, 60, 64, 71]),   # Am: E G C E B(9)
-    (29, [53, 57, 60, 64, 67]),   # F:  F A C E G(9)
-    (31, [50, 55, 59, 62, 64]),   # G6sus-ish: D G B D E
-]
-CH_LEN = 2 * BAR
-for rep in range(BARS // 8):
-    for ci, (root, tones) in enumerate(CHORDS):
-        start = (rep * 4 + ci) * CH_LEN
-        dur = CH_LEN + 1.8  # overlap into next chord
-        n = int((dur + 2.5) * SR)
-        # pad voices: two slightly detuned layers, slow swell, gentle tremolo
+def pad_note(tr, m, start, dur, gain, pan=0.0, bright=.3, detune=.003):
+    """Soft detuned pad with a slow swell and release."""
+    n = int((dur + 3) * SR)
+    t = np.arange(n) / SR
+    sig = np.zeros(n)
+    for d in (-detune, 0, detune):
+        for k, a in enumerate((1, bright, bright * .4, bright * .15), 1):
+            sig += a * np.sin(2 * np.pi * hz(m) * k * (1 + d) * t + tr.rng.uniform(0, 6.28))
+    a = np.clip(t / 1.6, 0, 1) ** 1.5
+    r = np.clip((dur + 2.5 - t) / 2.5, 0, 1)
+    tr.add(sig / 3 * a * r, start, pan, gain)
+
+
+# ---------------------------------------------------------------- tracks --
+
+def memory_lane():
+    """Soft piano: Am9 – Fmaj7 – Cmaj7 – G6, broken chords, 72 BPM."""
+    bpm = 72
+    beat = 60 / bpm
+    bars = 16
+    tr = Track(bars * 4 * beat, seed=1)
+
+    def piano(m, start, vel=1.0, pan=0.0):
+        f = hz(m)
+        n = int(5 * SR)
+        t = np.arange(n) / SR
+        sig = np.zeros(n)
+        for k in range(1, 9):
+            fk = f * k * np.sqrt(1 + 0.0004 * k * k)  # string inharmonicity
+            sig += (1 / k ** 1.3) * np.sin(2 * np.pi * fk * t) * np.exp(-t * (0.9 + 0.55 * k) * (f / 400) ** .3)
+        hammer = tr.rng.normal(0, 1, n) * np.exp(-t * 90) * .03
+        sig = (sig + hammer) * (1 - np.exp(-t / .004))
+        tr.add(sig, start, pan, .16 * vel)
+
+    chords = [(45, [57, 60, 64, 67, 71]), (41, [57, 60, 64, 65, 69]),
+              (36, [55, 60, 64, 67, 71]), (43, [55, 59, 62, 64, 67])]
+    for bar in range(bars):
+        root, tones = chords[(bar // 2) % 4]
+        t0 = bar * 4 * beat
+        if bar % 2 == 0:
+            piano(root, t0, .9, -.2)
+            piano(root + 12, t0, .5, -.2)
+        order = [0, 2, 1, 3, 4, 3, 2, 1]
+        for i, k in enumerate(order):
+            piano(tones[k] + (12 if (bar % 4 == 3 and i > 4) else 0),
+                  t0 + i * beat / 2, .55 + .15 * tr.rng.random(), -.4 + .8 * k / 4)
+        if bar % 4 in (1, 3):  # a quiet melody note on top
+            piano(tones[-1] + 12, t0 + 2 * beat, .45, .3)
+    tr.reverb(2.6, .7, .35)
+    tr.master(OUT / 'memoryLane.m4a')
+
+
+def rocket_launch():
+    """Continuous space ambience: no beat, drifting pads, drone, twinkles."""
+    loop = 64.0
+    tr = Track(loop, seed=2, tail=8)
+    t = np.arange(tr.n) / SR
+    # low drone with a slow wobble
+    drone = (np.sin(2 * np.pi * hz(38) * t) + .5 * np.sin(2 * np.pi * hz(45) * t * 1.001)) \
+        * (.8 + .2 * np.sin(2 * np.pi * t / 16))
+    tr.add(drone, 0, 0, .06)
+    # pads: Dmaj9 – Bm9 – Gmaj9 – Asus2, 16 s each, long overlaps
+    chords = [[50, 57, 61, 64, 66], [47, 54, 57, 61, 62], [43, 54, 57, 59, 62], [45, 52, 57, 59, 64]]
+    for i, tones in enumerate(chords):
         for v, m in enumerate(tones):
-            e = env_adsr(n, 1.8, 1.0, .75, 2.5, dur)
-            lfo = 1 + .08 * np.sin(2 * np.pi * (.13 + .02 * v) * np.arange(n) / SR + v)
-            sig = (warm_tone(hz(m), n, detune=+.0025) + warm_tone(hz(m), n, detune=-.0025)) * .5
-            add(sig * e * lfo, start, pan=(-.6 + 1.2 * v / (len(tones) - 1)), gain=.055)
-        # sub bass: soft sine root, swells
-        e = env_adsr(n, 1.2, .8, .8, 2.0, dur)
-        add(np.sin(2 * np.pi * hz(root) * np.arange(n) / SR) * e, start, gain=.16)
-        add(np.sin(2 * np.pi * hz(root + 12) * np.arange(n) / SR) * e, start, gain=.04)
+            pad_note(tr, m, i * 16, 17, .05, pan=-.7 + 1.4 * v / 4, bright=.45, detune=.004)
+    # slow-moving filtered "solar wind"
+    noise = tr.rng.normal(0, 1, tr.n)
+    wind = sosfilt(butter(2, [500, 1800], btype='band', fs=SR, output='sos'), noise)
+    tr.add(wind * (.5 + .5 * np.sin(2 * np.pi * t / 32)) * .012, 0, 0, 1)
+    # twinkles: high soft bells, random but sparse
+    for s in np.arange(1.5, loop, 2.7):
+        if tr.rng.random() < .55:
+            m = int(tr.rng.choice([78, 81, 83, 85, 86, 88, 90]))
+            n = int(4 * SR)
+            tt = np.arange(n) / SR
+            bell = (np.sin(2 * np.pi * hz(m) * tt) + .3 * np.sin(2 * np.pi * hz(m) * 2.76 * tt)) * env(n, .003, 1.1)
+            tr.add(bell, s + tr.rng.uniform(0, 1), tr.rng.uniform(-.8, .8), .03)
+    tr.reverb(4.5, 1.4, .55)
+    tr.master(OUT / 'rocketLaunch.m4a', rms_db=-22)
 
-# Sparse pentatonic pluck melody (C major pentatonic, upper register)
-PENT = [72, 74, 76, 79, 81, 84]
-pattern_beats = [0, 1.5, 3, 5, 6.5, 8, 10, 11.5, 13, 14.5]  # within each 16-beat phrase
-for phrase in range(BARS // 4):
-    chord_tones = CHORDS[(phrase * 2) % 4][1]
-    for k, b in enumerate(pattern_beats):
-        if rng.random() < .25:
-            continue
-        cands = [p for p in PENT if (p % 12) in {(c % 12) for c in chord_tones}] or PENT
-        m = cands[rng.integers(len(cands))] if rng.random() < .7 else PENT[rng.integers(len(PENT))]
-        start = phrase * 4 * BAR + b * BEAT
-        n = int(3.0 * SR)
+
+def quick_math():
+    """Marimba ostinato over soft bass, 96 BPM, light and steady."""
+    bpm = 96
+    beat = 60 / bpm
+    bars = 16
+    tr = Track(bars * 4 * beat, seed=3)
+
+    def marimba(m, start, gain, pan):
+        n = int(1.6 * SR)
+        t = np.arange(n) / SR
+        f = hz(m)
+        sig = np.sin(2 * np.pi * f * t) * env(n, .002, 4.5) + .25 * np.sin(2 * np.pi * f * 3.93 * t) * env(n, .001, 16)
+        tr.add(sig, start, pan, gain)
+
+    chords = [(48, [60, 64, 67, 72]), (45, [60, 64, 69, 72]), (41, [60, 65, 69, 72]), (43, [59, 62, 67, 71])]
+    pattern = [0, 2, 1, 3, 2, 1, 3, 2]
+    for bar in range(bars):
+        root, tones = chords[bar % 4]
+        t0 = bar * 4 * beat
+        for i, k in enumerate(pattern):
+            marimba(tones[k] + (12 if bar % 8 >= 4 and i % 4 == 3 else 0), t0 + i * beat / 2,
+                    .11 if i % 2 == 0 else .07, -.3 + .2 * k)
+        n = int(4 * beat * SR)
         tt = np.arange(n) / SR
-        e = np.exp(-tt * 2.2) * (1 - np.exp(-tt * 300))
-        sig = (np.sin(2 * np.pi * hz(m) * tt) + .25 * np.sin(2 * np.pi * hz(m) * 2 * tt) + .08 * np.sin(2 * np.pi * hz(m) * 3 * tt)) * e
-        pan = rng.uniform(-.4, .4)
-        add(sig, start, pan=pan, gain=.075)
-        # soft dotted-eighth echoes
-        for d in range(1, 4):
-            add(sig * (.42 ** d), start + d * .75 * BEAT, pan=-pan * (1 if d % 2 else -1), gain=.075)
+        tr.add(np.sin(2 * np.pi * hz(root - 12) * tt) * env(n, .02, .6), t0, 0, .14)
+    for bar in range(0, bars, 4):
+        pad_note(tr, 64 if bar % 8 == 0 else 67, bar * 4 * beat, 8 * beat, .025)
+    tr.reverb(1.8, .45, .25)
+    tr.master(OUT / 'quickMath.m4a')
 
-# Very soft "air": filtered noise swell, barely audible
-noise = rng.normal(0, 1, N)
-sos = butter(2, [300, 2200], btype='band', fs=SR, output='sos')
-air = sosfilt(sos, noise) * (.5 + .5 * np.sin(2 * np.pi * t_all / LOOP * 2 - np.pi / 2)) * .006
-L += air; R += air[::-1] if False else air
 
-# Reverb: exponentially decaying stereo noise impulse
-irn = int(2.8 * SR)
-tt = np.arange(irn) / SR
-ir_l = rng.normal(0, 1, irn) * np.exp(-tt / .55)
-ir_r = rng.normal(0, 1, irn) * np.exp(-tt / .55)
-lp = butter(2, 4500, fs=SR, output='sos')
-ir_l = sosfilt(lp, ir_l); ir_r = sosfilt(lp, ir_r)
-ir_l /= np.sqrt((ir_l ** 2).sum()); ir_r /= np.sqrt((ir_r ** 2).sum())
-wetL = fftconvolve(L, ir_l)[:N]; wetR = fftconvolve(R, ir_r)[:N]
-L = .78 * L + .32 * wetL; R = .78 * R + .32 * wetR
+def guess_color():
+    """Warm electric-piano bells (FM), playful syncopation, 84 BPM."""
+    bpm = 84
+    beat = 60 / bpm
+    bars = 16
+    tr = Track(bars * 4 * beat, seed=4)
 
-# Gentle tone: roll off highs and rumble
-sos_lp = butter(2, 6000, fs=SR, output='sos'); sos_hp = butter(2, 35, btype='high', fs=SR, output='sos')
-L = sosfilt(sos_hp, sosfilt(sos_lp, L)); R = sosfilt(sos_hp, sosfilt(sos_lp, R))
+    def ep(m, start, gain, pan, dur=2.5):
+        n = int(dur * SR)
+        t = np.arange(n) / SR
+        f = hz(m)
+        index = 1.6 * np.exp(-t * 3)
+        sig = np.sin(2 * np.pi * f * t + index * np.sin(2 * np.pi * f * t)) * env(n, .004, 1.4)
+        sig += .08 * np.sin(2 * np.pi * f * 14 * t) * env(n, .001, 30)  # tine ping
+        tr.add(sig, start, pan, gain)
 
-# Seamless loop: fold the tail back onto the start
-n_loop = int(LOOP * SR)
-outL = L[:n_loop].copy(); outR = R[:n_loop].copy()
-tail = N - n_loop
-outL[:tail] += L[n_loop:]; outR[:tail] += R[n_loop:]
+    chords = [(41, [57, 60, 64, 67]), (38, [57, 60, 62, 65]), (46, [58, 62, 65, 69]), (48, [58, 60, 64, 67])]
+    comp = [0, 1.5, 2.5, 3.5]
+    melody = [72, 74, 76, 79, 77, 76, 74, 72]
+    for bar in range(bars):
+        root, tones = chords[(bar // 2) % 4]
+        t0 = bar * 4 * beat
+        for c in comp:
+            for v, m in enumerate(tones):
+                ep(m, t0 + c * beat, .045, -.4 + .27 * v, 1.6)
+        n = int(4 * beat * SR)
+        tt = np.arange(n) / SR
+        tr.add(np.sin(2 * np.pi * hz(root - 12) * tt) * env(n, .01, .7), t0, 0, .15)
+        if bar % 2 == 1:
+            for i in range(3):
+                ep(melody[(bar + i * 3) % len(melody)], t0 + (i * 1.25) * beat, .07, .35)
+    tr.reverb(2.2, .6, .3)
+    tr.master(OUT / 'guessColor.m4a')
 
-# Master: target quiet RMS, safe peak
-st = np.stack([outL, outR], axis=1)
-rms = np.sqrt((st ** 2).mean())
-st *= (10 ** (-20 / 20)) / rms          # ~ -20 dBFS RMS
-peak = np.abs(st).max()
-if peak > 10 ** (-3 / 20):
-    st *= (10 ** (-3 / 20)) / peak
-print('len %.2fs rms %.1f dBFS peak %.1f dBFS' % (n_loop / SR, 20*np.log10(np.sqrt((st**2).mean())), 20*np.log10(np.abs(st).max())))
-wavfile.write(sys.argv[1], SR, (st * 32767).astype(np.int16))
+
+def angle_sense():
+    """Music box / celesta in 3/4, calm, 70 BPM."""
+    bpm = 70
+    beat = 60 / bpm
+    bars = 24
+    tr = Track(bars * 3 * beat, seed=5)
+
+    def box(m, start, gain, pan):
+        n = int(3 * SR)
+        t = np.arange(n) / SR
+        f = hz(m)
+        sig = (np.sin(2 * np.pi * f * t) + .35 * np.sin(2 * np.pi * f * 3 * t) * np.exp(-t * 6)
+               + .12 * np.sin(2 * np.pi * f * 5.4 * t) * np.exp(-t * 12)) * env(n, .001, 1.8)
+        tr.add(sig, start, pan, gain)
+
+    chords = [(43, [67, 71, 74]), (40, [67, 71, 76]), (36, [67, 72, 76]), (38, [66, 69, 74])]
+    tune = [79, 78, 76, 74, 76, 78, 79, 83, 81, 79, 78, 76]
+    for bar in range(bars):
+        root, tones = chords[(bar // 2) % 4]
+        t0 = bar * 3 * beat
+        n = int(3 * beat * SR)
+        tt = np.arange(n) / SR
+        tr.add(np.sin(2 * np.pi * hz(root) * tt) * env(n, .01, 1.0), t0, 0, .1)
+        for b in (1, 2):
+            for v, m in enumerate(tones):
+                box(m - 12, t0 + b * beat, .03, -.3 + .3 * v)
+        if bar % 3 != 2:
+            box(tune[bar % len(tune)], t0, .09, .25)
+            box(tune[(bar + 5) % len(tune)], t0 + 1.5 * beat, .06, .4)
+    tr.reverb(2.4, .75, .35)
+    tr.master(OUT / 'angleSense.m4a')
+
+
+def line_split():
+    """Kalimba plucks over a soft pad, D pentatonic, 78 BPM."""
+    bpm = 78
+    beat = 60 / bpm
+    bars = 16
+    tr = Track(bars * 4 * beat, seed=6)
+
+    def kalimba(m, start, gain, pan):
+        n = int(2.2 * SR)
+        t = np.arange(n) / SR
+        f = hz(m) * (1 + .004 * np.exp(-t * 40))  # tiny pitch settle
+        ph = 2 * np.pi * np.cumsum(f) / SR
+        sig = np.sin(ph) * env(n, .002, 2.6) + .18 * np.sin(5.9 * ph) * env(n, .001, 22)
+        tr.add(sig, start, pan, gain)
+
+    pent = [62, 64, 66, 69, 71, 74, 76, 78]
+    chords = [[50, 57, 62, 66], [47, 54, 59, 62], [43, 50, 59, 62], [45, 52, 57, 61]]
+    for i, tones in enumerate(chords * (bars // 8)):
+        for v, m in enumerate(tones):
+            pad_note(tr, m, i * 8 * beat, 8 * beat, .03, pan=-.5 + .33 * v, bright=.2)
+    for bar in range(bars):
+        t0 = bar * 4 * beat
+        steps = [0, 1, 1.5, 2.5, 3] if bar % 2 == 0 else [0, .5, 2, 3, 3.5]
+        for s in steps:
+            m = int(tr.rng.choice(pent[2:] if bar % 4 == 3 else pent[:6]))
+            kalimba(m, t0 + s * beat, .1, tr.rng.uniform(-.5, .5))
+    tr.reverb(2.0, .55, .3)
+    tr.master(OUT / 'lineSplit.m4a')
+
+
+TRACKS = {
+    'rocketLaunch': rocket_launch,
+    'memoryLane': memory_lane,
+    'quickMath': quick_math,
+    'guessColor': guess_color,
+    'angleSense': angle_sense,
+    'lineSplit': line_split,
+}
+
+if __name__ == '__main__':
+    OUT.mkdir(parents=True, exist_ok=True)
+    for name in [a for a in sys.argv[1:] if not a.startswith('--')] or TRACKS:
+        TRACKS[name]()

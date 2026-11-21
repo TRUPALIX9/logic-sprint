@@ -48,7 +48,7 @@ flutter:
     enable-swift-package-manager: false
   assets:
     - assets/brand/docs/privacy_policy.md
-    - assets/audio/calm_loop.m4a
+    - assets/audio/
   fonts:
     - family: Rajdhani
       fonts:

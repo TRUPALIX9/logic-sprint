@@ -36,8 +36,10 @@ Future<void> main() async {
       AdEvent(kind: kind, outcome: outcome, at: DateTime.now()),
     );
   final appState = AppState(storage);
-  // Calm background music: follows the Music setting, pauses under ads.
+  // In-game music: one track per game, follows the Music setting, pauses
+  // under ads. Menus are silent.
   final music = Music();
+  Music.current = music;
   appState.addListener(() => music.on = appState.musicOn);
   ads
     ..onFullScreenStarted = music.adStarted
@@ -58,6 +60,6 @@ Future<void> main() async {
   // After runApp: neither the consent form nor syncing runs finished offline
   // may block the first frame.
   unawaited(ads.initialize());
-  unawaited(music.start(on: appState.musicOn));
+  unawaited(music.init(on: appState.musicOn));
   unawaited(leaderboard.syncPending());
 }

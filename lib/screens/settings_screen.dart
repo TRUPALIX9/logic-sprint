@@ -113,7 +113,7 @@ class SettingsScreen extends StatelessWidget {
                       _Row(
                         icon: Icons.music_note_outlined,
                         title: 'Music',
-                        subtitle: 'Calm background music',
+                        subtitle: 'Calm music while you play',
                         trailing: LSToggle(
                           value: app.musicOn,
                           onChanged: app.setMusicOn,
