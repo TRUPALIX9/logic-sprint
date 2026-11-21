@@ -130,8 +130,14 @@ abstract class RoundEngine extends ChangeNotifier {
     notify();
   }
 
+  /// Scores a correct action. [silent] skips the click and light haptic,
+  /// for points that come on their own (an asteroid passing in Rocket
+  /// Launch) rather than from a tap.
   @protected
-  void scoreCorrect([int points = AppConfig.pointsPerCorrect]) {
+  void scoreCorrect([
+    int points = AppConfig.pointsPerCorrect,
+    bool silent = false,
+  ]) {
     if (!isPlaying) {
       return;
     }
@@ -141,7 +147,9 @@ abstract class RoundEngine extends ChangeNotifier {
     if (_streak % AppConfig.streakBonusEvery == 0) {
       score += AppConfig.streakBonusPoints;
     }
-    feedback?.correct();
+    if (!silent) {
+      feedback?.correct();
+    }
     notify();
   }
 

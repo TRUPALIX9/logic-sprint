@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import '../../core/config.dart';
 import '../../models/game.dart';
 import '../round_engine.dart';
 
@@ -177,7 +178,9 @@ class RocketLaunchEngine extends RoundEngine {
       }
       if (rock.y >= 1) {
         asteroids.remove(rock);
-        scoreCorrect();
+        // Dodging is continuous: no click or haptic for every rock that
+        // passes (players found the tick distracting).
+        scoreCorrect(AppConfig.pointsPerCorrect, true);
       }
     }
     notify();

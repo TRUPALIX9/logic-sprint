@@ -8,6 +8,17 @@ import 'package:logic_sprint/models/game.dart';
 
 const _frame = Duration(milliseconds: 16);
 
+class _Feedback implements RoundFeedback {
+  int rights = 0;
+
+  @override
+  void tap() {}
+  @override
+  void correct() => rights++;
+  @override
+  void wrong() {}
+}
+
 RocketLaunchEngine _engine({int seed = 1}) =>
     RocketLaunchEngine(difficulty: Difficulty.medium, random: Random(seed));
 
@@ -87,6 +98,21 @@ void main() {
     expect(engine.score, 10);
     expect(engine.asteroids, isNot(contains(passing)));
     expect(engine.isPlaying, isTrue);
+    engine.dispose();
+  });
+
+  test('a dodge scores silently: no click or haptic per rock', () {
+    final feedback = _Feedback();
+    final engine = RocketLaunchEngine(
+      difficulty: Difficulty.medium,
+      random: Random(1),
+      feedback: feedback,
+    )..start();
+    engine.asteroids.add(_rock(x: 0.9, y: 0.99, speed: 1));
+    engine.tick(_frame);
+
+    expect(engine.score, 10);
+    expect(feedback.rights, 0);
     engine.dispose();
   });
 
