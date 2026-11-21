@@ -89,9 +89,12 @@ Finder _type(String name, [bool Function(dynamic w)? where]) =>
       (w) => w.runtimeType.toString() == name && (where?.call(w) ?? true),
     );
 
-/// The engine behind the game body widget [body] (each holds `engine`).
-T _engine<T>(WidgetTester tester, String body) =>
-    (tester.widget(_type(body).first) as dynamic).engine as T;
+/// The engine behind the game body widget [body] (each holds `engine`),
+/// once the run screen has built it.
+Future<T> _engine<T>(WidgetTester tester, String body) async {
+  await _until(tester, _type(body), timeout: const Duration(seconds: 10));
+  return (tester.widget(_type(body).first) as dynamic).engine as T;
+}
 
 /// A finger on the screen. Its events go in as device input, like a real
 /// touch: the test binding draws a crosshair over test-dispatched pointers,
@@ -244,7 +247,7 @@ Future<void> _fly(
   double seconds, {
   bool crash = false,
 }) async {
-  final engine = _engine<RocketLaunchEngine>(tester, '_RocketLaunchBody');
+  final engine = await _engine<RocketLaunchEngine>(tester, '_RocketLaunchBody');
   var target = engine.rocketX;
   final end = DateTime.now().add(
     Duration(milliseconds: (seconds * 1000).round()),
@@ -295,7 +298,7 @@ Future<void> _memoryLane(WidgetTester tester) async {
   _mark('memory_sheet');
   await _start(tester, 'MEMORY LANE', difficulty: 'MEDIUM');
   _mark('memory_play');
-  final engine = _engine<MemoryLaneEngine>(tester, '_MemoryLaneBody');
+  final engine = await _engine<MemoryLaneEngine>(tester, '_MemoryLaneBody');
   for (var level = 1; level <= 4 && engine.isPlaying; level++) {
     await _waitFor(() => engine.canTap);
     await _think(350, 550);
@@ -319,7 +322,7 @@ Future<void> _quickMath(WidgetTester tester) async {
   _mark('math_sheet');
   await _start(tester, 'QUICK MATH', difficulty: 'MEDIUM');
   _mark('math_play');
-  final engine = _engine<QuickMathEngine>(tester, '_QuickMathBody');
+  final engine = await _engine<QuickMathEngine>(tester, '_QuickMathBody');
   for (var i = 0; i < 16 && engine.isPlaying; i++) {
     await _waitFor(() => !engine.locked);
     await _think(650, 1100);
@@ -342,7 +345,7 @@ Future<void> _guessColor(WidgetTester tester) async {
   _mark('color_sheet');
   await _start(tester, 'GUESS COLOR');
   _mark('color_play');
-  final engine = _engine<GuessColorEngine>(tester, 'GuessColorBoard');
+  final engine = await _engine<GuessColorEngine>(tester, 'GuessColorBoard');
   // Through the shuffle, the countdown and into the COLOR | TEXT swaps.
   for (var i = 0; i < 27 && engine.isPlaying; i++) {
     await _waitFor(() => !engine.locked);
